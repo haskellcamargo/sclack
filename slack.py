@@ -1,39 +1,37 @@
 #!/usr/bin/env python3
-import curses
-import curses.panel
-import sys
+import urwid
 
-def app(stdscr):
-    key = 0
-    sidebar = curses.newpad(curses.LINES, 27)
-    while key != ord('q'):
-        stdscr.box()
-        stdscr.bkgd(' ', curses.color_pair(2))
-        stdscr.refresh()
-        sidebar.box()
-        sidebar.bkgd('~', curses.color_pair(1))
-        sidebar.refresh( 0, 0, 0, 0, curses.LINES - 1, 26)
-        key = stdscr.getch()
+def exit_on_q(key):
+    if key in ('q', 'Q'):
+        raise urwid.ExitMainLoop()
 
-curses.initscr()
+palette = [
+    ('app', '', '', '', 'h99', 'h235'),
+    ('sidebar', '', '', '', 'white', 'h99')
+]
 
-# init additional 8 colors
-for i in range(0, 255):
-    intesity = (1000*i/255)
-    try:
-        curses.init_color(i, intesity, 0, 0)
-    except:
-        print("Failed to initialize pair #%d".format(i))
+class Sidebar(urwid.BoxWidget):
+    def __init__(self):
+        self.contents = urwid.SimpleListWalker([
+            urwid.Text('NG Informatica ' + str(x)) for x in range(1, 100)
+        ])
+        self.listbox = urwid.LineBox(urwid.ListBox(self.contents), 'Channels', title_align='left')
+        self.edit = False
 
-# init color pairs
-for i in range(1, 255):
-    try:
-        curses.init_pair(i, i, 0)
-    except:
-        print("Failed to initialize pair #%d".format(i))
-        pass
+    def render(self, size, focus=False):
+        return self.listbox.render(size, focus)
 
-curses.start_color()
-curses.init_pair(1, 165, 53)
-curses.init_pair(2, 240, 253)
-curses.wrapper(app)
+    def keypress(self, size, key):
+        self.listbox.keypress(size, key)
+
+sidebar = urwid.AttrWrap(Sidebar(), 'sidebar')
+columns = urwid.Columns([
+    ('fixed', 25, sidebar)
+], 1)
+
+header= urwid.Text('foo')
+footer= urwid.Text('bar')
+app = urwid.Frame(urwid.AttrWrap(columns, 'app'))
+loop = urwid.MainLoop(app, palette, unhandled_input=exit_on_q)
+loop.screen.set_terminal_properties(colors=256)
+loop.run()
