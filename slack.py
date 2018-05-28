@@ -9,15 +9,16 @@ token = config.get_pyslack_config().get('DEFAULT', 'Token')
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
-    ('sidebar', '', '', '', 'white', 'h99'),
+    ('sidebar', '', '', '', 'white', 'h98'),
     ('chatbox', '', '', '', 'h99', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
-    ('message_input', '', '', '', 'h255', 'h234'),
-    ('prompt', '', '', '', 'h85', 'h234'),
+    ('message_input', '', '', '', 'h255', 'h235'),
+    ('prompt', '', '', '', 'h85', 'h235'),
     ('datetime', '', '', '', 'h239', 'h235'),
     ('username', '', '', '', 'h71,underline', 'h235'),
     ('message', '', '', '', 'h253', 'h235'),
-    ('history_date', '', '', '', 'h244', 'h235')
+    ('history_date', '', '', '', 'h244', 'h235'),
+    ('is_typing', '', '', '', 'h244', 'h235')
 ]
 
 class Sidebar(urwid.BoxWidget):
@@ -32,7 +33,17 @@ class Sidebar(urwid.BoxWidget):
         self.contents = urwid.SimpleListWalker([
             urwid.Text(' # ' + channel['name']) for channel in channels
         ])
-        self.listbox = urwid.LineBox(urwid.ListBox(self.contents), title=team['domain'], title_align='left')
+
+        header_text = 'nginformatica'
+        header = urwid.Columns([
+            ('fixed', 1, urwid.Divider(u'─')),
+            ('fixed', len(header_text) + 2, urwid.Text(header_text, align='center')),
+            urwid.Divider(u'─')
+        ])
+
+        footer = urwid.Divider(u'─')
+
+        self.listbox = urwid.Frame(urwid.ListBox(self.contents), header=header, footer=footer)
         self.edit = False
 
     def render(self, size, focus=False):
@@ -58,13 +69,24 @@ def main():
             urwid.Divider(u'─')
         ])
     ]), 'chatbox_header')
-    footer = urwid.AttrWrap(urwid.LineBox(
-        urwid.Edit(('prompt', 'haskellcamargo> '), multiline=True)
-    ), 'message_input')
+
+    is_typing_text = 'vitorebatista is typing...'
+    is_typing = urwid.Columns([
+        ('fixed', 1, urwid.Divider(u'─')),
+        ('fixed', len(is_typing_text) + 2, urwid.Text(('is_typing', is_typing_text), align='center')),
+        urwid.Divider(u'─'),
+    ])
+
+    footer = urwid.AttrWrap(urwid.Pile([
+        is_typing,
+        urwid.Edit(('prompt', ' haskellcamargo> '), multiline=True),
+        urwid.Divider(u'─')
+    ]), 'message_input')
+
 
     messages = [
         urwid.Text([
-            ('datetime', '[22:10] '),
+            ('datetime', ' [22:10] '),
             ('username', 'takanuva'),
             ('message', ' sou javeiro ' + str(i))
         ]) for i in range(1, 100)
