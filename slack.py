@@ -2,8 +2,10 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox
+from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message
+from datetime import datetime
 import pprint
+
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
 
@@ -48,7 +50,19 @@ def main():
         is_private=False
     ), 'chatbox_header')
     message_box = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
+
+    messages = slack.api_call('channels.history', unreads=True, channel='C1A1MMJAE')['messages']
+    messages.reverse()
+    # pprint.pprint(messages)
+    # return
+    messages = [
+        Message(
+            time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
+            user='...'
+        ) for message in messages
+    ]
     chatbox = urwid.AttrWrap(ChatBox(
+        messages=messages,
         header=header,
         message_box=message_box
     ), 'chatbox')

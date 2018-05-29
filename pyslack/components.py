@@ -53,9 +53,16 @@ class ChannelHeader(urwid.Pile):
         super(ChannelHeader, self).__init__(body)
 
 class ChatBox(urwid.Frame):
-    def __init__(self, header, message_box):
-        body = urwid.ListBox(urwid.SimpleFocusListWalker([]))
+    def __init__(self, messages, header, message_box):
+        body = urwid.ListBox(urwid.SimpleFocusListWalker(messages))
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
+
+class Message(urwid.Text):
+    def __init__(self, time, user):
+        super(Message, self).__init__([
+            ' ', ('datetime', '{} │'.format(time)),
+            user
+        ])
 
 class MessageBox(urwid.Pile):
     def __init__(self, user, typing=None):
