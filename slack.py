@@ -2,25 +2,26 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader
+from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox
 import pprint
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
-    ('sidebar', '', '', '', 'white', 'h98'),
+    ('sidebar', '', '', '', 'white', 'h24'),
     ('chatbox', '', '', '', 'h99', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
     ('message_input', '', '', '', 'h255', 'h235'),
-    ('prompt', '', '', '', 'h85', 'h235'),
+    ('prompt', '', '', '', 'white', 'h27'),
+    ('prompt_arrow', '', '', '', 'h27', 'h235'),
     ('datetime', '', '', '', 'h239', 'h235'),
     ('username', '', '', '', 'h71,underline', 'h235'),
     ('message', '', '', '', 'h253', 'h235'),
     ('history_date', '', '', '', 'h244', 'h235'),
     ('is_typing', '', '', '', 'h244', 'h235'),
-    ('reveal focus', '', '', '', 'h99', 'h77'),
-    ('active_channel', '', '', '', 'white', 'h142')
+    ('active_channel', '', '', '', 'white', 'h162'),
+    ('separator', '', '', '', 'h244', 'h235')
 ]
 
 def main():
@@ -36,8 +37,8 @@ def main():
         Channel(channel['name'], is_private=channel['is_private'])
         for channel in my_channels
     ]
-
     urwid.set_encoding('UTF-8')
+
     sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica'), 'sidebar')
     header = urwid.AttrWrap(ChannelHeader(
         date='Today',
@@ -46,21 +47,11 @@ def main():
         name='rung',
         is_private=False
     ), 'chatbox_header')
-
-    footer = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
-
-    messages = [
-        urwid.Text([
-            ('datetime', ' [22:10] '),
-            ('username', 'takanuva'),
-            ('message', ' sou javeiro ' + str(i))
-        ]) for i in range(1, 100)
-    ]
-
-    body = urwid.ListBox(urwid.SimpleListWalker(messages))
-    frame = urwid.Frame(body, header=header, footer=footer)
-    ##
-    chatbox = urwid.AttrWrap(frame, 'chatbox')
+    message_box = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
+    chatbox = urwid.AttrWrap(ChatBox(
+        header=header,
+        message_box=message_box
+    ), 'chatbox')
     columns = urwid.Columns([
         ('fixed', 25, sidebar),
         ('weight', 1, chatbox)

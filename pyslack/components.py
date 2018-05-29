@@ -3,6 +3,8 @@ import urwid
 options = {
     'icons': {
         'channel': '\uF198',
+        'divider': '\uE0B1',
+        'full_divider': '\uE0B0',
         'full_star': '\uF005',
         'keyboard': '\uF11C',
         'line_star': '\uF006',
@@ -10,6 +12,19 @@ options = {
         'private_channel': '\uF023'
     }
 }
+
+class BreadCrumbs(urwid.Text):
+    def intersperse(self, iterable, delimiter):
+        it = iter(iterable)
+        yield next(it)
+        for elem in it:
+            yield delimiter
+            yield elem
+
+    def __init__(self, elements=[]):
+        separator = ('separator', ' {} '.format(options['icons']['divider']))
+        body = list(self.intersperse(elements, separator))
+        super(BreadCrumbs, self).__init__([' '] + body)
 
 class Channel(urwid.AttrMap):
     def __init__(self, name, is_private=False):
@@ -28,13 +43,19 @@ class ChannelHeader(urwid.Pile):
                 options['icons']['private_channel' if is_private else 'channel'],
                 name
             )),
-            urwid.Text(' {} \uE0B1 {} {} \uE0B1 {}'.format(
-                star_icon, options['icons']['person'], num_members, topic
-            )),
+            BreadCrumbs([
+                star_icon,
+                '{} {}'.format(options['icons']['person'], num_members),
+                topic
+            ]),
             TextDivider(('history_date', date), align='center')
         ]
         super(ChannelHeader, self).__init__(body)
 
+class ChatBox(urwid.Frame):
+    def __init__(self, header, message_box):
+        body = urwid.ListBox(urwid.SimpleFocusListWalker([]))
+        super(ChatBox, self).__init__(body, header=header, footer=message_box)
 
 class MessageBox(urwid.Pile):
     def __init__(self, user, typing=None):
@@ -45,7 +66,9 @@ class MessageBox(urwid.Pile):
             )))
         else:
             top_separator = urwid.Divider('─')
-        prompt = urwid.Edit(('prompt', ' {}>'.format(user)))
+        prompt = urwid.Edit(('prompt', [
+            ' ', user, ('prompt_arrow', options['icons']['full_divider'] + ' ')
+        ]))
         body = [
             top_separator,
             prompt,
