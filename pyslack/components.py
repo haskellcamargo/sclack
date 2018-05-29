@@ -8,8 +8,8 @@ options = {
         'full_star': '\uF005',
         'keyboard': '\uF11C',
         'line_star': '\uF006',
-        'offline': '\uFC64',
-        'online': '\uFC63',
+        'offline': '\uF10C',
+        'online': '\uF111',
         'person': '\uF415',
         'private_channel': '\uF023'
     }
@@ -30,7 +30,6 @@ class BreadCrumbs(urwid.Text):
 
 class Channel(urwid.AttrMap):
     def __init__(self, name, is_private=False):
-        icon = ' · ' if is_private else '\uF023'
         body = urwid.SelectableIcon(' {} {}'.format(
             options['icons']['private_channel' if is_private else 'channel'],
             name
@@ -60,14 +59,31 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
 
 class Message(urwid.Columns):
-    def __init__(self, time, user, edited=False):
-        time_column = urwid.Text(('datetime', ' {} │'.format(time)))
-        edited_column = urwid.Text(('edited', ' (edited) ' if edited else ''))
+    def __init__(self, time, user, text, is_starred=False, is_edited=False, reactions=[]):
+        time_column = ('fixed', 9, urwid.Text(('datetime', ' {} │ '.format(time))))
+        starred_column = []
+        edited_column = []
+        
+        # Starred message
+        if is_starred:
+            starred_column = [('fixed', 3, urwid.Text(('starred', ' {} '.format(options['icons']['full_star']))))]
+        
+        # Edited message
+        if is_edited:
+            edited_column = [('fixed', 10, urwid.Text(('edited', ' (edited) ')))]
+
+        content = urwid.Text(('message', text))
+        if reactions:
+            content = urwid.Pile([
+                content,
+                urwid.Columns(reactions, dividechars=1)
+            ])
+
         super(Message, self).__init__([
-            ('fixed', 8, time_column),
-            urwid.Text(user),
-            ('fixed', 10, edited_column)
-        ])
+            time_column,
+            ('pack', urwid.Text([('username', user), ' '])),
+            content
+        ] + starred_column + edited_column)
 
 class MessageBox(urwid.Pile):
     def __init__(self, user, typing=None):
@@ -96,6 +112,11 @@ class Profile(urwid.Text):
             presence_icon = ('presence_away', ' {} '.format(options['icons']['offline']))
         body = [presence_icon, name]
         super(Profile, self).__init__(body)
+
+class Reaction(urwid.Text):
+    def __init__(self, name, count=0):
+        text = '[:{}: {}]'.format(name, count)
+        super(Reaction, self).__init__(('reaction', text))
 
 class SideBar(urwid.Frame):
     def __init__(self, profile, channels=[], title=''):

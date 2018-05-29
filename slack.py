@@ -2,7 +2,7 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile
+from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile, Reaction
 from datetime import datetime
 import pprint
 
@@ -25,6 +25,8 @@ palette = [
     ('active_channel', '', '', '', 'white', 'h162'),
     ('separator', '', '', '', 'h244', 'h235'),
     ('edited', '', '', '', 'h239', 'h235'),
+    ('starred', '', '', '', 'h214', 'h235'),
+    ('reaction', '', '', '', 'h27', 'h235'),
     ('presence_active', '', '', '', 'h40', 'h24'),
     ('presence_away', '', '', '', 'h239', 'h24')
 ]
@@ -44,7 +46,7 @@ def main():
     ]
     urwid.set_encoding('UTF-8')
 
-    profile = Profile(name="haskellcamargo", is_online=False)
+    profile = Profile(name="haskellcamargo", is_online=True)
     sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica', profile=profile), 'sidebar')
     header = urwid.AttrWrap(ChannelHeader(
         date='Today',
@@ -56,14 +58,21 @@ def main():
     message_box = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
 
     messages = slack.api_call('channels.history', unreads=True, channel='C1A1MMJAE')['messages']
+    messages = list(filter(lambda message: 'user' in message, messages))
     messages.reverse()
-    # pprint.pprint(messages)
-    # return
+    with open('ignored.pyc', 'w+') as m:
+        m.write(pprint.pformat(messages))
     messages = [
         Message(
             time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
-            user='...',
-            edited=('edited' in message)
+            user=message['user'],
+            text=message['text'],
+            is_edited=('edited' in message),
+            is_starred=message.get('is_starred', False),
+            reactions=list(map(
+                lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
+                message.get('reactions', [])
+            ))
         ) for message in messages
     ]
     chatbox = urwid.AttrWrap(ChatBox(
