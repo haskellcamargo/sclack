@@ -2,11 +2,10 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar
+from pyslack.components import TextDivider, SideBar, Channel
 import pprint
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
-#slack = SlackClient(token)
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
@@ -20,25 +19,31 @@ palette = [
     ('message', '', '', '', 'h253', 'h235'),
     ('history_date', '', '', '', 'h244', 'h235'),
     ('is_typing', '', '', '', 'h244', 'h235'),
-    ('reveal focus', '', '', '', 'h99', 'h77')
+    ('reveal focus', '', '', '', 'h99', 'h77'),
+    ('active_channel', '', '', '', 'white', 'h142')
 ]
 
 def main():
+    slack = SlackClient(token)
+    slack_channels = slack.api_call('conversations.list', exclude_archived=True, types='public_channel,private_channel,im,mpim')['channels']
+
+    my_channels = list(filter(lambda channel:
+        'is_channel' in channel and channel['is_member'] and (channel['is_channel'] or not channel['is_mpim']),
+        slack_channels))
+    my_channels.sort(key=lambda channel: channel['name'])
+
+    channels = [
+        Channel(channel['name'], is_private=channel['is_private'])
+        for channel in my_channels
+    ]
+
     urwid.set_encoding('UTF-8')
-    sidebar = urwid.AttrWrap(SideBar(), 'sidebar')
+    sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica'), 'sidebar')
     ## FRAME
     header = urwid.AttrWrap(urwid.Pile([
-        urwid.Columns([
-            ('fixed', 1, urwid.Divider(u'─')),
-            ('fixed', 11, urwid.Text('#compiler', align='center')),
-            urwid.Divider(u'─')
-        ]),
+        TextDivider('#compiler'),
         urwid.Text(u' 👨 11 | Everything is terrible'),
-        urwid.Columns([
-            urwid.Divider(u'─'),
-            ('fixed', 14, urwid.Text(('history_date', 'Satuday 25th'), align='center')),
-            urwid.Divider(u'─')
-        ])
+        TextDivider(('history_date', 'Satuday 25th'), align='center')
     ]), 'chatbox_header')
 
     is_typing_text = 'vitorebatista is typing...'
