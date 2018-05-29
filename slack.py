@@ -2,7 +2,7 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel
+from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader
 import pprint
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
@@ -39,26 +39,15 @@ def main():
 
     urwid.set_encoding('UTF-8')
     sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica'), 'sidebar')
-    ## FRAME
-    header = urwid.AttrWrap(urwid.Pile([
-        TextDivider('#compiler'),
-        urwid.Text(u' 👨 11 | Everything is terrible'),
-        TextDivider(('history_date', 'Satuday 25th'), align='center')
-    ]), 'chatbox_header')
+    header = urwid.AttrWrap(ChannelHeader(
+        date='Today',
+        topic='Tudo é terrível',
+        num_members=13,
+        name='rung',
+        is_private=False
+    ), 'chatbox_header')
 
-    is_typing_text = 'vitorebatista is typing...'
-    is_typing = urwid.Columns([
-        ('fixed', 1, urwid.Divider(u'─')),
-        ('fixed', len(is_typing_text) + 2, urwid.Text(('is_typing', is_typing_text), align='center')),
-        urwid.Divider(u'─'),
-    ])
-
-    footer = urwid.AttrWrap(urwid.Pile([
-        is_typing,
-        urwid.Edit(('prompt', ' haskellcamargo> '), multiline=True),
-        urwid.Divider(u'─')
-    ]), 'message_input')
-
+    footer = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
 
     messages = [
         urwid.Text([
