@@ -2,6 +2,7 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
+from pyslack.components import TextDivider, SideBar
 import pprint
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
@@ -18,43 +19,13 @@ palette = [
     ('username', '', '', '', 'h71,underline', 'h235'),
     ('message', '', '', '', 'h253', 'h235'),
     ('history_date', '', '', '', 'h244', 'h235'),
-    ('is_typing', '', '', '', 'h244', 'h235')
+    ('is_typing', '', '', '', 'h244', 'h235'),
+    ('reveal focus', '', '', '', 'h99', 'h77')
 ]
-
-class Sidebar(urwid.BoxWidget):
-    def __init__(self):
-        team = {'domain': 'workspace'}
-        # team = slack.api_call('team.info')['team']
-        # channels = slack.api_call('channels.list', exclude_members=True, exclude_archived=True)['channels']
-        channels = [
-            { 'name': 'compiler' },
-            { 'name': 'midgets-and-horses' }
-        ] # list(filter(lambda channel: channel['is_member'], channels))
-        self.contents = urwid.SimpleListWalker([
-            urwid.Text(' # ' + channel['name']) for channel in channels
-        ])
-
-        header_text = 'nginformatica'
-        header = urwid.Columns([
-            ('fixed', 1, urwid.Divider(u'─')),
-            ('fixed', len(header_text) + 2, urwid.Text(header_text, align='center')),
-            urwid.Divider(u'─')
-        ])
-
-        footer = urwid.Divider(u'─')
-
-        self.listbox = urwid.Frame(urwid.ListBox(self.contents), header=header, footer=footer)
-        self.edit = False
-
-    def render(self, size, focus=False):
-        return self.listbox.render(size, focus)
-
-    def keypress(self, size, key):
-        self.listbox.keypress(size, key)
 
 def main():
     urwid.set_encoding('UTF-8')
-    sidebar = urwid.AttrWrap(Sidebar(), 'sidebar')
+    sidebar = urwid.AttrWrap(SideBar(), 'sidebar')
     ## FRAME
     header = urwid.AttrWrap(urwid.Pile([
         urwid.Columns([
