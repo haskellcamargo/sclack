@@ -57,11 +57,14 @@ class ChatBox(urwid.Frame):
         body = urwid.ListBox(urwid.SimpleFocusListWalker(messages))
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
 
-class Message(urwid.Text):
-    def __init__(self, time, user):
+class Message(urwid.Columns):
+    def __init__(self, time, user, edited=False):
+        time_column = urwid.Text(('datetime', ' {} │'.format(time)))
+        edited_column = urwid.Text(('edited', ' (edited) ' if edited else ''))
         super(Message, self).__init__([
-            ' ', ('datetime', '{} │'.format(time)),
-            user
+            ('fixed', 8, time_column),
+            urwid.Text(user),
+            ('fixed', 10, edited_column)
         ])
 
 class MessageBox(urwid.Pile):

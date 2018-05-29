@@ -23,7 +23,8 @@ palette = [
     ('history_date', '', '', '', 'h244', 'h235'),
     ('is_typing', '', '', '', 'h244', 'h235'),
     ('active_channel', '', '', '', 'white', 'h162'),
-    ('separator', '', '', '', 'h244', 'h235')
+    ('separator', '', '', '', 'h244', 'h235'),
+    ('edited', '', '', '', 'h239', 'h235')
 ]
 
 def main():
@@ -58,7 +59,8 @@ def main():
     messages = [
         Message(
             time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
-            user='...'
+            user='...',
+            edited=('edited' in message)
         ) for message in messages
     ]
     chatbox = urwid.AttrWrap(ChatBox(
