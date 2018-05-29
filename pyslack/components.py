@@ -8,6 +8,8 @@ options = {
         'full_star': '\uF005',
         'keyboard': '\uF11C',
         'line_star': '\uF006',
+        'offline': '\uFC64',
+        'online': '\uFC63',
         'person': '\uF415',
         'private_channel': '\uF023'
     }
@@ -86,13 +88,21 @@ class MessageBox(urwid.Pile):
         ]
         super(MessageBox, self).__init__(body)
 
+class Profile(urwid.Text):
+    def __init__(self, name, is_online=True):
+        if is_online:
+            presence_icon = ('presence_active', ' {} '.format(options['icons']['online']))
+        else:
+            presence_icon = ('presence_away', ' {} '.format(options['icons']['offline']))
+        body = [presence_icon, name]
+        super(Profile, self).__init__(body)
+
 class SideBar(urwid.Frame):
-    def __init__(self, channels=[], title=''):
+    def __init__(self, profile, channels=[], title=''):
         header = TextDivider(title)
         footer = urwid.Divider('─')
-        empty_line = urwid.Divider(' ')
         self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([
-            empty_line,
+            profile,
             TextDivider('Channels')
         ] + channels))
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)

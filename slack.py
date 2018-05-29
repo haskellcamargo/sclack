@@ -2,7 +2,7 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message
+from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile
 from datetime import datetime
 import pprint
 
@@ -24,7 +24,9 @@ palette = [
     ('is_typing', '', '', '', 'h244', 'h235'),
     ('active_channel', '', '', '', 'white', 'h162'),
     ('separator', '', '', '', 'h244', 'h235'),
-    ('edited', '', '', '', 'h239', 'h235')
+    ('edited', '', '', '', 'h239', 'h235'),
+    ('presence_active', '', '', '', 'h40', 'h24'),
+    ('presence_away', '', '', '', 'h239', 'h24')
 ]
 
 def main():
@@ -42,7 +44,8 @@ def main():
     ]
     urwid.set_encoding('UTF-8')
 
-    sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica'), 'sidebar')
+    profile = Profile(name="haskellcamargo", is_online=False)
+    sidebar = urwid.AttrWrap(SideBar(channels=channels, title='nginformatica', profile=profile), 'sidebar')
     header = urwid.AttrWrap(ChannelHeader(
         date='Today',
         topic='Tudo é terrível',
