@@ -78,11 +78,11 @@ class Message(urwid.AttrMap):
         time_column = ('fixed', 8, urwid.Text(('datetime', ' {} │'.format(time))))
         starred_column = []
         edited_column = []
-        
+
         # Starred message
         if is_starred:
             starred_column = [('fixed', 3, urwid.Text(('starred', ' {} '.format(options['icons']['full_star']))))]
-        
+
         # Edited message
         if is_edited:
             edited_column = [('fixed', 10, urwid.Text(('edited', ' (edited) ')))]
