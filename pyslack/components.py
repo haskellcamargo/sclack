@@ -4,7 +4,7 @@ options = {
     'icons': {
         'channel': '\uF198',
         'divider': '\uE0B1',
-        'full_divider': '\uE0B0',
+        'full_divider': '\uE0C6',
         'full_star': '\uF005',
         'keyboard': '\uF11C',
         'line_star': '\uF006',
@@ -82,7 +82,7 @@ class Message(urwid.Columns):
         super(Message, self).__init__([
             time_column,
             ('pack', urwid.Text([
-                ('background_{}'.format(user_id), ' {}'.format(user_name)),
+                ('background_{}'.format(user_id), ' {} '.format(user_name)),
                 ('foreground_{}'.format(user_id), options['icons']['full_divider']),
                 ' '
             ])),
@@ -99,7 +99,7 @@ class MessageBox(urwid.Pile):
         else:
             top_separator = urwid.Divider('─')
         prompt = urwid.Edit(('prompt', [
-            ' ', user, ('prompt_arrow', options['icons']['full_divider'] + ' ')
+            ' ', user, ' ', ('prompt_arrow', options['icons']['full_divider'] + ' ')
         ]))
         body = [
             top_separator,
