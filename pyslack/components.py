@@ -56,8 +56,22 @@ class ChannelHeader(urwid.Pile):
 
 class ChatBox(urwid.Frame):
     def __init__(self, messages, header, message_box):
-        body = urwid.ListBox(urwid.SimpleFocusListWalker(messages))
+        body = ChatBoxMessages(messages=messages)
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
+
+class ChatBoxMessages(urwid.ListBox):
+    def __init__(self, messages=[]):
+        self.walker = urwid.SimpleFocusListWalker(messages)
+        super(ChatBoxMessages, self).__init__(self.walker)
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse press' and button in (4, 5):
+            if button == 4:
+                self.set_focus(max(0, self.get_focus()[1] - 1))
+            else:
+                self.set_focus(min(len(self.body) - 1, self.get_focus()[1] + 1))
+        else:
+            return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
 class Message(urwid.AttrMap):
     def __init__(self, time, user_id, user_name, text, is_starred=False, is_edited=False, reactions=[]):
