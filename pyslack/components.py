@@ -59,8 +59,8 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
 
 class Message(urwid.Columns):
-    def __init__(self, time, user, text, is_starred=False, is_edited=False, reactions=[]):
-        time_column = ('fixed', 9, urwid.Text(('datetime', ' {} │ '.format(time))))
+    def __init__(self, time, user_id, user_name, text, is_starred=False, is_edited=False, reactions=[]):
+        time_column = ('fixed', 8, urwid.Text(('datetime', ' {} │'.format(time))))
         starred_column = []
         edited_column = []
         
@@ -81,7 +81,11 @@ class Message(urwid.Columns):
 
         super(Message, self).__init__([
             time_column,
-            ('pack', urwid.Text([('username', user), ' '])),
+            ('pack', urwid.Text([
+                ('background_{}'.format(user_id), ' {}'.format(user_name)),
+                ('foreground_{}'.format(user_id), options['icons']['full_divider']),
+                ' '
+            ])),
             content
         ] + starred_column + edited_column)
 

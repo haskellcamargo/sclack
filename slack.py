@@ -59,6 +59,24 @@ def main():
 
     messages = slack.api_call('channels.history', unreads=True, channel='C1A1MMJAE')['messages']
     members = slack.api_call('users.list')['members']
+
+    # Register color for each user
+    users_palette = []
+    def register_user_color(id, color):
+        # Convert to short form
+        red, green, blue = int(color[:2], 16), int(color[2:4], 16), int(color[4:], 16)
+        color = '#{}{}{}'.format(
+            hex(round(red / 17))[-1], 
+            hex(round(green / 17))[-1], 
+            hex(round(blue / 17))[-1]
+        )
+        users_palette.append(('background_{}'.format(id), '', '', '', 'white', color))
+        users_palette.append(('foreground_{}'.format(id), '', '', '', color, 'h235'))
+
+    for user in members:
+        if not user['deleted']:
+            register_user_color(user['id'], user['color'])
+
     messages = list(filter(lambda message: 'user' in message, messages))
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
@@ -72,7 +90,8 @@ def main():
         user = find_user(message['user'], members)
         _messages.append(Message(
             time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
-            user=user['profile']['display_name'],
+            user_id=user['id'],
+            user_name=user['profile']['display_name'],
             text=message['text'],
             is_edited=('edited' in message),
             is_starred=message.get('is_starred', False),
@@ -91,7 +110,7 @@ def main():
         ('weight', 1, chatbox)
     ])
     app = urwid.Frame(urwid.AttrWrap(columns, 'app'))
-    loop = urwid.MainLoop(app, palette)
+    loop = urwid.MainLoop(app, palette + users_palette)
     loop.screen.set_terminal_properties(colors=256)
     loop.screen.set_mouse_tracking()
     loop.run()
