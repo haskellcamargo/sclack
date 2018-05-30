@@ -23,12 +23,16 @@ palette = [
     ('history_date', '', '', '', 'h244', 'h235'),
     ('is_typing', '', '', '', 'h244', 'h235'),
     ('active_channel', '', '', '', 'white', 'h162'),
+    ('active_message', '', '', '', 'white', 'h237'),
+    ('active_link', '', '', '', 'h21,underline', 'h237'),
     ('separator', '', '', '', 'h244', 'h235'),
     ('edited', '', '', '', 'h239', 'h235'),
     ('starred', '', '', '', 'h214', 'h235'),
     ('reaction', '', '', '', 'h27', 'h235'),
     ('presence_active', '', '', '', 'h40', 'h24'),
-    ('presence_away', '', '', '', 'h239', 'h24')
+    ('presence_away', '', '', '', 'h239', 'h24'),
+    ('link', '', '', '', 'h21,underline', 'h235'),
+    ('cite', '', '', '', 'italics,white', 'h235')
 ]
 
 def main():
@@ -80,7 +84,7 @@ def main():
     messages = list(filter(lambda message: 'user' in message, messages))
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
-        m.write(pprint.pformat(members))
+        m.write(pprint.pformat(messages))
 
     def find_user(id, users):
         return next(filter(lambda user: user['id'] == id, users), None)

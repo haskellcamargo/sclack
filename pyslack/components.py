@@ -1,4 +1,5 @@
 import urwid
+import pprint
 
 options = {
     'icons': {
@@ -58,7 +59,7 @@ class ChatBox(urwid.Frame):
         body = urwid.ListBox(urwid.SimpleFocusListWalker(messages))
         super(ChatBox, self).__init__(body, header=header, footer=message_box)
 
-class Message(urwid.Columns):
+class Message(urwid.AttrMap):
     def __init__(self, time, user_id, user_name, text, is_starred=False, is_edited=False, reactions=[]):
         time_column = ('fixed', 8, urwid.Text(('datetime', ' {} │'.format(time))))
         starred_column = []
@@ -72,14 +73,14 @@ class Message(urwid.Columns):
         if is_edited:
             edited_column = [('fixed', 10, urwid.Text(('edited', ' (edited) ')))]
 
-        content = urwid.Text(('message', text))
+        content = self.parse_message(text)
         if reactions:
             content = urwid.Pile([
                 content,
                 urwid.Columns(reactions, dividechars=1)
             ])
 
-        super(Message, self).__init__([
+        self.contents = urwid.Columns([
             time_column,
             ('pack', urwid.Text([
                 ('background_{}'.format(user_id), ' {} '.format(user_name)),
@@ -88,6 +89,47 @@ class Message(urwid.Columns):
             ])),
             content
         ] + starred_column + edited_column)
+        super(Message, self).__init__(self.contents, None, 'active_message')
+
+    def selectable(self):
+        return True
+
+    def parse_message(self, text):
+        result = []
+        state = {
+            'text': '',
+            'link_url': '',
+            'link_name': ''
+        }
+        active_state = 'text'
+
+        is_cite = text.startswith('&gt; ')
+        if is_cite:
+            text = text[5:]
+
+        for char in text:
+            if char == '<':
+                active_state = 'link_url'
+                result.append(('message', state['text']))
+                state['text'] = ''
+            elif char == '>':
+                active_state = 'text'
+                result.append(('link', state['link_url']))
+                state['link_url'] = ''
+            else:
+                state[active_state] = state[active_state] + char
+        result.append(('message', state['text']))
+        result = urwid.AttrMap(urwid.SelectableIcon(result), None, focus_map={
+            'message': 'active_message',
+            'link': 'active_link'
+        })
+
+        if is_cite:
+            result = urwid.AttrMap(result, attr_map={
+                'message': 'cite'
+            })
+
+        return result
 
 class MessageBox(urwid.Pile):
     def __init__(self, user, typing=None):
