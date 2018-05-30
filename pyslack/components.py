@@ -74,7 +74,7 @@ class ChatBoxMessages(urwid.ListBox):
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
 class Message(urwid.AttrMap):
-    def __init__(self, time, user_id, user_name, text, is_starred=False, is_edited=False, reactions=[]):
+    def __init__(self, time, user_id, user_name, text, file=None, is_starred=False, is_edited=False, reactions=[]):
         time_column = ('fixed', 8, urwid.Text(('datetime', ' {} │'.format(time))))
         starred_column = []
         edited_column = []
@@ -87,12 +87,17 @@ class Message(urwid.AttrMap):
         if is_edited:
             edited_column = [('fixed', 10, urwid.Text(('edited', ' (edited) ')))]
 
-        content = self.parse_message(text)
+        content = [self.parse_message(text)]
         if reactions:
-            content = urwid.Pile([
-                content,
-                urwid.Columns(reactions, dividechars=1)
-            ])
+            content.append(urwid.Columns(reactions, dividechars=1))
+
+        if file:
+            content.append(file)
+
+        if len(content) == 1:
+            content = content[0]
+        else:
+            content = urwid.Pile(content)
 
         self.contents = urwid.Columns([
             time_column,

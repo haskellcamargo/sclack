@@ -3,9 +3,10 @@ import urwid
 from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile, Reaction
+from pyslack.image import Image
 from datetime import datetime
 import pprint
-
+import requests
 
 token = config.get_pyslack_config().get('DEFAULT', 'Token')
 
@@ -70,8 +71,8 @@ def main():
         # Convert to short form
         red, green, blue = int(color[:2], 16), int(color[2:4], 16), int(color[4:], 16)
         color = '#{}{}{}'.format(
-            hex(round(red / 17))[-1], 
-            hex(round(green / 17))[-1], 
+            hex(round(red / 17))[-1],
+            hex(round(green / 17))[-1],
             hex(round(blue / 17))[-1]
         )
         users_palette.append(('background_{}'.format(id), '', '', '', 'white', color))
@@ -81,10 +82,10 @@ def main():
         if not user['deleted']:
             register_user_color(user['id'], user['color'])
 
-    messages = list(filter(lambda message: 'user' in message, messages))
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
         m.write(pprint.pformat(messages))
+    messages = list(filter(lambda message: 'user' in message, messages))
 
     def find_user(id, users):
         return next(filter(lambda user: user['id'] == id, users), None)
@@ -92,6 +93,11 @@ def main():
     _messages = []
     for message in messages:
         user = find_user(message['user'], members)
+        file = message.get('file', None)
+        if file and file.get('filetype', None) in ('jpg', 'png', 'gif', 'jpeg', 'bmp'):
+            file = Image(token=token, path=file['url_private'])
+        else:
+            file = None
         _messages.append(Message(
             time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
             user_id=user['id'],
@@ -102,7 +108,8 @@ def main():
             reactions=list(map(
                 lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
                 message.get('reactions', [])
-            ))
+            )),
+            file=file
         ))
     chatbox = urwid.AttrWrap(ChatBox(
         messages=_messages,
