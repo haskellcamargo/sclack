@@ -58,14 +58,21 @@ def main():
     message_box = urwid.AttrWrap(MessageBox(user='haskellcamargo', typing='vitorebatista'), 'message_input')
 
     messages = slack.api_call('channels.history', unreads=True, channel='C1A1MMJAE')['messages']
+    members = slack.api_call('users.list')['members']
     messages = list(filter(lambda message: 'user' in message, messages))
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
-        m.write(pprint.pformat(messages))
-    messages = [
-        Message(
+        m.write(pprint.pformat(members))
+
+    def find_user(id, users):
+        return next(filter(lambda user: user['id'] == id, users), None)
+
+    _messages = []
+    for message in messages:
+        user = find_user(message['user'], members)
+        _messages.append(Message(
             time=datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M'),
-            user=message['user'],
+            user=user['profile']['display_name'],
             text=message['text'],
             is_edited=('edited' in message),
             is_starred=message.get('is_starred', False),
@@ -73,10 +80,9 @@ def main():
                 lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
                 message.get('reactions', [])
             ))
-        ) for message in messages
-    ]
+        ))
     chatbox = urwid.AttrWrap(ChatBox(
-        messages=messages,
+        messages=_messages,
         header=header,
         message_box=message_box
     ), 'chatbox')
