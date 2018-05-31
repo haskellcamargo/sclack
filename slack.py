@@ -66,8 +66,6 @@ def main():
     messages = slack.api_call('channels.history', unreads=True, channel='C1A1MMJAE')['messages']
     members = slack.api_call('users.list')['members']
 
-    # Register color for each user
-    users_palette = []
     def shorten_hex(color):
         return '{}{}{}'.format(
             hex(round(int(color[:2], 16) / 17))[-1],
@@ -77,15 +75,36 @@ def main():
 
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
-        m.write(pprint.pformat(messages))
-    messages = list(filter(lambda message: 'user' in message, messages))
+        m.write(pprint.pformat(members))
 
     def find_user(id, users):
         return next(filter(lambda user: user['id'] == id, users), None)
 
+    def find_bot(id, users):
+        return next(filter(lambda user: user.get('is_bot', False) and user['profile']['bot_id'] == id, users), None)
+
     _messages = []
+    # Bots cache
+    _bots = {}
     for message in messages:
-        user = find_user(message['user'], members)
+        if message.get('subtype', None) == 'bot_message':
+            bot = find_bot(message['bot_id'], members)
+            if bot:
+                user_name = bot['profile']['display_name']
+            elif message['bot_id'] in _bots:
+                # Use bot data from cache
+                bot = _bots.get(message['bot_id'])
+                user_name = bot['name']
+            else:
+                bot = slack.api_call('bots.info', bot=message['bot_id'])['bot']
+                _bots[message['bot_id']] = bot
+                user_name = bot['name']
+
+            color = '#{}'.format(shorten_hex(bot.get('color', '333333')))
+        else:
+            user = find_user(message['user'], members)
+            user_name = user['profile']['display_name']
+            color = '#{}'.format(shorten_hex(user.get('color', '333333')))
 
         file = message.get('file', None)
         if file and file.get('filetype', None) in ('jpg', 'png', 'gif', 'jpeg', 'bmp'):
@@ -94,7 +113,6 @@ def main():
             file = None
 
         time = datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M')
-        user_name = user['profile']['display_name']
         text = message['text']
         is_edited = 'edited' in message
         is_starred = message.get('is_starred', False)
@@ -105,7 +123,7 @@ def main():
 
         _messages.append(Message(
             time=time,
-            color='#{}'.format(shorten_hex(user.get('color', '333333'))),
+            color=color,
             user_name=user_name,
             text=text,
             is_edited=is_edited,
