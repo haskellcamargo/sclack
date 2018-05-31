@@ -4,6 +4,9 @@ from datetime import datetime
 
 options = {
     'icons': {
+        'block': '\u258C',
+        'block_bottom': '\u2598',
+        'block_top': '\u2596',
         'channel': '\uF198',
         'divider': '\uE0B1',
         'edit': '\uF040',
@@ -14,8 +17,7 @@ options = {
         'offline': '\uF10C',
         'online': '\uF111',
         'person': '\uF415',
-        'private_channel': '\uF023',
-        'block': '\u258C'
+        'private_channel': '\uF023'
     }
 }
 
@@ -30,8 +32,11 @@ class Attachment(urwid.Pile):
 
 class Box(urwid.AttrWrap):
     def __init__(self, widget, color):
-        body = urwid.LineBox(widget, tlcorner='', tline='', lline=options['icons']['block'],
-            trcorner='', blcorner='', rline='', bline='', brcorner='')
+        body = urwid.LineBox(widget,
+            lline=options['icons']['block'],
+            tlcorner=options['icons']['block_top'],
+            blcorner=options['icons']['block_bottom'],
+            tline='', trcorner='', rline='', bline='', brcorner='.')
         super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
 
 class BreadCrumbs(urwid.Text):
@@ -141,6 +146,10 @@ class Message(urwid.AttrMap):
         ])]
 
         main_column.extend(attachments)
+
+        if file:
+            main_column.append(file)
+
         main_column = urwid.Pile(main_column)
         columns = [
             ('fixed', 8, time),
