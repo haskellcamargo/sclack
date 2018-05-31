@@ -30,12 +30,17 @@ class BreadCrumbs(urwid.Text):
         super(BreadCrumbs, self).__init__([' '] + body)
 
 class Channel(urwid.AttrMap):
-    def __init__(self, name, is_private=False):
+    def __init__(self, name, is_private=False, is_selected=False):
         body = urwid.SelectableIcon(' {} {}'.format(
             options['icons']['private_channel' if is_private else 'channel'],
             name
         ))
-        super(Channel, self).__init__(body, None, 'active_channel')
+
+        attr_map = None
+        if is_selected:
+            attr_map = 'selected_channel'
+
+        super(Channel, self).__init__(body, attr_map, 'active_channel')
 
 class ChannelHeader(urwid.Pile):
     def __init__(self, date, topic, num_members, name, is_private=False, starred=False):

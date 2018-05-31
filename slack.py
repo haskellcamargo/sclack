@@ -23,7 +23,8 @@ palette = [
     ('message', '', '', '', 'h253', 'h235'),
     ('history_date', '', '', '', 'h244', 'h235'),
     ('is_typing', '', '', '', 'h244', 'h235'),
-    ('active_channel', '', '', '', 'white', 'h162'),
+    ('selected_channel', '', '', '', 'white', 'h162'),
+    ('active_channel', '', '', '', 'white', 'h33'),
     ('active_message', '', '', '', 'white', 'h237'),
     ('active_link', '', '', '', 'h21,underline', 'h237'),
     ('separator', '', '', '', 'h244', 'h235'),
@@ -46,7 +47,7 @@ def main():
     my_channels.sort(key=lambda channel: channel['name'])
 
     channels = [
-        Channel(channel['name'], is_private=channel['is_private'])
+        Channel(channel['name'], is_private=channel['is_private'], is_selected=channel['id'] == 'C1A1MMJAE')
         for channel in my_channels
     ]
     urwid.set_encoding('UTF-8')
