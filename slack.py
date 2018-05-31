@@ -115,12 +115,10 @@ def main():
         else:
             file = None
 
-        attachments = message.get('attachments', None)
-        if attachments:
-            attachments = [
-                Attachment(fields=attachment.get('fields', None))
-                for attachment in attachments
-            ]
+        attachments = [
+            Attachment(fields=attachment.get('fields', None))
+            for attachment in message.get('attachments', [])
+        ]
 
         time = Time(message['ts'])
         text = message['text']

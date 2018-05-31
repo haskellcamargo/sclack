@@ -91,8 +91,10 @@ class ChatBoxMessages(urwid.ListBox):
 
 class Fields(urwid.GridFlow):
     def __init__(self, fields=[]):
-        fields = [urwid.Text('..') for field in fields]
-        super(Fields, self).__init__(cells=fields, cell_width=30, h_sep=2, v_sep=1, align='left')
+        cells = []
+        for field in fields:
+            cells.append(urwid.Text(field.get('title', '')))
+        super(Fields, self).__init__(cells, cell_width=20, h_sep=2, v_sep=2, align='left')
 
 class Indicators(urwid.Columns):
     def __init__(self, is_edited=False, is_starred=False):
@@ -110,13 +112,16 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
-        message_column = urwid.Columns([
+        main_column = [urwid.Columns([
             ('pack', user),
             self.parse_message(text)
-        ])
+        ])]
+
+        main_column.extend(attachments)
+        main_column = urwid.Pile(main_column)
         columns = [
             ('fixed', 8, time),
-            message_column,
+            main_column,
             ('fixed', indicators.size, indicators)
         ]
         self.contents = urwid.Columns(columns)
