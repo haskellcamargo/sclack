@@ -14,18 +14,25 @@ options = {
         'offline': '\uF10C',
         'online': '\uF111',
         'person': '\uF415',
-        'private_channel': '\uF023'
+        'private_channel': '\uF023',
+        'block': '\u258C'
     }
 }
 
 class Attachment(urwid.Pile):
-    def __init__(self, color=None, title=None, title_link=None, pretext=None, fields=None, footer=None):
+    def __init__(self, color='#CCC', title=None, title_link=None, pretext=None, fields=None, footer=None):
         body = []
-
+        if pretext:
+            body.append(urwid.Text(('message', pretext)))
         if fields:
-            body.append(Fields(fields))
-
+            body.append(Box(Fields(fields), color=color))
         super(Attachment, self).__init__(body)
+
+class Box(urwid.AttrWrap):
+    def __init__(self, widget, color):
+        body = urwid.LineBox(widget, tlcorner='', tline='', lline=options['icons']['block'],
+            trcorner='', blcorner='', rline='', bline='', brcorner='')
+        super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
 
 class BreadCrumbs(urwid.Text):
     def intersperse(self, iterable, delimiter):
@@ -89,12 +96,28 @@ class ChatBoxMessages(urwid.ListBox):
         else:
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
-class Fields(urwid.GridFlow):
-    def __init__(self, fields=[]):
-        cells = []
-        for field in fields:
-            cells.append(urwid.Text(field.get('title', '')))
-        super(Fields, self).__init__(cells, cell_width=20, h_sep=2, v_sep=2, align='left')
+class Fields(urwid.Pile):
+    def chunks(self, list, size):
+        for i in range(0, len(list), size):
+            yield list[i:i + size]
+
+    def render_field(self, field):
+        text = []
+        title = field.get('title', '')
+        if title != '':
+            text.append(('field_title', title))
+            text.append('\n')
+        text.append(('field_value', field['value']))
+        return urwid.Text(text)
+
+    def __init__(self, fields=[], columns=2, width=30):
+        pile = []
+        for chunk in self.chunks(fields, columns):
+            pile.append(urwid.Columns([
+                ('fixed', width, self.render_field(field))
+                for field in chunk
+            ]))
+        super(Fields, self).__init__(pile)
 
 class Indicators(urwid.Columns):
     def __init__(self, is_edited=False, is_starred=False):

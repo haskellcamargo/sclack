@@ -35,7 +35,9 @@ palette = [
     ('presence_away', '', '', '', 'h239', 'h24'),
     ('link', '', '', '', 'h21,underline', 'h235'),
     ('cite', '', '', '', 'italics,white', 'h235'),
-    ('app_badge', '', '', '', 'h235', 'h248')
+    ('app_badge', '', '', '', 'h235', 'h248'),
+    ('field_title', '', '', '', 'white,bold,underline', 'h235'),
+    ('field_value', '', '', '', 'h253', 'h235')
 ]
 
 def main():
@@ -116,7 +118,9 @@ def main():
             file = None
 
         attachments = [
-            Attachment(fields=attachment.get('fields', None))
+            Attachment(fields=attachment.get('fields', None), color='#{}'.format(
+                shorten_hex(attachment.get('color', 'CCCCCC'))
+            ))
             for attachment in message.get('attachments', [])
         ]
 
