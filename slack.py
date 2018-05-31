@@ -34,7 +34,8 @@ palette = [
     ('presence_active', '', '', '', 'h40', 'h24'),
     ('presence_away', '', '', '', 'h239', 'h24'),
     ('link', '', '', '', 'h21,underline', 'h235'),
-    ('cite', '', '', '', 'italics,white', 'h235')
+    ('cite', '', '', '', 'italics,white', 'h235'),
+    ('app_badge', '', '', '', 'h235', 'h248')
 ]
 
 def main():
@@ -100,8 +101,10 @@ def main():
                 _bots[message['bot_id']] = bot
                 user_name = bot['name']
 
+            is_app = 'app_id' in bot
             color = '#{}'.format(shorten_hex(bot.get('color', '333333')))
         else:
+            is_app = False
             user = find_user(message['user'], members)
             user_name = user['profile']['display_name']
             color = '#{}'.format(shorten_hex(user.get('color', '333333')))
@@ -128,6 +131,7 @@ def main():
             text=text,
             is_edited=is_edited,
             is_starred=is_starred,
+            is_app=is_app,
             reactions=reactions,
             file=file
         ))
