@@ -2,7 +2,7 @@
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile, Reaction
+from pyslack.components import Time, User, Indicators, TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile, Reaction, Attachment
 from pyslack.image import Image
 from datetime import datetime
 import pprint
@@ -76,7 +76,7 @@ def main():
 
     messages.reverse()
     with open('ignored.pyc', 'w+') as m:
-        m.write(pprint.pformat(members))
+        m.write(pprint.pformat(messages))
 
     def find_user(id, users):
         return next(filter(lambda user: user['id'] == id, users), None)
@@ -115,7 +115,14 @@ def main():
         else:
             file = None
 
-        time = datetime.fromtimestamp(float(message['ts'])).strftime('%H:%M')
+        attachments = message.get('attachments', None)
+        if attachments:
+            attachments = [
+                Attachment(fields=attachment.get('fields', None))
+                for attachment in attachments
+            ]
+
+        time = Time(message['ts'])
         text = message['text']
         is_edited = 'edited' in message
         is_starred = message.get('is_starred', False)
@@ -124,16 +131,17 @@ def main():
             message.get('reactions', [])
         ))
 
+        user = User(name=user_name, color=color, is_app=is_app)
+        indicators = Indicators(is_edited=is_edited, is_starred=is_starred)
+
         _messages.append(Message(
             time=time,
-            color=color,
-            user_name=user_name,
+            user=user,
             text=text,
-            is_edited=is_edited,
-            is_starred=is_starred,
-            is_app=is_app,
+            indicators=indicators,
             reactions=reactions,
-            file=file
+            file=file,
+            attachments=attachments
         ))
     chatbox = urwid.AttrWrap(ChatBox(
         messages=_messages,

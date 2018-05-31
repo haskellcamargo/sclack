@@ -1,10 +1,12 @@
 import urwid
 import pprint
+from datetime import datetime
 
 options = {
     'icons': {
         'channel': '\uF198',
         'divider': '\uE0B1',
+        'edit': '\uF040',
         'full_divider': '\uE0C6',
         'full_star': '\uF005',
         'keyboard': '\uF11C',
@@ -15,6 +17,15 @@ options = {
         'private_channel': '\uF023'
     }
 }
+
+class Attachment(urwid.Pile):
+    def __init__(self, color=None, title=None, title_link=None, pretext=None, fields=None, footer=None):
+        body = []
+
+        if fields:
+            body.append(Fields(fields))
+
+        super(Attachment, self).__init__(body)
 
 class BreadCrumbs(urwid.Text):
     def intersperse(self, iterable, delimiter):
@@ -78,47 +89,37 @@ class ChatBoxMessages(urwid.ListBox):
         else:
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
-class Message(urwid.AttrMap):
-    def __init__(self, time, color, user_name, text, file=None, is_starred=False,
-        is_edited=False, is_app=False, reactions=[]):
-        time_column = ('fixed', 8, urwid.Text(('datetime', ' {} │'.format(time))))
-        app_badge = []
-        starred_column = []
-        edited_column = []
+class Fields(urwid.GridFlow):
+    def __init__(self, fields=[]):
+        fields = [urwid.Text('..') for field in fields]
+        super(Fields, self).__init__(cells=fields, cell_width=30, h_sep=2, v_sep=1, align='left')
 
-        # App bot
-        if is_app:
-            app_badge = [('app_badge', '[APP]')]
-
-        # Starred message
-        if is_starred:
-            starred_column = [('fixed', 3, urwid.Text(('starred', ' {} '.format(options['icons']['full_star']))))]
-
-        # Edited message
+class Indicators(urwid.Columns):
+    def __init__(self, is_edited=False, is_starred=False):
+        indicators = []
+        self.size = 0
         if is_edited:
-            edited_column = [('fixed', 10, urwid.Text(('edited', ' (edited) ')))]
+            edited_text = urwid.Text(('edited', ' {} '.format(options['icons']['edit'])))
+            indicators.append(edited_text)
+            self.size = self.size + 3
+        if is_starred:
+            starred_text = urwid.Text(('starred', ' {} '.format(options['icons']['full_star'])))
+            indicators.append(starred_text)
+            self.size = self.size + 3
+        super(Indicators, self).__init__(indicators)
 
-        content = [self.parse_message(text)]
-        if reactions:
-            content.append(urwid.Columns(reactions, dividechars=1))
-
-        if file:
-            content.append(file)
-
-        if len(content) == 1:
-            content = content[0]
-        else:
-            content = urwid.Pile(content)
-
-        self.contents = urwid.Columns([
-            time_column,
-            ('pack', urwid.Text([
-                (urwid.AttrSpec('white', color), ' {} '.format(user_name)),
-                (urwid.AttrSpec(color, 'h235'), options['icons']['full_divider']),
-                ' '
-            ] + app_badge)),
-            content
-        ] + starred_column + edited_column)
+class Message(urwid.AttrMap):
+    def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
+        message_column = urwid.Columns([
+            ('pack', user),
+            self.parse_message(text)
+        ])
+        columns = [
+            ('fixed', 8, time),
+            message_column,
+            ('fixed', indicators.size, indicators)
+        ]
+        self.contents = urwid.Columns(columns)
         super(Message, self).__init__(self.contents, None, 'active_message')
 
     def selectable(self):
@@ -228,3 +229,19 @@ class TextDivider(urwid.Columns):
                 urwid.Divider(char)
             ]
         super(TextDivider, self).__init__(body)
+
+class Time(urwid.Text):
+    def __init__(self, timestamp):
+        time = datetime.fromtimestamp(float(timestamp)).strftime('%H:%M')
+        super(Time, self).__init__(('datetime', ' {} │'.format(time)))
+
+class User(urwid.Text):
+    def __init__(self, name, color='#333', is_app=False):
+        markup = [
+            (urwid.AttrSpec('white', color), ' {} '.format(name)),
+            (urwid.AttrSpec(color, 'h235'), options['icons']['full_divider']),
+            ' '
+        ]
+        if is_app:
+            markup.append(('app_badge', '[APP]'))
+        super(User, self).__init__(markup)
