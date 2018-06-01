@@ -151,6 +151,7 @@ class Message(urwid.AttrMap):
         if file:
             main_column.append(file)
 
+        main_column.extend(reactions)
         main_column = urwid.Pile(main_column)
         columns = [
             ('fixed', 8, time),
