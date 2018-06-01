@@ -17,7 +17,8 @@ options = {
         'offline': '\uF10C',
         'online': '\uF111',
         'person': '\uF415',
-        'private_channel': '\uF023'
+        'private_channel': '\uF023',
+        'square': '\uF445'
     }
 }
 
