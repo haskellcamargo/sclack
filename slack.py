@@ -4,6 +4,7 @@ from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import Time, User, Indicators, TextDivider, SideBar, Channel, MessageBox, ChannelHeader, ChatBox, Message, Profile, Reaction, Attachment
 from pyslack.image import Image
+from pyslack.markdown import MarkdownText
 from datetime import datetime
 import pprint
 import requests
@@ -37,7 +38,10 @@ palette = [
     ('cite', '', '', '', 'italics,white', 'h235'),
     ('app_badge', '', '', '', 'h235', 'h248'),
     ('field_title', '', '', '', 'white,bold,underline', 'h235'),
-    ('field_value', '', '', '', 'h253', 'h235')
+    ('field_value', '', '', '', 'h253', 'h235'),
+    ('italics', '', '', '', 'italics,white', 'h235'),
+    ('bold', '', '', '', 'bold,h254', 'h235'),
+    ('code', '', '', '', 'h124', 'h252')
 ]
 
 def main():
@@ -128,7 +132,7 @@ def main():
         ]
 
         time = Time(message['ts'])
-        text = message['text']
+        text = MarkdownText(message['text'])
         is_edited = 'edited' in message
         is_starred = message.get('is_starred', False)
         reactions = list(map(

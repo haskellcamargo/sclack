@@ -1,6 +1,7 @@
 import urwid
 import pprint
 from datetime import datetime
+from .markdown import MarkdownText
 
 options = {
     'icons': {
@@ -26,7 +27,7 @@ class Attachment(urwid.Pile):
     def __init__(self, color='#CCC', title=None, title_link=None, pretext=None, fields=None, footer=None):
         body = []
         if pretext:
-            body.append(urwid.Text(('message', pretext)))
+            body.append(urwid.Text(MarkdownText(pretext).markup))
         if fields:
             body.append(Box(Fields(fields), color=color))
         super(Attachment, self).__init__(body)
@@ -113,7 +114,7 @@ class Fields(urwid.Pile):
         if title != '':
             text.append(('field_title', title))
             text.append('\n')
-        text.append(('field_value', field['value']))
+        text.append(('field_value', MarkdownText(field['value']).markup))
         return urwid.Text(text)
 
     def __init__(self, fields=[], columns=2, width=30):
@@ -141,11 +142,7 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
-        main_column = [urwid.Columns([
-            ('pack', user),
-            self.parse_message(text)
-        ])]
-
+        main_column = [urwid.Columns([('pack', user), text])]
         main_column.extend(attachments)
 
         if file:
@@ -163,44 +160,6 @@ class Message(urwid.AttrMap):
 
     def selectable(self):
         return True
-
-    def parse_message(self, text):
-        result = []
-        state = {
-            'text': '',
-            'link_url': '',
-            'link_name': '',
-            'code': ''
-        }
-        active_state = 'text'
-
-        is_cite = text.startswith('&gt; ')
-        if is_cite:
-            text = text[5:]
-
-        for char in text:
-            if char == '<':
-                active_state = 'link_url'
-                result.append(('message', state['text']))
-                state['text'] = ''
-            elif char == '>':
-                active_state = 'text'
-                result.append(('link', state['link_url']))
-                state['link_url'] = ''
-            else:
-                state[active_state] = state[active_state] + char
-        result.append(('message', state['text']))
-        result = urwid.AttrMap(urwid.SelectableIcon(result), None, focus_map={
-            'message': 'active_message',
-            'link': 'active_link'
-        })
-
-        if is_cite:
-            result = urwid.AttrMap(result, attr_map={
-                'message': 'cite'
-            })
-
-        return result
 
 class MessageBox(urwid.Pile):
     def __init__(self, user, typing=None):
