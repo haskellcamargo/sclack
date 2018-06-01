@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 import asyncio
 import urwid
+from slackclient import SlackClient
+from pyslack import config
+import time
+import queue
+import sys
+import threading
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 
 palette = [
@@ -40,32 +46,52 @@ palette = [
 
 loop = asyncio.get_event_loop()
 
-class App(urwid.Frame):
-    def __init__(self):
+class App:
+    def __init__(self, message_queue):
+        urwid.set_encoding('UTF-8')
         sidebar = urwid.AttrWrap(LoadingSideBar(), 'sidebar')
         chatbox = urwid.AttrWrap(LoadingChatBox(loop), 'chatbox')
-        app = urwid.AttrWrap(urwid.Columns([
+        app = urwid.Frame(urwid.AttrWrap(urwid.Columns([
             ('fixed', 25, sidebar),
             chatbox
-        ]), 'app')
-        super(App, self).__init__(app)
+        ]), 'app'))
+        urwid_loop = urwid.MainLoop(
+            app,
+            palette=palette,
+            event_loop=urwid.AsyncioEventLoop(loop=loop),
+            unhandled_input=self.unhandled_input
+        )
+        self.configure_screen(urwid_loop.screen)
+        self.message_queue = message_queue
+        self.loop = urwid_loop
+        self.component_did_mount(self.loop)
 
-def unhandled_input(key):
-    if key in ('q', 'esc'):
-        raise urwid.ExitMainLoop
+    def component_did_mount(self, loop, *args):
+        loop.set_alarm_in(0.5, self.component_did_mount)
+        try:
+            message = self.message_queue.get_nowait()
+            print(message)
+        except queue.Empty:
+            return
 
-def configure_screen(screen):
-    screen.set_terminal_properties(colors=256)
-    screen.set_mouse_tracking()
+    def unhandled_input(self, key):
+        if key in ('q', 'esc'):
+            raise urwid.ExitMainLoop
+
+    def configure_screen(self, screen):
+        screen.set_terminal_properties(colors=256)
+        screen.set_mouse_tracking()
+
+def load_initial_data(stop_event, message_queue):
+    while not stop_event.wait(timeout=1.0):
+        message_queue.put(time.strftime('time %X'))
 
 if __name__ == '__main__':
-    urwid.set_encoding('UTF-8')
-    app = App()
-    urwid_loop = urwid.MainLoop(
-        app,
-        palette=palette,
-        event_loop=urwid.AsyncioEventLoop(loop=loop),
-        unhandled_input=unhandled_input
-    )
-    configure_screen(urwid_loop.screen)
-    urwid_loop.run()
+    stop_event = threading.Event()
+    message_queue = queue.Queue()
+    threading.Thread(target=load_initial_data, args=[stop_event, message_queue], name='load_initial_data').start()
+    App(message_queue).loop.run()
+    stop_event.set()
+    for thread in threading.enumerate():
+        if thread != threading.current_thread():
+            thread.join()
