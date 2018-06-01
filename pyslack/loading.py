@@ -5,9 +5,51 @@ def placeholder(size=10, left=0):
     return ((' ' * left)[:left] +
         (options['icons']['square'] * size)[:size])
 
+class CircularLoading(urwid.Pile):
+    _matrix = [
+        ['\uE0BA', '\uE0B8'],
+        ['\uE0BE', '\uE0BC']
+    ]
+
+    def __init__(self, loop):
+        self._index = 0
+        self._loop = loop
+        self._shape = [
+            urwid.Text([char for char in row], align='center')
+            for row in self._matrix
+        ]
+        super(CircularLoading, self).__init__(self._shape)
+        self.next_frame()
+
+    def next_frame(self):
+        if self._index == 0:
+            self._index = 1
+        elif self._index == 1:
+            self._index = 3
+        elif self._index == 3:
+            self._index = 2
+        elif self._index == 2:
+            self._index = 0
+
+        active_row = int(self._index >= 2)
+        old_row = int(not active_row)
+        active_column = self._index % 2
+
+        active_text = self._matrix[active_row].copy()
+        active_text[active_column] = ('loading_active_block', active_text[active_column])
+        old_text = self._matrix[old_row].copy()
+
+        self._shape[old_row].set_text(old_text)
+        self._shape[active_row].set_text(active_text)
+        self._loop.call_later(0.3, self.next_frame)
+
 class LoadingChatBox(urwid.Frame):
-    def __init__(self):
-        body = urwid.Filler(SlackBot())
+    def __init__(self, loop):
+        body = urwid.Filler(urwid.Pile([
+            SlackBot(),
+            urwid.Text(('loading_message', 'Everything is terrible!'), align='center'),
+            CircularLoading(loop)
+        ]))
         super(LoadingChatBox, self).__init__(body)
 
 class LoadingSideBar(urwid.Frame):
