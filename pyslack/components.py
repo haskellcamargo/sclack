@@ -208,7 +208,7 @@ class MessageBox(urwid.Pile):
         super(MessageBox, self).__init__(body)
 
 class Profile(urwid.Text):
-    def __init__(self, name, is_online=True):
+    def __init__(self, name, is_online=False):
         if is_online:
             presence_icon = ('presence_active', ' {} '.format(options['icons']['online']))
         else:

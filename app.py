@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import asyncio
+import json
+import os
+import subprocess
+import sys
+import time
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-import time
-import queue
-import sys
-import threading
+from pyslack.components import Profile, SideBar
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 
 palette = [
@@ -47,32 +49,45 @@ palette = [
 loop = asyncio.get_event_loop()
 
 class App:
-    def __init__(self, message_queue):
+    def __init__(self, service_path, slack_token):
         urwid.set_encoding('UTF-8')
-        sidebar = urwid.AttrWrap(LoadingSideBar(), 'sidebar')
-        chatbox = urwid.AttrWrap(LoadingChatBox(loop), 'chatbox')
-        app = urwid.Frame(urwid.AttrWrap(urwid.Columns([
-            ('fixed', 25, sidebar),
-            chatbox
-        ]), 'app'))
+        self.sidebar = LoadingSideBar()
+        self.chatbox = LoadingChatBox('Everything is terrible!', loop)
+        self.columns = urwid.Columns([
+            ('fixed', 25, urwid.AttrWrap(self.sidebar, 'sidebar')),
+            urwid.AttrWrap(self.chatbox, 'chatbox')
+        ])
+        self.app = urwid.Frame(urwid.AttrMap(self.columns, 'app'))
         urwid_loop = urwid.MainLoop(
-            app,
+            self.app,
             palette=palette,
             event_loop=urwid.AsyncioEventLoop(loop=loop),
             unhandled_input=self.unhandled_input
         )
         self.configure_screen(urwid_loop.screen)
-        self.message_queue = message_queue
         self.loop = urwid_loop
-        self.component_did_mount(self.loop)
+        self.start_server(service_path, slack_token)
 
-    def component_did_mount(self, loop, *args):
-        loop.set_alarm_in(0.5, self.component_did_mount)
-        try:
-            message = self.message_queue.get_nowait()
-            print(message)
-        except queue.Empty:
-            return
+    def handle_message(self, data):
+        message = json.loads(data.decode('utf-8'))
+        if 'pyslack_type' in message:
+            text = None
+            if message['pyslack_type'] == 'auth':
+                text = 'Loading yourself'
+                profile = Profile(message['user'])
+                sidebar = urwid.AttrWrap(SideBar(profile, title=message['team']), 'sidebar')
+                self.columns.contents[0][0].original_widget = sidebar
+
+            if text:
+                self.chatbox.status_message = text
+
+    def start_server(self, service_path, slack_token):
+        stdout = self.loop.watch_pipe(self.handle_message)
+        self.server = subprocess.Popen(
+            ['python3', service_path, '--token', slack_token],
+            stdout=stdout,
+            close_fds=True
+        )
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):
@@ -82,16 +97,9 @@ class App:
         screen.set_terminal_properties(colors=256)
         screen.set_mouse_tracking()
 
-def load_initial_data(stop_event, message_queue):
-    while not stop_event.wait(timeout=1.0):
-        message_queue.put(time.strftime('time %X'))
-
 if __name__ == '__main__':
-    stop_event = threading.Event()
-    message_queue = queue.Queue()
-    threading.Thread(target=load_initial_data, args=[stop_event, message_queue], name='load_initial_data').start()
-    App(message_queue).loop.run()
-    stop_event.set()
-    for thread in threading.enumerate():
-        if thread != threading.current_thread():
-            thread.join()
+    slack_token = config.get_pyslack_config().get('DEFAULT', 'Token')
+    service_path = os.path.join(os.path.dirname(sys.argv[0]), 'service.py')
+    app = App(service_path, slack_token)
+    app.loop.run()
+    app.server.kill()

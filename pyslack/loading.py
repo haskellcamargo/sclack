@@ -44,13 +44,23 @@ class CircularLoading(urwid.Pile):
         self._loop.call_later(0.3, self.next_frame)
 
 class LoadingChatBox(urwid.Frame):
-    def __init__(self, loop):
+    def __init__(self, message, loop, status_message=''):
+        self._status_message = urwid.Text(status_message, align='center')
         body = urwid.Filler(urwid.Pile([
             SlackBot(),
-            urwid.Text(('loading_message', 'Everything is terrible!'), align='center'),
-            CircularLoading(loop)
+            urwid.Text(('loading_message', message), align='center'),
+            CircularLoading(loop),
+            self._status_message
         ]))
         super(LoadingChatBox, self).__init__(body)
+
+    @property
+    def status_message(self):
+        return self._status_message.get_text()
+
+    @status_message.setter
+    def status_message(self, value):
+        self._status_message.set_text(value)
 
 class LoadingSideBar(urwid.Frame):
     def __init__(self):
