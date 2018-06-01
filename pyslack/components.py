@@ -118,9 +118,11 @@ class ChatBoxMessages(urwid.ListBox):
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse press' and button in (4, 5):
             if button == 4:
-                self.set_focus(max(0, self.get_focus()[1] - 1))
+                self.keypress(size, 'up')
+                return True
             else:
-                self.set_focus(min(len(self.body) - 1, self.get_focus()[1] + 1))
+                self.keypress(size, 'down')
+                return True
         else:
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
