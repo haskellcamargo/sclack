@@ -87,10 +87,8 @@ class ChannelHeader(urwid.Pile):
 class ChatBox(urwid.Frame):
     def __init__(self, messages, header, message_box):
         self.body = ChatBoxMessages(messages=messages)
-        super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
-
-    def scroll_to_bottom(self):
         self.body.scroll_to_bottom()
+        super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals

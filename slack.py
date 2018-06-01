@@ -157,7 +157,6 @@ def main():
         header=header,
         message_box=message_box
     )
-    chatbox.scroll_to_bottom()
 
     chatbox = urwid.AttrWrap(chatbox, 'chatbox')
     columns = urwid.Columns([
@@ -169,5 +168,4 @@ def main():
     loop.screen.set_terminal_properties(colors=256)
     loop.screen.set_mouse_tracking()
     loop.run()
-
 main()
