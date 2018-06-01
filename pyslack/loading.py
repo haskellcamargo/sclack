@@ -65,9 +65,9 @@ class LoadingSideBar(urwid.Frame):
 
 class SlackBot(urwid.Pile):
     _matrix = [
-        [('    \uE0BA', 'white', 'h69'), (' ', 'white', 'white'), ('\uE0B8    ', 'white', 'h200')],
-        [('  \uE0B2', 'white', 'h78'), ('\uF140 v \uF140', 'h91', 'white'), ('\uE0B0  ', 'white', 'h124')],
-        [('    \uE0BE', 'white', 'h22'), (' ', 'white', 'white'), ('\uE0BC    ', 'white', 'h202')],
+        [('   \uE0BA', 'white', 'h69'), (' ', 'white', 'white'), ('\uE0B8   ', 'white', 'h200')],
+        [(' \uE0B2', 'white', 'h78'), ('\uF140 v \uF140', 'h91', 'white'), ('\uE0B0 ', 'white', 'h124')],
+        [('   \uE0BE', 'white', 'h22'), (' ', 'white', 'white'), ('\uE0BC   ', 'white', 'h202')],
     ]
 
     def __init__(self):
