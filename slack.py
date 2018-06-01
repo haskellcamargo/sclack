@@ -152,11 +152,14 @@ def main():
             file=file,
             attachments=attachments
         ))
-    chatbox = urwid.AttrWrap(ChatBox(
+    chatbox = ChatBox(
         messages=_messages,
         header=header,
         message_box=message_box
-    ), 'chatbox')
+    )
+    chatbox.scroll_to_bottom()
+
+    chatbox = urwid.AttrWrap(chatbox, 'chatbox')
     columns = urwid.Columns([
         ('fixed', 25, sidebar),
         ('weight', 1, chatbox)

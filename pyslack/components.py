@@ -86,13 +86,36 @@ class ChannelHeader(urwid.Pile):
 
 class ChatBox(urwid.Frame):
     def __init__(self, messages, header, message_box):
-        body = ChatBoxMessages(messages=messages)
-        super(ChatBox, self).__init__(body, header=header, footer=message_box)
+        self.body = ChatBoxMessages(messages=messages)
+        super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
+
+    def scroll_to_bottom(self):
+        self.body.scroll_to_bottom()
 
 class ChatBoxMessages(urwid.ListBox):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['set_auto_scroll']
+
     def __init__(self, messages=[]):
-        self.walker = urwid.SimpleFocusListWalker(messages)
-        super(ChatBoxMessages, self).__init__(self.walker)
+        self.body = urwid.SimpleFocusListWalker(messages)
+        super(ChatBoxMessages, self).__init__(self.body)
+        self.auto_scroll = True
+
+    @property
+    def auto_scroll(self):
+        return self._auto_scroll
+
+    @auto_scroll.setter
+    def auto_scroll(self, switch):
+        if type(switch) != bool:
+            return
+        self._auto_scroll = switch
+        urwid.emit_signal(self, 'set_auto_scroll', switch)
+
+    def keypress(self, size, key):
+        super(ChatBoxMessages, self).keypress(size, key)
+        if key in ('page up', 'page down'):
+            self.auto_scroll = self.get_focus()[1] == len(self.body) - 1
 
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse press' and button in (4, 5):
@@ -102,6 +125,10 @@ class ChatBoxMessages(urwid.ListBox):
                 self.set_focus(min(len(self.body) - 1, self.get_focus()[1] + 1))
         else:
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
+
+    def scroll_to_bottom(self):
+        if self.auto_scroll and len(self.body):
+            self.set_focus(len(self.body) - 1)
 
 class Fields(urwid.Pile):
     def chunks(self, list, size):
