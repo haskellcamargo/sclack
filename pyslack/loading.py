@@ -11,15 +11,13 @@ class CircularLoading(urwid.Pile):
         ['\uE0BE', '\uE0BC']
     ]
 
-    def __init__(self, loop):
+    def __init__(self):
         self._index = 0
-        self._loop = loop
         self._shape = [
             urwid.Text([char for char in row], align='center')
             for row in self._matrix
         ]
         super(CircularLoading, self).__init__(self._shape)
-        self.next_frame()
 
     def next_frame(self):
         if self._index == 0:
@@ -41,15 +39,15 @@ class CircularLoading(urwid.Pile):
 
         self._shape[old_row].set_text(old_text)
         self._shape[active_row].set_text(active_text)
-        self._loop.call_later(0.3, self.next_frame)
 
 class LoadingChatBox(urwid.Frame):
-    def __init__(self, message, loop, status_message=''):
+    def __init__(self, message, status_message=''):
         self._status_message = urwid.Text(status_message, align='center')
+        self.circular_loading = CircularLoading()
         body = urwid.Filler(urwid.Pile([
             SlackBot(),
             urwid.Text(('loading_message', message), align='center'),
-            CircularLoading(loop),
+            self.circular_loading,
             self._status_message
         ]))
         super(LoadingChatBox, self).__init__(body)

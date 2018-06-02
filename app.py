@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
+import concurrent.futures
+import functools
 import json
 import os
 import subprocess
 import sys
-import time
 import urwid
 from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import Channel, Profile, SideBar
 from pyslack.loading import LoadingChatBox, LoadingSideBar
-
-PIPE_BUFFER_READ_SIZE = 0x1000
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
@@ -54,108 +53,57 @@ class App:
     def __init__(self, service_path, slack_token):
         urwid.set_encoding('UTF-8')
         self.sidebar = LoadingSideBar()
-        self.chatbox = LoadingChatBox('Everything is terrible!', loop)
+        self.chatbox = LoadingChatBox('Everything is terrible!')
         self.columns = urwid.Columns([
             ('fixed', 25, urwid.AttrWrap(self.sidebar, 'sidebar')),
             urwid.AttrWrap(self.chatbox, 'chatbox')
         ])
         self.app = urwid.Frame(urwid.AttrMap(self.columns, 'app'))
-        urwid_loop = urwid.MainLoop(
+        self.urwid_loop = urwid.MainLoop(
             self.app,
             palette=palette,
             event_loop=urwid.AsyncioEventLoop(loop=loop),
             unhandled_input=self.unhandled_input
         )
-        self.configure_screen(urwid_loop.screen)
-        self.loop = urwid_loop
-        token = config.get_pyslack_config().get('DEFAULT', 'Token')
-        self.client = SlackClient(token)
+        self.configure_screen(self.urwid_loop.screen)
+        self.slack_token = slack_token
 
-        loop.create_task(self.ping())
-        def cb(loops, l, *k):
-            loop.create_task(self.load_identity(loop))
-        urwid_loop.set_alarm_in(0.5, cb)
+    def start(self):
+        self.slack = SlackClient(self.slack_token)
+        self._loading = True
+        loop.create_task(self.animate_loading())
+        loop.create_task(self.component_did_mount())
+        self.urwid_loop.run()
 
-    async def ping(self):
-        counter = 1
-        while True:
-            await asyncio.sleep(1)
-            self.chatbox.status_message = str(counter)
-            counter = counter + 1
+    async def animate_loading(self):
+        def update(*args):
+            self.chatbox.circular_loading.next_frame()
+            if self._loading:
+                self.urwid_loop.set_alarm_in(0.2, update)
+        update()
 
-    async def load_identity(self, loop):
-        message = self.client.api_call('auth.test')
-        channels = await self.load_channels()
-        _channels = []
-        for channel in channels:
-            channel = Channel(channel['name'], is_private=channel['is_private'])
-            _channels.append(channel)
-
-        self.sidebar = SideBar(
-            Profile(message['user']),
-            channels=_channels,
-            title=message['team']
-        )
-        self.chatbox.status_message = 'Loading yourself'
-        self.columns.contents[0][0].original_widget = urwid.AttrWrap(self.sidebar, 'sidebar')
-
-
-    async def load_channels(self):
-        message = self.client.api_call(
-            'conversations.list',
-            exclude_archived=True,
-            types='public_channel,private_channel,im,mpim'
-        )['channels']
-        _channels = []
-        for channel in message:
-            if ('is_channel' in channel
-                and channel['is_member']
-                and (channel['is_channel'] or not channel['is_mpim'])):
-                _channels.append({
-                    'id': channel['id'],
-                    'name': channel['name'],
-                    'is_private': channel['is_private'],
-                    'topic': channel.get('topic'),
-                })
-        _channels.sort(key=lambda channel: channel['name'])
-        return _channels
-
-    def handle_message(self, data):
-        raw_data = data.decode('utf-8')
-
-        # Handle buffer creation
-        if len(raw_data) == PIPE_BUFFER_READ_SIZE:
-            self._buffer = self._buffer + raw_data
-            return
-
-        # End of continuation, seek and reset
-        if self._buffer:
-            raw_data = self._buffer + raw_data
-            self._buffer = ''
-
-        message = json.loads(raw_data)
-        if 'pyslack_type' in message:
-            if message['pyslack_type'] == 'auth':
-                self.sidebar = SideBar(
-                    Profile(message['user']),
-                    title=message['team']
-                )
-                self.chatbox.status_message = 'Loading yourself'
-                self.columns.contents[0][0].original_widget = urwid.AttrWrap(self.sidebar, 'sidebar')
-            if message['pyslack_type'] == 'channels':
-                for channel in message['channels']:
-                    channel = Channel(channel['name'], is_private=channel['is_private'])
-                    self.sidebar.add_channel(channel)
-                self.chatbox.status_message = 'Loading channels'
-
-    def start_server(self, service_path, slack_token):
-        stdout = self.loop.watch_pipe(self.handle_message)
-        self._buffer = ''
-        self.server = subprocess.Popen(
-            ['python3', '-u', service_path, '--token', slack_token],
-            stdout=stdout,
-            close_fds=True
-        )
+    async def component_did_mount(self):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            loop = asyncio.get_event_loop()
+            futures = [
+                loop.run_in_executor(executor, self.slack.api_call, 'auth.test'),
+                loop.run_in_executor(executor, functools.partial(
+                    self.slack.api_call, 'conversations.list',
+                    exclude_archived=True, types='public_channel,private_channel,im,mpim'
+                ))
+            ]
+            [identity, conversations] = await asyncio.gather(*futures)
+            # Filter only channels and create components
+            channels = []
+            for channel in conversations['channels']:
+                if ('is_channel' in channel
+                    and channel['is_member']
+                    and (channel['is_channel'] or not channel['is_mpim'])):
+                    channels.append(Channel(channel['name'], channel['is_private']))
+            channels.sort()
+            self.sidebar = SideBar(Profile(identity['user']), channels, identity['team'])
+            self.columns.contents[0][0].original_widget = self.sidebar
+            self._loading = False
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):
@@ -169,4 +117,4 @@ if __name__ == '__main__':
     slack_token = config.get_pyslack_config().get('DEFAULT', 'Token')
     service_path = os.path.join(os.path.dirname(sys.argv[0]), 'service.py')
     app = App(service_path, slack_token)
-    app.loop.run()
+    app.start()
