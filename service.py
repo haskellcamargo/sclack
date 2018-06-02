@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import math
 from slackclient import SlackClient
 
 class Service:
