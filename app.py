@@ -9,7 +9,8 @@ import sys
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Channel, Profile, SideBar
+from pyslack.components import Channel, ChannelHeader, ChatBox, MessageBox
+from pyslack.components import Profile, SideBar
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 
 palette = [
@@ -77,33 +78,61 @@ class App:
 
     async def animate_loading(self):
         def update(*args):
-            self.chatbox.circular_loading.next_frame()
             if self._loading:
+                self.chatbox.circular_loading.next_frame()
                 self.urwid_loop.set_alarm_in(0.2, update)
         update()
 
     async def component_did_mount(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             loop = asyncio.get_event_loop()
-            futures = [
+            self.chatbox.status_message = 'Loading channels...'
+            [identity, conversations] = await asyncio.gather(
                 loop.run_in_executor(executor, self.slack.api_call, 'auth.test'),
                 loop.run_in_executor(executor, functools.partial(
                     self.slack.api_call, 'conversations.list',
                     exclude_archived=True, types='public_channel,private_channel,im,mpim'
                 ))
-            ]
-            [identity, conversations] = await asyncio.gather(*futures)
+            )
             # Filter only channels and create components
             channels = []
             for channel in conversations['channels']:
                 if ('is_channel' in channel
                     and channel['is_member']
                     and (channel['is_channel'] or not channel['is_mpim'])):
-                    channels.append(Channel(channel['name'], channel['is_private']))
+                    channels.append(Channel(channel['id'], channel['name'], channel['is_private']))
             channels.sort()
             self.sidebar = SideBar(Profile(identity['user']), channels, identity['team'])
             self.columns.contents[0][0].original_widget = self.sidebar
+            self.chatbox.status_message = 'Loading messages...'
+            # Mark first channel as selected
+            channels[0].select()
+            # Load the first channel info and history
+            mode = 'group' if channels[0].is_private else 'channel'
+            [channel, messages] = await asyncio.gather(
+                loop.run_in_executor(executor, functools.partial(
+                    self.slack.api_call, '{}s.info'.format(mode),
+                    channel=channels[0].id
+                )),
+                loop.run_in_executor(executor, functools.partial(
+                    self.slack.api_call, '{}s.history'.format(mode),
+                    channel=channels[0].id, unreads=True
+                ))
+            )
+            channel = channel[mode]
+            messages = messages['messages']
+            channel_header = urwid.AttrWrap(ChannelHeader(
+                'Today', channel['topic']['value'], len(channel['members']),
+                channel['name'], channel.get('is_private', False)
+            ), 'chatbox_header')
+            message_box = urwid.AttrWrap(MessageBox(identity['user']), 'message_input')
             self._loading = False
+            self.chatbox = ChatBox(
+                messages=[],
+                header=channel_header,
+                message_box=message_box
+            )
+            self.columns.contents[1][0].original_widget = self.chatbox
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):
