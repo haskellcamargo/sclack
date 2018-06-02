@@ -68,7 +68,57 @@ class App:
         )
         self.configure_screen(urwid_loop.screen)
         self.loop = urwid_loop
-        self.start_server(service_path, slack_token)
+        token = config.get_pyslack_config().get('DEFAULT', 'Token')
+        self.client = SlackClient(token)
+
+        loop.create_task(self.ping())
+        def cb(loops, l, *k):
+            loop.create_task(self.load_identity(loop))
+        urwid_loop.set_alarm_in(0.5, cb)
+
+    async def ping(self):
+        counter = 1
+        while True:
+            await asyncio.sleep(1)
+            self.chatbox.status_message = str(counter)
+            counter = counter + 1
+
+    async def load_identity(self, loop):
+        message = self.client.api_call('auth.test')
+        channels = await self.load_channels()
+        _channels = []
+        for channel in channels:
+            channel = Channel(channel['name'], is_private=channel['is_private'])
+            _channels.append(channel)
+
+        self.sidebar = SideBar(
+            Profile(message['user']),
+            channels=_channels,
+            title=message['team']
+        )
+        self.chatbox.status_message = 'Loading yourself'
+        self.columns.contents[0][0].original_widget = urwid.AttrWrap(self.sidebar, 'sidebar')
+
+
+    async def load_channels(self):
+        message = self.client.api_call(
+            'conversations.list',
+            exclude_archived=True,
+            types='public_channel,private_channel,im,mpim'
+        )['channels']
+        _channels = []
+        for channel in message:
+            if ('is_channel' in channel
+                and channel['is_member']
+                and (channel['is_channel'] or not channel['is_mpim'])):
+                _channels.append({
+                    'id': channel['id'],
+                    'name': channel['name'],
+                    'is_private': channel['is_private'],
+                    'topic': channel.get('topic'),
+                })
+        _channels.sort(key=lambda channel: channel['name'])
+        return _channels
 
     def handle_message(self, data):
         raw_data = data.decode('utf-8')
@@ -120,4 +170,3 @@ if __name__ == '__main__':
     service_path = os.path.join(os.path.dirname(sys.argv[0]), 'service.py')
     app = App(service_path, slack_token)
     app.loop.run()
-    app.server.kill()
