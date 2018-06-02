@@ -225,11 +225,15 @@ class SideBar(urwid.Frame):
     def __init__(self, profile, channels=[], title=''):
         header = TextDivider(title)
         footer = urwid.Divider('─')
-        self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([
+        self.walker = urwid.SimpleFocusListWalker([
             profile,
             TextDivider('Channels')
-        ] + channels))
+        ] + channels)
+        self.listbox = urwid.ListBox(self.walker)
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)
+
+    def add_channel(self, channel):
+        self.walker.append(channel)
 
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):

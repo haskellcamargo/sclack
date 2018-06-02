@@ -8,8 +8,10 @@ import time
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Profile, SideBar
+from pyslack.components import Channel, Profile, SideBar
 from pyslack.loading import LoadingChatBox, LoadingSideBar
+
+PIPE_BUFFER_READ_SIZE = 0x1000
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
@@ -69,22 +71,38 @@ class App:
         self.start_server(service_path, slack_token)
 
     def handle_message(self, data):
-        message = json.loads(data.decode('utf-8'))
-        if 'pyslack_type' in message:
-            text = None
-            if message['pyslack_type'] == 'auth':
-                text = 'Loading yourself'
-                profile = Profile(message['user'])
-                sidebar = urwid.AttrWrap(SideBar(profile, title=message['team']), 'sidebar')
-                self.columns.contents[0][0].original_widget = sidebar
+        raw_data = data.decode('utf-8')
 
-            if text:
-                self.chatbox.status_message = text
+        # Handle buffer creation
+        if len(raw_data) == PIPE_BUFFER_READ_SIZE:
+            self._buffer = self._buffer + raw_data
+            return
+
+        # End of continuation, seek and reset
+        if self._buffer:
+            raw_data = self._buffer + raw_data
+            self._buffer = ''
+
+        message = json.loads(raw_data)
+        if 'pyslack_type' in message:
+            if message['pyslack_type'] == 'auth':
+                self.sidebar = SideBar(
+                    Profile(message['user']),
+                    title=message['team']
+                )
+                self.chatbox.status_message = 'Loading yourself'
+                self.columns.contents[0][0].original_widget = urwid.AttrWrap(self.sidebar, 'sidebar')
+            if message['pyslack_type'] == 'channels':
+                for channel in message['channels']:
+                    channel = Channel(channel['name'], is_private=channel['is_private'])
+                    self.sidebar.add_channel(channel)
+                self.chatbox.status_message = 'Loading channels'
 
     def start_server(self, service_path, slack_token):
         stdout = self.loop.watch_pipe(self.handle_message)
+        self._buffer = ''
         self.server = subprocess.Popen(
-            ['python3', service_path, '--token', slack_token],
+            ['python3', '-u', service_path, '--token', slack_token],
             stdout=stdout,
             close_fds=True
         )
