@@ -19,6 +19,7 @@ options = {
         'offline': '\uF10C',
         'online': '\uF111',
         'person': '\uF415',
+        'pin': '\uF435',
         'private_channel': '\uF023',
         'square': '\uF445'
     }
@@ -74,11 +75,19 @@ class Channel(urwid.AttrMap):
         self.attr_map = {None: 'selected_channel'}
 
 class ChannelHeader(urwid.Pile):
-    def __init__(self, date, topic, num_members, name, is_private=False, is_starred=False):
+    def __init__(self, name, topic, date=None, num_members=0, is_private=False,
+        pin_count=0, is_starred=False):
         if is_starred:
             star_icon = ('starred', options['icons']['full_star'])
         else:
             star_icon = options['icons']['line_star']
+
+        # Fixed date divider
+        if date:
+            date_divider = TextDivider(('history_date', date), align='center')
+        else:
+            date_divider = urwid.Divider('─')
+
         body = [
             TextDivider(' {} {}'.format(
                 options['icons']['private_channel' if is_private else 'channel'],
@@ -87,9 +96,10 @@ class ChannelHeader(urwid.Pile):
             BreadCrumbs([
                 star_icon,
                 '{} {}'.format(options['icons']['person'], num_members),
+                '{} {}'.format(options['icons']['pin'], pin_count),
                 topic
             ]),
-            TextDivider(('history_date', date), align='center')
+            date_divider
         ]
         super(ChannelHeader, self).__init__(body)
 

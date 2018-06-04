@@ -1,16 +1,20 @@
 from slackclient import SlackClient
 
 class State:
-    pass
+    def __init__(self):
+        self.channels = []
+        self.dms = []
+        self.groups = []
+        self.messages = []
+        self.users = []
+        self.pin_count = 0
+        self.has_more = False
+        self.is_limited = False
 
 class Store:
     def __init__(self, slack_token):
         self.slack = SlackClient(slack_token)
         self.state = State()
-        self.state.channels = []
-        self.state.groups = []
-        self.state.dms = []
-        self.state.users = []
 
     def find_user_by_id(self, user_id):
         return self._users_dict.get(user_id)
@@ -19,10 +23,14 @@ class Store:
         self.state.auth = self.slack.api_call('auth.test')
 
     def load_messages(self, channel_id):
-        self.state.messages = self.slack.api_call(
+        history = self.slack.api_call(
             'conversations.history',
             channel=channel_id
-        )['messages']
+        )
+        self.state.messages = history['messages']
+        self.state.has_more = history.get('has_more', False)
+        self.state.is_limited = history.get('is_limited', False)
+        self.state.pin_count = history['pin_count']
 
     def load_channel(self, channel_id):
         if channel_id[0] == 'G':
