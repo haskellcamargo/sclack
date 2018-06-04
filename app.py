@@ -123,6 +123,27 @@ class App:
                 if user:
                     dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
             self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
+            # Load first channel
+            active_channel = self.store.state.channels[0]
+            yield from asyncio.gather(
+                loop.run_in_executor(executor, self.store.load_channel, active_channel['id']),
+                loop.run_in_executor(executor, self.store.load_messages, active_channel['id'])
+            )
+            header = ChannelHeader(
+                'Today',
+                self.store.state.channel['topic']['value'],
+                num_members=0,
+                name=self.store.state.channel['name'],
+                is_private=self.store.state.channel.get('is_group', False)
+            )
+            self._loading = False
+            self.chatbox = ChatBox(
+                [],
+                header,
+                message_box=MessageBox(
+                    user=self.store.state.auth['user']
+                )
+            )
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):

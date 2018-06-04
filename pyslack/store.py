@@ -18,6 +18,18 @@ class Store:
     def load_auth(self):
         self.state.auth = self.slack.api_call('auth.test')
 
+    def load_messages(self, channel_id):
+        self.state.messages = self.slack.api_call(
+            'conversations.history',
+            channel=channel_id
+        )['messages']
+
+    def load_channel(self, channel_id):
+        self.state.channel = self.slack.api_call(
+            'conversations.info',
+            channel=channel_id
+        )['channel']
+
     def load_channels(self):
         conversations = self.slack.api_call(
             'users.conversations',
