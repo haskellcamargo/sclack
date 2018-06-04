@@ -103,11 +103,10 @@ class App:
             self.chatbox.status_message = 'Loading channels...'
             await asyncio.gather(
                 loop.run_in_executor(executor, self.store.load_auth),
-                loop.run_in_executor(executor, self.store.load_channels)
+                loop.run_in_executor(executor, self.store.load_channels),
+                loop.run_in_executor(executor, self.store.load_users)
             )
-            profile = Profile(
-                name=self.store.state.auth['user']
-            )
+            profile = Profile(name=self.store.state.auth['user'])
             channels = [
                 Channel(
                     id=channel['id'],
@@ -118,9 +117,6 @@ class App:
             ]
             self.sidebar = SideBar(profile, channels, title=self.store.state.auth['team'])
             self.chatbox.status_message = 'Loading messages...'
-
-            # # Mark first channel as selected
-            # channels[0].select()
             # # Load the first channel info and history
             # self.data['channel_mode'] = 'group' if channels[0].is_private else 'channel'
             # [channel, messages] = await asyncio.gather(

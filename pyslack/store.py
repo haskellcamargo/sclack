@@ -24,3 +24,6 @@ class Store:
             all_channels
         ))
         self.state.channels.sort(key=lambda channel: channel['name'])
+
+    def load_users(self):
+        self.users = self.slack.api_call('users.list')['members']
