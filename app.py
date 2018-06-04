@@ -102,48 +102,56 @@ class App:
     @asyncio.coroutine
     def component_did_mount(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            yield from asyncio.gather(
-                loop.run_in_executor(executor, self.store.load_auth),
-                loop.run_in_executor(executor, self.store.load_channels),
-                loop.run_in_executor(executor, self.store.load_groups),
-                loop.run_in_executor(executor, self.store.load_users)
+            yield from self.mount_sidebar(executor)
+            yield from self.mount_chatbox(executor, self.store.state.channels[0]['id'])
+
+    @asyncio.coroutine
+    def mount_sidebar(self, executor):
+        yield from asyncio.gather(
+            loop.run_in_executor(executor, self.store.load_auth),
+            loop.run_in_executor(executor, self.store.load_channels),
+            loop.run_in_executor(executor, self.store.load_groups),
+            loop.run_in_executor(executor, self.store.load_users)
+        )
+        profile = Profile(name=self.store.state.auth['user'])
+        channels = [
+            Channel(
+                id=channel['id'],
+                name=channel['name'],
+                is_private=channel['is_private']
             )
-            profile = Profile(name=self.store.state.auth['user'])
-            channels = [
-                Channel(
-                    id=channel['id'],
-                    name=channel['name'],
-                    is_private=channel['is_private']
-                )
-                for channel in self.store.state.channels
-            ]
-            dms = []
-            for dm in self.store.state.dms:
-                user = self.store.find_user_by_id(dm['user'])
-                if user:
-                    dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
-            self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
-            # Load first channel
-            active_channel = self.store.state.channels[0]
-            yield from asyncio.gather(
-                loop.run_in_executor(executor, self.store.load_channel, active_channel['id']),
-                loop.run_in_executor(executor, self.store.load_messages, active_channel['id'])
+            for channel in self.store.state.channels
+        ]
+        dms = []
+        for dm in self.store.state.dms:
+            user = self.store.find_user_by_id(dm['user'])
+            if user:
+                dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
+        self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
+        # Load first channel
+        active_channel = self.store.state.channels[0]
+
+    @asyncio.coroutine
+    def mount_chatbox(self, executor, channel):
+        yield from asyncio.gather(
+            loop.run_in_executor(executor, self.store.load_channel, channel),
+            loop.run_in_executor(executor, self.store.load_messages, channel)
+        )
+        header = ChannelHeader(
+            'Today',
+            self.store.state.channel['topic']['value'],
+            num_members=0,
+            name=self.store.state.channel['name'],
+            is_private=self.store.state.channel.get('is_group', False)
+        )
+        self._loading = False
+        self.chatbox = ChatBox(
+            [],
+            header,
+            message_box=MessageBox(
+                user=self.store.state.auth['user']
             )
-            header = ChannelHeader(
-                'Today',
-                self.store.state.channel['topic']['value'],
-                num_members=0,
-                name=self.store.state.channel['name'],
-                is_private=self.store.state.channel.get('is_group', False)
-            )
-            self._loading = False
-            self.chatbox = ChatBox(
-                [],
-                header,
-                message_box=MessageBox(
-                    user=self.store.state.auth['user']
-                )
-            )
+        )
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):
