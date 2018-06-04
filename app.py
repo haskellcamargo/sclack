@@ -91,17 +91,19 @@ class App:
     def chatbox(self, chatbox):
         self.columns.contents[1][0].original_widget = chatbox
 
-    async def animate_loading(self):
+    @asyncio.coroutine
+    def animate_loading(self):
         def update(*args):
             if self._loading:
                 self.chatbox.circular_loading.next_frame()
                 self.urwid_loop.set_alarm_in(0.2, update)
         update()
 
-    async def component_did_mount(self):
+    @asyncio.coroutine
+    def component_did_mount(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             self.chatbox.status_message = 'Loading channels...'
-            await asyncio.gather(
+            yield from asyncio.gather(
                 loop.run_in_executor(executor, self.store.load_auth),
                 loop.run_in_executor(executor, self.store.load_channels),
                 loop.run_in_executor(executor, self.store.load_users)
