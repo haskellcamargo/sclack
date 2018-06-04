@@ -25,10 +25,16 @@ class Store:
         )['messages']
 
     def load_channel(self, channel_id):
-        self.state.channel = self.slack.api_call(
-            'conversations.info',
-            channel=channel_id
-        )['channel']
+        if channel_id[0] == 'G':
+            self.state.channel = self.slack.api_call(
+                'groups.info',
+                channel=channel_id
+            )['group']
+        elif channel_id[0] == 'C':
+            self.state.channel = self.slack.api_call(
+                'channels.info',
+                channel=channel_id
+            )['channel']
 
     def load_channels(self):
         conversations = self.slack.api_call(

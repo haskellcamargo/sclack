@@ -74,8 +74,11 @@ class Channel(urwid.AttrMap):
         self.attr_map = {None: 'selected_channel'}
 
 class ChannelHeader(urwid.Pile):
-    def __init__(self, date, topic, num_members, name, is_private=False, starred=False):
-        star_icon = options['icons']['full_star' if starred else 'line_star']
+    def __init__(self, date, topic, num_members, name, is_private=False, is_starred=False):
+        if is_starred:
+            star_icon = ('starred', options['icons']['full_star'])
+        else:
+            star_icon = options['icons']['line_star']
         body = [
             TextDivider(' {} {}'.format(
                 options['icons']['private_channel' if is_private else 'channel'],

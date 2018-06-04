@@ -140,9 +140,10 @@ class App:
         header = ChannelHeader(
             'Today',
             self.store.state.channel['topic']['value'],
-            num_members=0,
+            num_members=len(self.store.state.channel['members']),
             name=self.store.state.channel['name'],
-            is_private=self.store.state.channel.get('is_group', False)
+            is_private=self.store.state.channel.get('is_group', False),
+            is_starred=self.store.state.channel.get('is_starred', False)
         )
         self._loading = False
         self.chatbox = ChatBox(
