@@ -9,7 +9,7 @@ import sys
 import urwid
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Channel, ChannelHeader, ChatBox, MessageBox
+from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, MessageBox
 from pyslack.components import Profile, SideBar
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
@@ -102,10 +102,10 @@ class App:
     @asyncio.coroutine
     def component_did_mount(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            self.chatbox.status_message = 'Loading channels...'
             yield from asyncio.gather(
                 loop.run_in_executor(executor, self.store.load_auth),
                 loop.run_in_executor(executor, self.store.load_channels),
+                loop.run_in_executor(executor, self.store.load_groups),
                 loop.run_in_executor(executor, self.store.load_users)
             )
             profile = Profile(name=self.store.state.auth['user'])
@@ -117,36 +117,12 @@ class App:
                 )
                 for channel in self.store.state.channels
             ]
-            self.sidebar = SideBar(profile, channels, title=self.store.state.auth['team'])
-            self.chatbox.status_message = 'Loading messages...'
-            # # Load the first channel info and history
-            # self.data['channel_mode'] = 'group' if channels[0].is_private else 'channel'
-            # [channel, messages] = await asyncio.gather(
-            #     loop.run_in_executor(executor, functools.partial(
-            #         self.slack.api_call, '{}s.info'.format(self.data['channel_mode']),
-            #         channel=channels[0].id
-            #     )),
-            #     loop.run_in_executor(executor, functools.partial(
-            #         self.slack.api_call, '{}s.history'.format(self.data['channel_mode']),
-            #         channel=channels[0].id, unreads=True
-            #     ))
-            # )
-            # self.data['channel'] = channel[self.data['channel_mode']]
-            # self.data['messages'] = messages['messages']
-            # channel_header = urwid.AttrWrap(ChannelHeader(
-            #     date='Today',
-            #     topic=self.data['channel']['topic']['value'],
-            #     num_members=len(self.data['channel']['members']),
-            #     name=self.data['channel']['name'],
-            #     is_private=self.data['channel_mode'] == 'group' or self.data['channel'].get('is_private', False)
-            # ), 'chatbox_header')
-            # message_box = urwid.AttrWrap(MessageBox(self.data['identity']['user']), 'message_input')
-            # self._loading = False
-            # self.chatbox = ChatBox(
-            #     messages=[],
-            #     header=channel_header,
-            #     message_box=message_box
-            # )
+            dms = []
+            for dm in self.store.state.dms:
+                user = self.store.find_user_by_id(dm['user'])
+                if user:
+                    dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
+            self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
 
     def unhandled_input(self, key):
         if key in ('q', 'esc'):

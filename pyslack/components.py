@@ -13,6 +13,7 @@ options = {
         'edit': '\uF040',
         'full_divider': '\uE0C6',
         'full_star': '\uF005',
+        'heart': '\uF004',
         'keyboard': '\uF11C',
         'line_star': '\uF006',
         'offline': '\uF10C',
@@ -71,9 +72,6 @@ class Channel(urwid.AttrMap):
     def select(self):
         self.is_selected = True
         self.attr_map = {None: 'selected_channel'}
-
-    def __lt__(self, other):
-        return self.name < other.name
 
 class ChannelHeader(urwid.Pile):
     def __init__(self, date, topic, num_members, name, is_private=False, starred=False):
@@ -137,6 +135,17 @@ class ChatBoxMessages(urwid.ListBox):
     def scroll_to_bottom(self):
         if self.auto_scroll and len(self.body):
             self.set_focus(len(self.body) - 1)
+
+class Dm(urwid.AttrMap):
+    def __init__(self, name, user):
+        if len(name) > 21:
+            name = name[:18] + '...'
+        if user == 'USLACKBOT':
+            icon = ('presence_active', options['icons']['heart'])
+        else:
+            icon = ('presence_away', options['icons']['offline'])
+        body = urwid.SelectableIcon([' ', icon, ' ', name])
+        super(Dm, self).__init__(body, None, 'active_channel')
 
 class Fields(urwid.Pile):
     def chunks(self, list, size):
@@ -230,18 +239,19 @@ class Reaction(urwid.Text):
         super(Reaction, self).__init__(('reaction', text))
 
 class SideBar(urwid.Frame):
-    def __init__(self, profile, channels=[], title=''):
+    def __init__(self, profile, channels=[], dms=[], title=''):
         header = TextDivider(title)
         footer = urwid.Divider('─')
-        self.walker = urwid.SimpleFocusListWalker([
+        stack = [
             profile,
             TextDivider('Channels')
-        ] + channels)
+        ]
+        stack.extend(channels)
+        stack.append(TextDivider('Direct Messages'))
+        stack.extend(dms)
+        self.walker = urwid.SimpleFocusListWalker(stack)
         self.listbox = urwid.ListBox(self.walker)
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)
-
-    def add_channel(self, channel):
-        self.walker.append(channel)
 
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
