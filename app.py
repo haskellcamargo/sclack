@@ -7,10 +7,12 @@ import os
 import subprocess
 import sys
 import urwid
+from datetime import datetime
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, MessageBox
-from pyslack.components import Profile, SideBar
+from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, Indicators
+from pyslack.components import MarkdownText, Message, MessageBox, Profile
+from pyslack.components import SideBar, TextDivider, Time, User
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
 
@@ -128,8 +130,6 @@ class App:
             if user:
                 dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
-        # Load first channel
-        active_channel = self.store.state.channels[0]
 
     @asyncio.coroutine
     def mount_chatbox(self, executor, channel):
@@ -137,6 +137,29 @@ class App:
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
+        messages = []
+        previous_date = None
+        today = datetime.today().date()
+        for message in self.store.state.messages:
+            message_date = datetime.fromtimestamp(float(message['ts'])).date()
+            if not previous_date or previous_date != message_date:
+                previous_date = message_date
+                if message_date == today:
+                    date_text = 'Today'
+                else:
+                    date_text = message_date.strftime('%A, %B %d')
+                messages.append(TextDivider(date_text, 'center'))
+            user = self.store.find_user_by_id(message['user'])
+            time = Time(message['ts'])
+            user = User(user['profile']['display_name'], user.get('color'))
+            text = MarkdownText(message['text'])
+            indicators = Indicators('edited' in message, message.get('is_starred', False))
+            messages.append(Message(
+                time,
+                user,
+                text,
+                indicators
+            ))
         header = ChannelHeader(
             name=self.store.state.channel['name'],
             topic=self.store.state.channel['topic']['value'],
@@ -147,7 +170,7 @@ class App:
         )
         self._loading = False
         self.chatbox = ChatBox(
-            [],
+            messages,
             header,
             message_box=MessageBox(
                 user=self.store.state.auth['user']

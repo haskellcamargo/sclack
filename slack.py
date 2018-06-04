@@ -1,19 +1,3 @@
-    members = slack.api_call('users.list')['members']
-
-    def shorten_hex(color):
-        return '{}{}{}'.format(
-            hex(round(int(color[:2], 16) / 17))[-1],
-            hex(round(int(color[2:4], 16) / 17))[-1],
-            hex(round(int(color[4:], 16) / 17))[-1]
-        )
-
-    messages.reverse()
-    with open('ignored.pyc', 'w+') as m:
-        m.write(pprint.pformat(messages))
-
-    def find_user(id, users):
-        return next(filter(lambda user: user['id'] == id, users), None)
-
     def find_bot(id, users):
         return next(filter(lambda user: user.get('is_bot', False) and user['profile']['bot_id'] == id, users), None)
 
@@ -38,9 +22,9 @@
             color = '#{}'.format(shorten_hex(bot.get('color', '333333')))
         else:
             is_app = False
-            user = find_user(message['user'], members)
-            user_name = user['profile']['display_name']
-            color = '#{}'.format(shorten_hex(user.get('color', '333333')))
+            # user = find_user(message['user'], members)
+            # user_name = user['profile']['display_name']
+            # color = '#{}'.format(shorten_hex(user.get('color', '333333')))
 
         file = message.get('file')
         if file and file.get('filetype', None) in ('jpg', 'png', 'gif', 'jpeg', 'bmp'):
@@ -58,17 +42,17 @@
             for attachment in message.get('attachments', [])
         ]
 
-        time = Time(message['ts'])
+        # time = Time(message['ts'])
         text = MarkdownText(message['text'])
-        is_edited = 'edited' in message
-        is_starred = message.get('is_starred', False)
+        # is_edited = 'edited' in message
+        # is_starred = message.get('is_starred', False)
         reactions = list(map(
             lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
             message.get('reactions', [])
         ))
 
         user = User(name=user_name, color=color, is_app=is_app)
-        indicators = Indicators(is_edited=is_edited, is_starred=is_starred)
+        # indicators = Indicators(is_edited=is_edited, is_starred=is_starred)
 
         _messages.append(Message(
             time=time,

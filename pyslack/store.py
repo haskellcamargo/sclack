@@ -31,6 +31,7 @@ class Store:
         self.state.has_more = history.get('has_more', False)
         self.state.is_limited = history.get('is_limited', False)
         self.state.pin_count = history['pin_count']
+        self.state.messages.reverse()
 
     def load_channel(self, channel_id):
         if channel_id[0] == 'G':

@@ -296,7 +296,8 @@ class Time(urwid.Text):
         super(Time, self).__init__(('datetime', ' {} │'.format(time)))
 
 class User(urwid.Text):
-    def __init__(self, name, color='#333', is_app=False):
+    def __init__(self, name, color='333333', is_app=False):
+        color='#{}'.format(self.shorten_hex(color))
         markup = [
             (urwid.AttrSpec('white', color), ' {} '.format(name)),
             (urwid.AttrSpec(color, 'h235'), options['icons']['full_divider']),
@@ -305,3 +306,10 @@ class User(urwid.Text):
         if is_app:
             markup.append(('app_badge', '[APP]'))
         super(User, self).__init__(markup)
+
+    def shorten_hex(self, color):
+        return '{}{}{}'.format(
+            hex(round(int(color[:2], 16) / 17))[-1],
+            hex(round(int(color[2:4], 16) / 17))[-1],
+            hex(round(int(color[4:], 16) / 17))[-1]
+        )
