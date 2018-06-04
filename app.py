@@ -17,7 +17,7 @@ from pyslack.store import Store
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
     ('sidebar', '', '', '', 'white', 'h24'),
-    ('chatbox', '', '', '', 'h99', 'h235'),
+    ('chatbox', '', '', '', 'white', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
     ('message_input', '', '', '', 'h255', 'h235'),
     ('prompt', '', '', '', 'white', 'h27'),
@@ -46,7 +46,7 @@ palette = [
     ('bold', '', '', '', 'bold,h254', 'h235'),
     ('code', '', '', '', 'h124', 'h252'),
     ('loading_message', '', '', '', 'white', 'h235'),
-    ('loading_active_block', '', '', '', 'white', 'h235')
+    ('loading_active_block', '', '', '', 'h99', 'h235')
 ]
 
 loop = asyncio.get_event_loop()
