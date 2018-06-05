@@ -54,6 +54,8 @@ palette = [
 loop = asyncio.get_event_loop()
 
 class App:
+    message_box = None
+
     def __init__(self, service_path, slack_token):
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -175,15 +177,20 @@ class App:
         )
         self._loading = False
         self.sidebar.select_channel(channel)
-        self.chatbox = ChatBox(
-            messages,
-            header,
-            message_box=MessageBox(
-                user=self.store.state.auth['user']
-            )
+        self.message_box = MessageBox(
+            user=self.store.state.auth['user']
         )
+        self.chatbox = ChatBox(messages, header, self.message_box)
+
+    def set_insert_mode(self):
+        self.columns.focus_position = 1
+        self.chatbox.focus_position = 'footer'
+        self.message_box.focus_position = 1
 
     def unhandled_input(self, key):
+        if key == 'i' and self.message_box:
+            return self.set_insert_mode()
+
         if key in ('q', 'esc'):
             raise urwid.ExitMainLoop
 
