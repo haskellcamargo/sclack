@@ -248,7 +248,7 @@ class Message(urwid.AttrMap):
     def selectable(self):
         return True
 
-class MessageBox(urwid.Pile):
+class MessageBox(urwid.AttrMap):
     def __init__(self, user, typing=None):
         if typing != None:
             top_separator = TextDivider(('is_typing', '{} {} is typing...'.format(
@@ -260,12 +260,23 @@ class MessageBox(urwid.Pile):
         prompt = urwid.Edit(('prompt', [
             ' ', user, ' ', ('prompt_arrow', options['icons']['full_divider'] + ' ')
         ]))
-        body = [
+        self.body = urwid.Pile([
             top_separator,
             prompt,
             urwid.Divider('─')
-        ]
-        super(MessageBox, self).__init__(body)
+        ])
+        super(MessageBox, self).__init__(self.body, None, {
+            'prompt': 'active_prompt',
+            'prompt_arrow': 'active_prompt_arrow'
+        })
+
+    @property
+    def focus_position(self):
+        return self.body.focus_position
+
+    @focus_position.setter
+    def focus_position(self, focus_position):
+        self.body.focus_position = focus_position
 
 class Profile(urwid.Text):
     def __init__(self, name, is_online=False):
