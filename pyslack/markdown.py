@@ -7,6 +7,7 @@ class MarkdownText(urwid.SelectableIcon):
     _result = []
 
     def __init__(self, text):
+        self.original_text = text
         self.markup = self.parse_message(text)
         super(MarkdownText, self).__init__(self.markup)
 

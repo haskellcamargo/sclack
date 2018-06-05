@@ -183,17 +183,32 @@ class App:
             user=self.store.state.auth['user']
         )
         self.chatbox = ChatBox(messages, header, self.message_box)
+        urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
+        urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
 
     def set_insert_mode(self):
         self.columns.focus_position = 1
         self.chatbox.focus_position = 'footer'
         self.message_box.focus_position = 1
 
+    def go_to_chatbox(self):
+        self.columns.focus_position = 1
+        self.chatbox.focus_position = 'body'
+
+    def go_to_sidebar(self):
+        self.columns.focus_position = 0
+
     def unhandled_input(self, key):
+        if key == 'c' and self.message_box:
+            return self.go_to_chatbox()
+
         if key == 'i' and self.message_box:
             return self.set_insert_mode()
 
-        if key in ('q', 'esc'):
+        elif key == 'esc':
+            return self.go_to_sidebar()
+
+        elif key == 'q':
             raise urwid.ExitMainLoop
 
     def configure_screen(self, screen):

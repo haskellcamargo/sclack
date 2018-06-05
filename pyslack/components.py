@@ -1,6 +1,7 @@
 import urwid
 import pprint
 from datetime import datetime
+import pyperclip
 from .markdown import MarkdownText
 
 options = {
@@ -112,11 +113,23 @@ class ChannelHeader(urwid.Pile):
         super(ChannelHeader, self).__init__(body)
 
 class ChatBox(urwid.Frame):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['set_insert_mode', 'go_to_sidebar']
+
     def __init__(self, messages, header, message_box):
         self.body = ChatBoxMessages(messages=messages)
         self.body.scroll_to_bottom()
         urwid.connect_signal(self.body, 'set_date', header.on_set_date)
         super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
+
+    def keypress(self, size, key):
+        if key == 'i':
+            urwid.emit_signal(self, 'set_insert_mode')
+            return True
+        elif key == 'esc':
+            urwid.emit_signal(self, 'go_to_sidebar')
+            return True
+        return super(ChatBox, self).keypress(size, key)
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals
@@ -226,6 +239,7 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
+        self.original_text = text.original_text
         main_column = [urwid.Columns([('pack', user), text])]
         main_column.extend(attachments)
 
@@ -244,6 +258,12 @@ class Message(urwid.AttrMap):
         ]
         self.contents = urwid.Columns(columns)
         super(Message, self).__init__(self.contents, None, 'active_message')
+
+    def keypress(self, size, key):
+        if key == 'y':
+            pyperclip.copy(self.original_text)
+            return True
+        return super(Message, self).keypress(size, key)
 
     def selectable(self):
         return True
