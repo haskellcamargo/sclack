@@ -148,7 +148,7 @@ class App:
                     date_text = 'Today'
                 else:
                     date_text = message_date.strftime('%A, %B %d')
-                messages.append(TextDivider(date_text, 'center'))
+                messages.append(TextDivider(('history_date', date_text), 'center'))
             user = self.store.find_user_by_id(message['user'])
             time = Time(message['ts'])
             user = User(user['profile']['display_name'], user.get('color'))

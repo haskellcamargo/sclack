@@ -75,6 +75,14 @@ class Channel(urwid.AttrMap):
         self.attr_map = {None: 'selected_channel'}
 
 class ChannelHeader(urwid.Pile):
+    def on_set_date(self, divider):
+        if not divider:
+            self.contents.pop()
+            self.contents.append((urwid.Divider('─'), ('pack', 1)))
+        elif isinstance(self.contents[-1], tuple) and self.contents[-1][0] != divider:
+            self.contents.pop()
+            self.contents.append((divider, ('pack', 1)))
+
     def __init__(self, name, topic, date=None, num_members=0, is_private=False,
         pin_count=0, is_starred=False):
         if is_starred:
@@ -107,11 +115,12 @@ class ChatBox(urwid.Frame):
     def __init__(self, messages, header, message_box):
         self.body = ChatBoxMessages(messages=messages)
         self.body.scroll_to_bottom()
+        urwid.connect_signal(self.body, 'set_date', header.on_set_date)
         super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals
-    signals = ['set_auto_scroll']
+    signals = ['set_auto_scroll', 'set_date']
 
     def __init__(self, messages=[]):
         self.body = urwid.SimpleFocusListWalker(messages)
@@ -130,11 +139,13 @@ class ChatBoxMessages(urwid.ListBox):
         urwid.emit_signal(self, 'set_auto_scroll', switch)
 
     def keypress(self, size, key):
+        self.handle_floating_date(size)
         super(ChatBoxMessages, self).keypress(size, key)
         if key in ('page up', 'page down'):
             self.auto_scroll = self.get_focus()[1] == len(self.body) - 1
 
     def mouse_event(self, size, event, button, col, row, focus):
+        self.handle_floating_date(size)
         if event == 'mouse press' and button in (4, 5):
             if button == 4:
                 self.keypress(size, 'up')
@@ -148,6 +159,22 @@ class ChatBoxMessages(urwid.ListBox):
     def scroll_to_bottom(self):
         if self.auto_scroll and len(self.body):
             self.set_focus(len(self.body) - 1)
+
+    def render(self, size, *args, **kwargs):
+        self.handle_floating_date(size)
+        return super(ChatBoxMessages, self).render(size, *args, **kwargs)
+
+    def handle_floating_date(self, size):
+        (row_offset, _, focus_position, _, _), _, _ = self.calculate_visible(size, self.focus)
+        index = abs(row_offset - focus_position)
+        all_before = self.body[:index]
+        all_before.reverse()
+        text_divider = None
+        for row in all_before:
+            if isinstance(row, TextDivider):
+                text_divider = row
+                break
+        urwid.emit_signal(self, 'set_date', text_divider)
 
 class Dm(urwid.AttrMap):
     def __init__(self, name, user):
@@ -268,24 +295,25 @@ class SideBar(urwid.Frame):
 
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
+        self.text = text
         text_size = len(text if isinstance(text, str) else text[1]) + 2
-        text_widget = ('fixed', text_size, urwid.Text(text, align='center'))
+        self.text_widget = ('fixed', text_size, urwid.Text(text, align='center'))
         if align == 'right':
             body = [
                 urwid.Divider(char),
-                text_widget,
+                self.text_widget,
                 ('fixed', 1, urwid.Divider(char))
             ]
         elif align == 'center':
             body = [
                 urwid.Divider(char),
-                text_widget,
+                self.text_widget,
                 urwid.Divider(char)
             ]
         else:
             body = [
                 ('fixed', 1, urwid.Divider(char)),
-                text_widget,
+                self.text_widget,
                 urwid.Divider(char)
             ]
         super(TextDivider, self).__init__(body)
