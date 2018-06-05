@@ -174,6 +174,7 @@ class App:
             is_starred=self.store.state.channel.get('is_starred', False)
         )
         self._loading = False
+        self.sidebar.select_channel(channel)
         self.chatbox = ChatBox(
             messages,
             header,

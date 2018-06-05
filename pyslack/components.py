@@ -283,18 +283,24 @@ class Reaction(urwid.Text):
 
 class SideBar(urwid.Frame):
     def __init__(self, profile, channels=[], dms=[], title=''):
+        self.channels = channels
         header = TextDivider(title)
         footer = urwid.Divider('─')
         stack = [
             profile,
             TextDivider('Channels')
         ]
-        stack.extend(channels)
+        stack.extend(self.channels)
         stack.append(TextDivider('Direct Messages'))
         stack.extend(dms)
         self.walker = urwid.SimpleFocusListWalker(stack)
         self.listbox = urwid.ListBox(self.walker)
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)
+
+    def select_channel(self, channel_id):
+        for channel in self.channels:
+            if channel.id == channel_id:
+                channel.select()
 
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
