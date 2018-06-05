@@ -12,7 +12,7 @@ from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, Indicators
 from pyslack.components import MarkdownText, Message, MessageBox, Profile
-from pyslack.components import SideBar, TextDivider, Time, User
+from pyslack.components import Reaction, SideBar, TextDivider, Time, User
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
 
@@ -154,11 +154,16 @@ class App:
             user = User(user['profile']['display_name'], user.get('color'))
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
+            reactions = [
+                Reaction(reaction['name'], reaction['count'])
+                for reaction in message.get('reactions', [])
+            ]
             messages.append(Message(
                 time,
                 user,
                 text,
-                indicators
+                indicators,
+                reactions=reactions
             ))
         header = ChannelHeader(
             name=self.store.state.channel['name'],

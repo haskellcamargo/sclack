@@ -1,7 +1,7 @@
     def find_bot(id, users):
         return next(filter(lambda user: user.get('is_bot', False) and user['profile']['bot_id'] == id, users), None)
 
-    _messages = []
+    # _messages = []
     # Bots cache
     _bots = {}
     for message in messages:
@@ -43,23 +43,23 @@
         ]
 
         # time = Time(message['ts'])
-        text = MarkdownText(message['text'])
+        # text = MarkdownText(message['text'])
         # is_edited = 'edited' in message
         # is_starred = message.get('is_starred', False)
-        reactions = list(map(
-            lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
-            message.get('reactions', [])
-        ))
+        # reactions = list(map(
+            # lambda reaction: Reaction(name=reaction['name'], count=reaction['count']),
+            # message.get('reactions', [])
+        # ))
 
-        user = User(name=user_name, color=color, is_app=is_app)
+        # user = User(name=user_name, color=color, is_app=is_app)
         # indicators = Indicators(is_edited=is_edited, is_starred=is_starred)
 
-        _messages.append(Message(
-            time=time,
-            user=user,
-            text=text,
-            indicators=indicators,
-            reactions=reactions,
-            file=file,
-            attachments=attachments
-        ))
+        # _messages.append(Message(
+        #     time=time,
+        #     user=user,
+        #     text=text,
+        #     indicators=indicators,
+        #     reactions=reactions,
+        #     file=file,
+        #     attachments=attachments
+        # ))
