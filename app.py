@@ -12,7 +12,8 @@ from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, Indicators
 from pyslack.components import MarkdownText, Message, MessageBox, Profile
-from pyslack.components import Reaction, SideBar, TextDivider, Time, User
+from pyslack.components import ProfileSideBar, Reaction, SideBar, TextDivider
+from pyslack.components import Time, User
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
 
@@ -155,20 +156,22 @@ class App:
                 messages.append(TextDivider(('history_date', date_text), 'center'))
             user = self.store.find_user_by_id(message['user'])
             time = Time(message['ts'])
-            user = User(user['profile']['display_name'], user.get('color'))
+            user = User(message['user'], user['profile']['display_name'], user.get('color'))
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
             reactions = [
                 Reaction(reaction['name'], reaction['count'])
                 for reaction in message.get('reactions', [])
             ]
-            messages.append(Message(
+            message = Message(
                 time,
                 user,
                 text,
                 indicators,
                 reactions=reactions
-            ))
+            )
+            urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
+            messages.append(message)
         header = ChannelHeader(
             name=self.store.state.channel['name'],
             topic=self.store.state.channel['topic']['value'],
@@ -185,6 +188,10 @@ class App:
         self.chatbox = ChatBox(messages, header, self.message_box)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
+
+    def go_to_profile(self, user_id):
+        user = self.store.find_user_by_id(user_id)
+        # TODO: go_to_profile
 
     def set_insert_mode(self):
         self.columns.focus_position = 1

@@ -238,7 +238,11 @@ class Indicators(urwid.Columns):
         super(Indicators, self).__init__(indicators)
 
 class Message(urwid.AttrMap):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['go_to_profile']
+
     def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
+        self.user_id = user.id
         self.original_text = text.original_text
         main_column = [urwid.Columns([('pack', user), text])]
         main_column.extend(attachments)
@@ -262,6 +266,9 @@ class Message(urwid.AttrMap):
     def keypress(self, size, key):
         if key == 'y':
             pyperclip.copy(self.original_text)
+            return True
+        if key == 'p':
+            urwid.emit_signal(self, 'go_to_profile', self.user_id)
             return True
         return super(Message, self).keypress(size, key)
 
@@ -306,6 +313,11 @@ class Profile(urwid.Text):
             presence_icon = ('presence_away', ' {} '.format(options['icons']['offline']))
         body = [presence_icon, name]
         super(Profile, self).__init__(body)
+
+class ProfileSideBar(urwid.Frame):
+    def __init__(self):
+        body = urwid.SolidFill('#')
+        super(ProfileSideBar, self).__init__(body)
 
 class Reaction(urwid.Text):
     def __init__(self, name, count=0):
@@ -364,7 +376,8 @@ class Time(urwid.Text):
         super(Time, self).__init__(('datetime', ' {} │'.format(time)))
 
 class User(urwid.Text):
-    def __init__(self, name, color='333333', is_app=False):
+    def __init__(self, id, name, color='333333', is_app=False):
+        self.id = id
         color='#{}'.format(self.shorten_hex(color))
         markup = [
             (urwid.AttrSpec('white', color), ' {} '.format(name)),
