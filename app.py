@@ -12,9 +12,10 @@ import urwid
 from datetime import datetime
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, Indicators
-from pyslack.components import MarkdownText, Message, MessageBox, Profile
-from pyslack.components import ProfileSideBar, Reaction, SideBar, TextDivider
+from pyslack.components import Channel, ChannelHeader, ChatBox, Dm
+from pyslack.components import FreeSlackLimit, Indicators, MarkdownText
+from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
+from pyslack.components import Reaction, SideBar, TextDivider
 from pyslack.components import Time, User
 from pyslack.image import Image
 from pyslack.loading import LoadingChatBox, LoadingSideBar
@@ -27,6 +28,8 @@ palette = [
     ('profile_icon', '', '', '', 'h244', 'h233'),
     ('chatbox', '', '', '', 'white', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
+    ('free_slack_limit', '', '', '', 'white', 'h238'),
+    ('triangle_divider', '', '', '', 'h235', 'h238'),
     ('message_input', '', '', '', 'h255', 'h235'),
     ('prompt', '', '', '', 'white', 'h244'),
     ('prompt_arrow', '', '', '', 'h244', 'h235'),
@@ -191,6 +194,10 @@ class App:
 
     def render_messages(self, messages):
         _messages = []
+        # Free Slack account reached limit
+        if self.store.state.is_limited and not self.store.state.has_more:
+            _messages.append(FreeSlackLimit(self.store.state.channel['name']))
+
         previous_date = None
         today = datetime.today().date()
         for message in messages:

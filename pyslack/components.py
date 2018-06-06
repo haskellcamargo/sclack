@@ -1,7 +1,7 @@
 import urwid
 import pprint
-from datetime import datetime
 import pyperclip
+from datetime import datetime
 from .markdown import MarkdownText
 
 options = {
@@ -27,7 +27,9 @@ options = {
         'skype': '\uF17E',
         'square': '\uF445',
         'status': '\uF075',
-        'timezone': '\uF0AC'
+        'timezone': '\uF0AC',
+        'triangle_left': '\uE0BA',
+        'triangle_right': '\uE0B8'
     }
 }
 
@@ -236,6 +238,14 @@ class Fields(urwid.Pile):
                 for field in chunk
             ]))
         super(Fields, self).__init__(pile)
+
+class FreeSlackLimit(urwid.AttrWrap):
+    def __init__(self, channel):
+        contents = urwid.Pile([
+            urwid.Text('\nThere\'s more to the conversation in #{}\n'.format(channel), align='center'),
+            TriangleDivider()
+        ])
+        return super(FreeSlackLimit, self).__init__(contents, 'free_slack_limit')
 
 class Indicators(urwid.Columns):
     def __init__(self, is_edited=False, is_starred=False):
@@ -458,6 +468,20 @@ class Time(urwid.Text):
     def __init__(self, timestamp):
         time = datetime.fromtimestamp(float(timestamp)).strftime('%H:%M')
         super(Time, self).__init__(('datetime', ' {} │'.format(time)))
+
+class TriangleDivider(urwid.Text):
+    def __init__(self):
+        return super(TriangleDivider, self).__init__('')
+
+    def render(self, size, focus=False):
+        (maxcol,) = size
+        _, attr = self.get_text()
+        text = []
+        for index in range(0, maxcol):
+            triangle = 'triangle_left' if index % 2 == 0 else 'triangle_right'
+            text.append(('triangle_divider', options['icons'][triangle]))
+        self.set_text(text)
+        return super(TriangleDivider, self).render(size, focus)
 
 class User(urwid.Text):
     def __init__(self, id, name, color='333333', is_app=False):
