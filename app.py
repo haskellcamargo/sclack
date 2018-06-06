@@ -149,14 +149,7 @@ class App:
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
         messages = self.render_messages(self.store.state.messages)
-        header = ChannelHeader(
-            name=self.store.state.channel['name'],
-            topic=self.store.state.channel['topic']['value'],
-            num_members=len(self.store.state.channel['members']),
-            pin_count=self.store.state.pin_count,
-            is_private=self.store.state.channel.get('is_group', False),
-            is_starred=self.store.state.channel.get('is_starred', False)
-        )
+        header = self.render_chatbox_header()
         self._loading = False
         self.sidebar.select_channel(channel)
         self.message_box = MessageBox(user=self.store.state.auth['user'])
@@ -182,6 +175,16 @@ class App:
             )
             loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
+
+    def render_chatbox_header(self):
+        return ChannelHeader(
+            name=self.store.state.channel['name'],
+            topic=self.store.state.channel['topic']['value'],
+            num_members=len(self.store.state.channel['members']),
+            pin_count=self.store.state.pin_count,
+            is_private=self.store.state.channel.get('is_group', False),
+            is_starred=self.store.state.channel.get('is_starred', False)
+        )
 
     def render_messages(self, messages):
         _messages = []
@@ -224,7 +227,9 @@ class App:
                 loop.run_in_executor(executor, self.store.load_messages, channel_id)
             )
             messages = self.render_messages(self.store.state.messages)
+            header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
+            self.chatbox.set_header(header)
             self.chatbox.body.scroll_to_bottom()
             self.sidebar.select_channel(channel_id)
             self.go_to_chatbox()
