@@ -159,9 +159,7 @@ class App:
         )
         self._loading = False
         self.sidebar.select_channel(channel)
-        self.message_box = MessageBox(
-            user=self.store.state.auth['user']
-        )
+        self.message_box = MessageBox(user=self.store.state.auth['user'])
         self.chatbox = ChatBox(messages, header, self.message_box)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
@@ -200,7 +198,7 @@ class App:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
             user = self.store.find_user_by_id(message['user'])
             time = Time(message['ts'])
-            user = User(message['user'], user['profile']['display_name'], user.get('color'))
+            user = User(message['user'], user['profile']['display_name'] or user.get('name'), user.get('color'))
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
             reactions = [
@@ -227,6 +225,7 @@ class App:
             )
             messages = self.render_messages(self.store.state.messages)
             self.chatbox.body.body[:] = messages
+            self.chatbox.body.scroll_to_bottom()
             self.sidebar.select_channel(channel_id)
             self.go_to_chatbox()
 
