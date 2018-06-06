@@ -13,7 +13,7 @@ from datetime import datetime
 from slackclient import SlackClient
 from pyslack import config
 from pyslack.components import Channel, ChannelHeader, ChatBox, Dm
-from pyslack.components import FreeSlackLimit, Indicators, MarkdownText
+from pyslack.components import Indicators, MarkdownText
 from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
 from pyslack.components import Reaction, SideBar, TextDivider
 from pyslack.components import Time, User
@@ -194,10 +194,6 @@ class App:
 
     def render_messages(self, messages):
         _messages = []
-        # Free Slack account reached limit
-        if self.store.state.is_limited and not self.store.state.has_more:
-            _messages.append(FreeSlackLimit(self.store.state.channel['name']))
-
         previous_date = None
         today = datetime.today().date()
         for message in messages:

@@ -251,14 +251,6 @@ class Fields(urwid.Pile):
             ]))
         super(Fields, self).__init__(pile)
 
-class FreeSlackLimit(urwid.AttrWrap):
-    def __init__(self, channel):
-        contents = urwid.Pile([
-            urwid.Text('\nThere\'s more to the conversation in #{}\n'.format(channel), align='center'),
-            TriangleDivider()
-        ])
-        return super(FreeSlackLimit, self).__init__(contents, 'free_slack_limit')
-
 class Indicators(urwid.Columns):
     def __init__(self, is_edited=False, is_starred=False):
         indicators = []
