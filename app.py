@@ -148,36 +148,7 @@ class App:
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
-        messages = []
-        previous_date = None
-        today = datetime.today().date()
-        for message in self.store.state.messages:
-            message_date = datetime.fromtimestamp(float(message['ts'])).date()
-            if not previous_date or previous_date != message_date:
-                previous_date = message_date
-                if message_date == today:
-                    date_text = 'Today'
-                else:
-                    date_text = message_date.strftime('%A, %B %d')
-                messages.append(TextDivider(('history_date', date_text), 'center'))
-            user = self.store.find_user_by_id(message['user'])
-            time = Time(message['ts'])
-            user = User(message['user'], user['profile']['display_name'], user.get('color'))
-            text = MarkdownText(message['text'])
-            indicators = Indicators('edited' in message, message.get('is_starred', False))
-            reactions = [
-                Reaction(reaction['name'], reaction['count'])
-                for reaction in message.get('reactions', [])
-            ]
-            message = Message(
-                time,
-                user,
-                text,
-                indicators,
-                reactions=reactions
-            )
-            urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
-            messages.append(message)
+        messages = self.render_messages(self.store.state.messages)
         header = ChannelHeader(
             name=self.store.state.channel['name'],
             topic=self.store.state.channel['topic']['value'],
@@ -214,8 +185,53 @@ class App:
             loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
 
+    def render_messages(self, messages):
+        _messages = []
+        previous_date = None
+        today = datetime.today().date()
+        for message in messages:
+            message_date = datetime.fromtimestamp(float(message['ts'])).date()
+            if not previous_date or previous_date != message_date:
+                previous_date = message_date
+                if message_date == today:
+                    date_text = 'Today'
+                else:
+                    date_text = message_date.strftime('%A, %B %d')
+                _messages.append(TextDivider(('history_date', date_text), 'center'))
+            user = self.store.find_user_by_id(message['user'])
+            time = Time(message['ts'])
+            user = User(message['user'], user['profile']['display_name'], user.get('color'))
+            text = MarkdownText(message['text'])
+            indicators = Indicators('edited' in message, message.get('is_starred', False))
+            reactions = [
+                Reaction(reaction['name'], reaction['count'])
+                for reaction in message.get('reactions', [])
+            ]
+            message = Message(
+                time,
+                user,
+                text,
+                indicators,
+                reactions=reactions
+            )
+            urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
+            _messages.append(message)
+        return _messages
+
+    @asyncio.coroutine
+    def _go_to_channel(self, channel_id):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            yield from asyncio.gather(
+                loop.run_in_executor(executor, self.store.load_channel, channel_id),
+                loop.run_in_executor(executor, self.store.load_messages, channel_id)
+            )
+            messages = self.render_messages(self.store.state.messages)
+            self.chatbox.body.body[:] = messages
+            self.sidebar.select_channel(channel_id)
+            self.go_to_chatbox()
+
     def go_to_channel(self, channel_id):
-        pass # TODO: go_to_channel
+        loop.create_task(self._go_to_channel(channel_id))
 
     @asyncio.coroutine
     def load_profile_avatar(self, url, profile):

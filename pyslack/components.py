@@ -80,6 +80,10 @@ class Channel(urwid.AttrMap):
         self.is_selected = True
         self.attr_map = {None: 'selected_channel'}
 
+    def deselect(self):
+        self.is_selected = False
+        self.attr_map = {None: None}
+
 class ChannelHeader(urwid.Pile):
     def on_set_date(self, divider):
         if not divider:
@@ -386,6 +390,8 @@ class SideBar(urwid.Frame):
         for channel in self.channels:
             if channel.id == channel_id:
                 channel.select()
+            else:
+                channel.deselect()
 
     def keypress(self, size, key):
         if key == 'enter':
