@@ -364,6 +364,9 @@ class Reaction(urwid.Text):
         super(Reaction, self).__init__(('reaction', text))
 
 class SideBar(urwid.Frame):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['go_to_channel']
+
     def __init__(self, profile, channels=[], dms=[], title=''):
         self.channels = channels
         header = TextDivider(title)
@@ -383,6 +386,14 @@ class SideBar(urwid.Frame):
         for channel in self.channels:
             if channel.id == channel_id:
                 channel.select()
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            channel = self.listbox.focus
+            urwid.emit_signal(self, 'go_to_channel', channel.id)
+            return True
+
+        return super(SideBar, self).keypress(size, key)
 
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse press' and button in (4, 5):

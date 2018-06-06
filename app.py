@@ -140,6 +140,7 @@ class App:
             if user:
                 dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
+        urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
 
     @asyncio.coroutine
     def mount_chatbox(self, executor, channel):
@@ -212,6 +213,9 @@ class App:
             )
             loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
+
+    def go_to_channel(self, channel_id):
+        pass # TODO: go_to_channel
 
     @asyncio.coroutine
     def load_profile_avatar(self, url, profile):
