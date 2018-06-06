@@ -10,11 +10,18 @@ class State:
         self.pin_count = 0
         self.has_more = False
         self.is_limited = False
+        self.profile_user_id = None
+
+class Cache:
+    def __init__(self):
+        self.avatar = {}
 
 class Store:
     def __init__(self, slack_token):
+        self.slack_token = slack_token
         self.slack = SlackClient(slack_token)
         self.state = State()
+        self.cache = Cache()
 
     def find_user_by_id(self, user_id):
         return self._users_dict.get(user_id)

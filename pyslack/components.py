@@ -267,7 +267,7 @@ class Message(urwid.AttrMap):
         if key == 'y':
             pyperclip.copy(self.original_text)
             return True
-        if key == 'p':
+        elif key == 'p':
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
             return True
         return super(Message, self).keypress(size, key)
@@ -314,10 +314,25 @@ class Profile(urwid.Text):
         body = [presence_icon, name]
         super(Profile, self).__init__(body)
 
-class ProfileSideBar(urwid.Frame):
-    def __init__(self):
-        body = urwid.SolidFill('#')
-        super(ProfileSideBar, self).__init__(body)
+class ProfileSideBar(urwid.AttrWrap):
+    def __init__(self, name):
+        line = urwid.Divider('─')
+        header = urwid.Pile([
+            line,
+            urwid.Text([' ', name]),
+            line
+        ])
+        self.pile = urwid.Pile([])
+        body = urwid.Frame(urwid.Filler(self.pile, valign='top'), header, line)
+        super(ProfileSideBar, self).__init__(body, 'profile')
+
+    @property
+    def avatar(self):
+        return self.pile.contents[0]
+
+    @avatar.setter
+    def avatar(self, avatar):
+        self.pile.contents.insert(0, (avatar, ('pack', 1)))
 
 class Reaction(urwid.Text):
     def __init__(self, name, count=0):

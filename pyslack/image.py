@@ -1,7 +1,5 @@
 import subprocess
 import urwid
-import requests
-import tempfile
 
 color_list = [
     'black',
@@ -51,24 +49,17 @@ def ansi_to_urwid(ansi_text):
         result.append((urwid.AttrSpec(foreground, background), text))
     return result
 
-def img_to_ansi(path, height):
-    ansi_text = subprocess.check_output(['img2txt', path, '-f', 'utf8', '-H', str(height)])
+def img_to_ansi(path, width, height):
+    command = ['img2txt', path, '-f', 'utf8']
+    if width:
+        command.extend(['-W', str(width)])
+    if height:
+        command.extend(['-H', str(height)])
+    ansi_text = subprocess.check_output(command)
     return ansi_text
 
 class Image(urwid.Text):
-    def __init__(self, token, path, height=20):
-        path = self.resolve_path(path, token)
-        self.markup = ansi_to_urwid(img_to_ansi(path, height))
+    def __init__(self, path, width=None, height=None):
+        self.markup = ansi_to_urwid(img_to_ansi(path, width, height))
         super(Image, self).__init__(self.markup)
 
-    def resolve_path(self, path, token):
-        if path.startswith('http://') or path.startswith('https://'):
-            file = tempfile.NamedTemporaryFile(delete=False)
-            request = requests.get(path, headers={
-                'Authorization': 'Bearer {}'.format(token)
-            })
-            file.write(request.content)
-            file.close()
-            return file.name
-        else:
-            return path

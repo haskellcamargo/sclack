@@ -4,8 +4,10 @@ import concurrent.futures
 import functools
 import json
 import os
+import requests
 import subprocess
 import sys
+import tempfile
 import urwid
 from datetime import datetime
 from slackclient import SlackClient
@@ -14,12 +16,14 @@ from pyslack.components import Channel, ChannelHeader, ChatBox, Dm, Indicators
 from pyslack.components import MarkdownText, Message, MessageBox, Profile
 from pyslack.components import ProfileSideBar, Reaction, SideBar, TextDivider
 from pyslack.components import Time, User
+from pyslack.image import Image
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
 
 palette = [
     ('app', '', '', '', 'h99', 'h235'),
     ('sidebar', '', '', '', 'white', 'h24'),
+    ('profile', '', '', '', 'white', 'h233'),
     ('chatbox', '', '', '', 'white', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
     ('message_input', '', '', '', 'h255', 'h235'),
@@ -190,8 +194,34 @@ class App:
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
 
     def go_to_profile(self, user_id):
-        user = self.store.find_user_by_id(user_id)
-        # TODO: go_to_profile
+        if len(self.columns.contents) > 2:
+            self.columns.contents.pop()
+        if user_id == self.store.state.profile_user_id:
+            self.store.state.profile_user_id = None
+        else:
+            user = self.store.find_user_by_id(user_id)
+            self.store.state.profile_user_id = user_id
+            profile = ProfileSideBar(
+                name=user.get('real_name', user['name'])
+                #avatar=Image(user['profile'].get('image_512'), width=35)
+            )
+            loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
+            self.columns.contents.append((profile, ('given', 35, False)))
+
+    @asyncio.coroutine
+    def load_profile_avatar(self, url, profile):
+        bytes_in_cache = self.store.cache.avatar.get(url, None)
+        if bytes_in_cache:
+            profile.avatar = bytes_in_cache
+            return
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            bytes = yield from loop.run_in_executor(executor, requests.get, url)
+            file = tempfile.NamedTemporaryFile(delete=False)
+            file.write(bytes.content)
+            file.close()
+            avatar = Image(file.name, width=35)
+            self.store.cache.avatar[url] = avatar
+            profile.avatar = avatar
 
     def set_insert_mode(self):
         self.columns.focus_position = 1
