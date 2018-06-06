@@ -128,10 +128,11 @@ class ChatBox(urwid.Frame):
     signals = ['set_insert_mode', 'go_to_sidebar']
 
     def __init__(self, messages, header, message_box):
+        self._header = header
         self.message_box = message_box
         self.body = ChatBoxMessages(messages=messages)
         self.body.scroll_to_bottom()
-        urwid.connect_signal(self.body, 'set_date', header.on_set_date)
+        urwid.connect_signal(self.body, 'set_date', self._header.on_set_date)
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
@@ -142,6 +143,17 @@ class ChatBox(urwid.Frame):
             urwid.emit_signal(self, 'go_to_sidebar')
             return True
         return super(ChatBox, self).keypress(size, key)
+
+    @property
+    def header(self):
+        return self._header
+
+    @header.setter
+    def header(self, header):
+        urwid.disconnect_signal(self.body, 'set_date', self._header.on_set_date)
+        self._header = header
+        urwid.connect_signal(self.body, 'set_date', self._header.on_set_date)
+        self.set_header(self._header)
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals

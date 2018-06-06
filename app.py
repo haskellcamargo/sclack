@@ -239,11 +239,10 @@ class App:
             messages = self.render_messages(self.store.state.messages)
             header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
-            self.chatbox.set_header(header)
+            self.chatbox.header = header
             self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
-            self.chatbox.body.scroll_to_bottom()
             self.sidebar.select_channel(channel_id)
-            self.go_to_chatbox()
+            self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_bottom())
 
     def go_to_channel(self, channel_id):
         loop.create_task(self._go_to_channel(channel_id))
