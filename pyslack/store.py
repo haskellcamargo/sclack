@@ -80,5 +80,8 @@ class Store:
             self.slack.api_call('users.list')['members']
         ))
         self._users_dict = {}
+        self._bots_dict = {}
         for user in self.state.users:
+            if user.get('is_bot', False):
+                self._users_dict[user['profile']['bot_id']] = user
             self._users_dict[user['id']] = user

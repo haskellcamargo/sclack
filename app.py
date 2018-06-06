@@ -205,9 +205,13 @@ class App:
                 else:
                     date_text = message_date.strftime('%A, %B %d')
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
-            user = self.store.find_user_by_id(message['user'])
+            if message.get('subtype') == 'bot_message':
+                # TODO: handle bots, fake bots, and apps
+                user = self.store.find_user_by_id(message['bot_id'])
+            else:
+                user = self.store.find_user_by_id(message['user'])
             time = Time(message['ts'])
-            user = User(message['user'], user['profile']['display_name'] or user.get('name'), user.get('color'))
+            user = User(user['id'], user['profile']['display_name'] or user.get('name'), user.get('color'))
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
             reactions = [
