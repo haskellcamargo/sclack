@@ -152,7 +152,10 @@ class App:
         header = self.render_chatbox_header()
         self._loading = False
         self.sidebar.select_channel(channel)
-        self.message_box = MessageBox(user=self.store.state.auth['user'])
+        self.message_box = MessageBox(
+            user=self.store.state.auth['user'],
+            is_read_only=self.store.state.channel.get('is_read_only', False)
+        )
         self.chatbox = ChatBox(messages, header, self.message_box)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
@@ -230,6 +233,7 @@ class App:
             header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
             self.chatbox.set_header(header)
+            self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
             self.chatbox.body.scroll_to_bottom()
             self.sidebar.select_channel(channel_id)
             self.go_to_chatbox()

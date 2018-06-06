@@ -126,10 +126,11 @@ class ChatBox(urwid.Frame):
     signals = ['set_insert_mode', 'go_to_sidebar']
 
     def __init__(self, messages, header, message_box):
+        self.message_box = message_box
         self.body = ChatBoxMessages(messages=messages)
         self.body.scroll_to_bottom()
         urwid.connect_signal(self.body, 'set_date', header.on_set_date)
-        super(ChatBox, self).__init__(self.body, header=header, footer=message_box)
+        super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
         if key == 'i':
@@ -187,6 +188,10 @@ class ChatBoxMessages(urwid.ListBox):
         return super(ChatBoxMessages, self).render(size, *args, **kwargs)
 
     def handle_floating_date(self, size):
+        # No messages, no date
+        if not self.focus:
+            urwid.emit_signal(self, 'set_date', None)
+            return
         (row_offset, _, focus_position, _, _), _, _ = self.calculate_visible(size, self.focus)
         index = abs(row_offset - focus_position)
         all_before = self.body[:index]
@@ -285,7 +290,8 @@ class Message(urwid.AttrMap):
         return True
 
 class MessageBox(urwid.AttrMap):
-    def __init__(self, user, typing=None):
+    def __init__(self, user, typing=None, is_read_only=False):
+        self.read_only_widget = urwid.Text('You have no power here!', align='center')
         if typing != None:
             top_separator = TextDivider(('is_typing', '{} {} is typing...'.format(
                 options['icons']['keyboard'],
@@ -293,18 +299,30 @@ class MessageBox(urwid.AttrMap):
             )))
         else:
             top_separator = urwid.Divider('─')
-        prompt = urwid.Edit(('prompt', [
+        self.prompt_widget = urwid.Edit(('prompt', [
             ' ', user, ' ', ('prompt_arrow', options['icons']['full_divider'] + ' ')
         ]))
+        middle = urwid.WidgetPlaceholder(self.read_only_widget if is_read_only else self.prompt_widget)
         self.body = urwid.Pile([
             top_separator,
-            prompt,
+            middle,
             urwid.Divider('─')
         ])
         super(MessageBox, self).__init__(self.body, None, {
             'prompt': 'active_prompt',
             'prompt_arrow': 'active_prompt_arrow'
         })
+
+    @property
+    def is_read_only(self):
+        return None
+
+    @is_read_only.setter
+    def is_read_only(self, read_only):
+        if read_only:
+            self.body.contents[1][0].original_widget = self.read_only_widget
+        else:
+            self.body.contents[1][0].original_widget = self.prompt_widget
 
     @property
     def focus_position(self):
