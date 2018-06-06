@@ -12,6 +12,7 @@ options = {
         'channel': '\uF198',
         'divider': '\uE0B1',
         'edit': '\uF040',
+        'email': '\uF42F',
         'full_divider': '\uE0C6',
         'full_star': '\uF005',
         'heart': '\uF004',
@@ -20,9 +21,13 @@ options = {
         'offline': '\uF10C',
         'online': '\uF111',
         'person': '\uF415',
+        'phone': '\uF095',
         'pin': '\uF435',
         'private_channel': '\uF023',
-        'square': '\uF445'
+        'skype': '\uF17E',
+        'square': '\uF445',
+        'status': '\uF075',
+        'timezone': '\uF0AC'
     }
 }
 
@@ -315,14 +320,33 @@ class Profile(urwid.Text):
         super(Profile, self).__init__(body)
 
 class ProfileSideBar(urwid.AttrWrap):
-    def __init__(self, name):
+    def format_row(self, icon, text):
+        return urwid.Text([
+            ' ',
+            ('profile_icon', options['icons'][icon]),
+            ' ',
+            text
+        ])
+
+    def __init__(self, name, status=None, timezone=None, phone=None, email=None, skype=None):
         line = urwid.Divider('─')
         header = urwid.Pile([
             line,
             urwid.Text([' ', name]),
             line
         ])
-        self.pile = urwid.Pile([])
+        contents = []
+        if status:
+            contents.append(self.format_row('status', status))
+        if timezone:
+            contents.append(self.format_row('timezone', timezone))
+        if phone:
+            contents.append(self.format_row('phone', phone))
+        if email:
+            contents.append(self.format_row('email', email))
+        if skype:
+            contents.append(self.format_row('skype', skype))
+        self.pile = urwid.Pile(contents)
         body = urwid.Frame(urwid.Filler(self.pile, valign='top'), header, line)
         super(ProfileSideBar, self).__init__(body, 'profile')
 

@@ -24,6 +24,7 @@ palette = [
     ('app', '', '', '', 'h99', 'h235'),
     ('sidebar', '', '', '', 'white', 'h24'),
     ('profile', '', '', '', 'white', 'h233'),
+    ('profile_icon', '', '', '', 'h244', 'h233'),
     ('chatbox', '', '', '', 'white', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
     ('message_input', '', '', '', 'h255', 'h235'),
@@ -202,8 +203,12 @@ class App:
             user = self.store.find_user_by_id(user_id)
             self.store.state.profile_user_id = user_id
             profile = ProfileSideBar(
-                name=user.get('real_name', user['name'])
-                #avatar=Image(user['profile'].get('image_512'), width=35)
+                user.get('real_name', user['name']),
+                user['profile'].get('status_text', None),
+                user['profile'].get('tz_label', None),
+                user['profile'].get('phone', None),
+                user['profile'].get('email', None),
+                user['profile'].get('skype', None)
             )
             loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
@@ -233,6 +238,8 @@ class App:
         self.chatbox.focus_position = 'body'
 
     def go_to_sidebar(self):
+        if len(self.columns.contents) > 2:
+            self.columns.contents.pop()
         self.columns.focus_position = 0
 
     def unhandled_input(self, key):
