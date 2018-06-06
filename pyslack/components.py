@@ -384,6 +384,16 @@ class SideBar(urwid.Frame):
             if channel.id == channel_id:
                 channel.select()
 
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse press' and button in (4, 5):
+            if button == 4:
+                self.keypress(size, 'up')
+                return True
+            else:
+                self.keypress(size, 'down')
+                return True
+        return super(SideBar, self).mouse_event(size, event, button, col, row, focus)
+
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
         self.text = text
