@@ -45,7 +45,7 @@
 ## Contributing
 
 Contributions are very welcome, and there is a lot of work to do! You can...
-- Check out our [https://github.com/haskellcamargo/pyslack/issues](open issues)
+- Check out our [open issues](https://github.com/haskellcamargo/pyslack/issues)
 - Provide bug reports
 - Create packages for apt, dnf, rpm, pacman and brew
 - Improve documentation
