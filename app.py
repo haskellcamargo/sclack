@@ -26,6 +26,7 @@ palette = [
     ('sidebar', '', '', '', 'white', 'h24'),
     ('profile', '', '', '', 'white', 'h233'),
     ('profile_icon', '', '', '', 'h244', 'h233'),
+    ('attachment_title', '', '', '', 'bold,h33', 'h235'),
     ('chatbox', '', '', '', 'white', 'h235'),
     ('chatbox_header', '', '', '', 'h255', 'h235'),
     ('free_slack_limit', '', '', '', 'white', 'h238'),
@@ -236,9 +237,11 @@ class App:
             file = message.get('file')
             attachments = [
                 Attachment(
+                    title=attachment.get('title'),
                     fields=attachment.get('fields'),
                     color=attachment.get('color'),
-                    pretext=attachment.get('pretext')
+                    pretext=attachment.get('pretext'),
+                    footer=attachment.get('footer')
                 )
                 for attachment in message.get('attachments', [])
             ]
