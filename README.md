@@ -25,5 +25,21 @@
 - :heavy_check_mark: Notifications
 - :heavy_check_mark: Syntax highlighting for snippets
 
---------
+## Default Keymap
+
+- <kbd>i</kbd> set insert mode
+- <kbd>q</kbd> quit application
+- <kbd>up</kbd>, <kbd>down</kbd>, <kbd>page up</kbd>, <kbd>page down</kbd> vertical navigation
+- <kbd>esc</kbd> set channel mode, go to sidebar
+- <kbd>p</kbd> open profile sidebar of the focused message user
+- <kbd>c</kbd> focus on chatbox
+- <kbd>e</kbd> edit your focused message
+- <kbd>dd</kbd> delete your focused message
+- <kbd>s</kbd> share focused message
+- <kbd>f</kbd> star focused message
+- <kbd>y</kbd> yank focused message (copy to clipboard)
+- <kbd>gg</kbd> go to first line (of sidebar or chatbox)
+- <kbd>G</kbd> go to last line (of sidebar or chatbox)
+- <kbd>ctrl+k</kbd> open "jump to channel or dm" dialog
+
 <p align="center">Made with :rage: by <a href="https://github.com/haskellcamargo">@haskellcamargo</a></p>
