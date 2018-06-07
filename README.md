@@ -42,4 +42,12 @@
 - <kbd>G</kbd> go to last line (of sidebar or chatbox)
 - <kbd>ctrl+k</kbd> open "jump to channel or dm" dialog
 
+## Contributing
+
+Contributions are very welcome, and there is a lot of work to do! You can...
+- Check out our [https://github.com/haskellcamargo/pyslack/issues](open issues)
+- Provide bug reports
+- Create packages for apt, dnf, rpm, pacman and brew
+- Improve documentation
+
 <p align="center">Made with :rage: by <a href="https://github.com/haskellcamargo">@haskellcamargo</a></p>
