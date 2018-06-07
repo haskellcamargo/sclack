@@ -274,7 +274,7 @@ class Message(urwid.AttrMap):
         self.original_text = text.original_text
         main_column = [urwid.Columns([('pack', user), text])]
         main_column.extend(attachments)
-        self._file_index = len(main_column) - 1
+        self._file_index = len(main_column)
         if reactions:
             main_column.append(urwid.Columns([
                 ('pack', reaction) for reaction in reactions
