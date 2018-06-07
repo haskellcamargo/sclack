@@ -34,8 +34,11 @@ options = {
 }
 
 class Attachment(urwid.Pile):
-    def __init__(self, color='#CCC', title=None, title_link=None, pretext=None, fields=None, footer=None):
+    def __init__(self, color=None, title=None, title_link=None, pretext=None, fields=None, footer=None):
         body = []
+        if not color:
+            color = 'CCCCCC'
+        color = '#{}'.format(shorten_hex(color))
         if pretext:
             body.append(urwid.Text(MarkdownText(pretext).markup))
         if fields:
@@ -492,12 +495,19 @@ class TriangleDivider(urwid.Text):
         self.set_text(text)
         return super(TriangleDivider, self).render(size, focus)
 
+def shorten_hex(color):
+    return '{}{}{}'.format(
+        hex(round(int(color[:2], 16) / 17))[-1],
+        hex(round(int(color[2:4], 16) / 17))[-1],
+        hex(round(int(color[4:], 16) / 17))[-1]
+    )
+
 class User(urwid.Text):
     def __init__(self, id, name, color=None, is_app=False):
         self.id = id
         if not color:
             color = '333333'
-        color='#{}'.format(self.shorten_hex(color))
+        color='#{}'.format(shorten_hex(color))
         markup = [
             (urwid.AttrSpec('white', color), ' {} '.format(name)),
             (urwid.AttrSpec(color, 'h235'), options['icons']['full_divider']),
@@ -506,10 +516,3 @@ class User(urwid.Text):
         if is_app:
             markup.append(('app_badge', '[APP]'))
         super(User, self).__init__(markup)
-
-    def shorten_hex(self, color):
-        return '{}{}{}'.format(
-            hex(round(int(color[:2], 16) / 17))[-1],
-            hex(round(int(color[2:4], 16) / 17))[-1],
-            hex(round(int(color[4:], 16) / 17))[-1]
-        )

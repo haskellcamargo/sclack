@@ -12,7 +12,7 @@ import urwid
 from datetime import datetime
 from slackclient import SlackClient
 from pyslack import config
-from pyslack.components import Channel, ChannelHeader, ChatBox, Dm
+from pyslack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from pyslack.components import Indicators, MarkdownText
 from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
 from pyslack.components import Reaction, SideBar, TextDivider
@@ -234,11 +234,20 @@ class App:
                 for reaction in message.get('reactions', [])
             ]
             file = message.get('file')
+            attachments = [
+                Attachment(
+                    fields=attachment.get('fields'),
+                    color=attachment.get('color'),
+                    pretext=attachment.get('pretext')
+                )
+                for attachment in message.get('attachments', [])
+            ]
             message = Message(
                 time,
                 user,
                 text,
                 indicators,
+                attachments=attachments,
                 reactions=reactions
             )
             if file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png'):
