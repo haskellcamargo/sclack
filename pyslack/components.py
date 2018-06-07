@@ -269,23 +269,20 @@ class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
     signals = ['go_to_profile']
 
-    def __init__(self, time, user, text, indicators, file=None, reactions=[], attachments=[]):
+    def __init__(self, time, user, text, indicators, reactions=[], attachments=[]):
         self.user_id = user.id
         self.original_text = text.original_text
         main_column = [urwid.Columns([('pack', user), text])]
         main_column.extend(attachments)
-
-        if file:
-            main_column.append(file)
-
+        self._file_index = len(main_column) - 1
         if reactions:
             main_column.append(urwid.Columns([
                 ('pack', reaction) for reaction in reactions
             ]))
-        main_column = urwid.Pile(main_column)
+        self.main_column = urwid.Pile(main_column)
         columns = [
             ('fixed', 8, time),
-            main_column,
+            self.main_column,
             ('fixed', indicators.size, indicators)
         ]
         self.contents = urwid.Columns(columns)
@@ -302,6 +299,14 @@ class Message(urwid.AttrMap):
 
     def selectable(self):
         return True
+
+    @property
+    def file(self):
+        return None
+
+    @file.setter
+    def file(self, file):
+        self.main_column.contents.insert(self._file_index, (file, ('pack', 1)))
 
 class MessageBox(urwid.AttrMap):
     def __init__(self, user, typing=None, is_read_only=False):

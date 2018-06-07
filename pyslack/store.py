@@ -16,6 +16,7 @@ class State:
 class Cache:
     def __init__(self):
         self.avatar = {}
+        self.picture = {}
 
 class Store:
     def __init__(self, slack_token):

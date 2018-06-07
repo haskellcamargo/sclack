@@ -170,6 +170,8 @@ class App:
             self.store.state.profile_user_id = None
         else:
             user = self.store.find_user_by_id(user_id)
+            if not user:
+                return
             self.store.state.profile_user_id = user_id
             profile = ProfileSideBar(
                 user.get('real_name', user['name']),
@@ -231,6 +233,7 @@ class App:
                 Reaction(reaction['name'], reaction['count'])
                 for reaction in message.get('reactions', [])
             ]
+            file = message.get('file')
             message = Message(
                 time,
                 user,
@@ -238,6 +241,12 @@ class App:
                 indicators,
                 reactions=reactions
             )
+            if file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png'):
+                loop.create_task(self.load_picture_async(
+                    file['url_private'],
+                    file.get('original_w', 500),
+                    message
+                ))
             urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
             _messages.append(message)
         return _messages
@@ -262,8 +271,28 @@ class App:
         loop.create_task(self._go_to_channel(channel_id))
 
     @asyncio.coroutine
+    def load_picture_async(self, url, width, message_widget):
+        width = min(width, 800)
+        bytes_in_cache = self.store.cache.picture.get(url)
+        if bytes_in_cache:
+            message_widget.file = bytes_in_cache
+            return
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            bytes = yield from loop.run_in_executor(
+                executor,
+                functools.partial(requests.get, url, headers={
+                    'Authorization': 'Bearer {}'.format(self.store.slack_token)
+                })
+            )
+            file = tempfile.NamedTemporaryFile(delete=False)
+            file.write(bytes.content)
+            file.close()
+            picture = Image(file.name, width=(width / 10))
+            message_widget.file = picture
+
+    @asyncio.coroutine
     def load_profile_avatar(self, url, profile):
-        bytes_in_cache = self.store.cache.avatar.get(url, None)
+        bytes_in_cache = self.store.cache.avatar.get(url)
         if bytes_in_cache:
             profile.avatar = bytes_in_cache
             return
