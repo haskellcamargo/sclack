@@ -209,8 +209,9 @@ class ChatBoxMessages(urwid.ListBox):
         if not self.focus:
             urwid.emit_signal(self, 'set_date', None)
             return
-        (row_offset, _, focus_position, _, _), _, _ = self.calculate_visible(size, self.focus)
-        index = abs(row_offset - focus_position)
+        middle, top, _ = self.calculate_visible(size, self.focus)
+        row_offset, widget, focus_position, _, _ = middle
+        index = focus_position - row_offset + top[0]
         all_before = self.body[:index]
         all_before.reverse()
         text_divider = None
