@@ -11,6 +11,7 @@ class State:
         self.has_more = False
         self.is_limited = False
         self.profile_user_id = None
+        self.bots = {}
 
 class Cache:
     def __init__(self):
@@ -28,6 +29,14 @@ class Store:
 
     def load_auth(self):
         self.state.auth = self.slack.api_call('auth.test')
+
+    def find_or_load_bot(self, bot_id):
+        if bot_id in self.state.bots:
+            return self.state.bots[bot_id]
+        request = self.slack.api_call('bots.info', bot=bot_id)
+        if request['ok']:
+            self.state.bots[bot_id] = request['bot']
+            return self.state.bots[bot_id]
 
     def load_messages(self, channel_id):
         history = self.slack.api_call(

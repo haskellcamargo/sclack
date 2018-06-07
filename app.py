@@ -205,13 +205,26 @@ class App:
                 else:
                     date_text = message_date.strftime('%A, %B %d')
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
+
+            is_app = False
             if message.get('subtype') == 'bot_message':
-                # TODO: handle bots, fake bots, and apps
-                user = self.store.find_user_by_id(message['bot_id'])
+                bot = (self.store.find_user_by_id(message['bot_id'])
+                    or self.store.find_or_load_bot(message['bot_id']))
+                if bot:
+                    user_id = message['bot_id']
+                    user_name = bot.get('profile', {}).get('display_name') or bot.get('name')
+                    color = bot.get('color')
+                    is_app = 'app_id' in bot
+                else:
+                    continue
             else:
                 user = self.store.find_user_by_id(message['user'])
+                user_id = user['id']
+                user_name = user['profile']['display_name'] or user.get('name')
+                color = user.get('color')
+
             time = Time(message['ts'])
-            user = User(user['id'], user['profile']['display_name'] or user.get('name'), user.get('color'))
+            user = User(user_id, user_name, color)
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
             reactions = [
@@ -243,6 +256,7 @@ class App:
             self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
             self.sidebar.select_channel(channel_id)
             self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_bottom())
+            self.go_to_chatbox()
 
     def go_to_channel(self, channel_id):
         loop.create_task(self._go_to_channel(channel_id))

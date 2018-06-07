@@ -488,8 +488,10 @@ class TriangleDivider(urwid.Text):
         return super(TriangleDivider, self).render(size, focus)
 
 class User(urwid.Text):
-    def __init__(self, id, name, color='333333', is_app=False):
+    def __init__(self, id, name, color=None, is_app=False):
         self.id = id
+        if not color:
+            color = '333333'
         color='#{}'.format(self.shorten_hex(color))
         markup = [
             (urwid.AttrSpec('white', color), ' {} '.format(name)),
