@@ -227,7 +227,7 @@ class App:
                 color = user.get('color')
 
             time = Time(message['ts'])
-            user = User(user_id, user_name, color)
+            user = User(user_id, user_name, color, is_app)
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
             reactions = [
