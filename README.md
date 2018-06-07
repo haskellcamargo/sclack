@@ -22,6 +22,8 @@
 - :heavy_check_mark: Vim keybindings
 - :heavy_check_mark: Mouse scrolling
 - :heavy_check_mark: Edit topic
+- :heavy_check_mark: Notifications
+- :heavy_check_mark: Syntax highlighting for snippets
 
 --------
 <p align="center">Made with :rage: by <a href="https://github.com/haskellcamargo">@haskellcamargo</a></p>
