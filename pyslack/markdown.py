@@ -29,6 +29,7 @@ class MarkdownText(urwid.SelectableIcon):
         self._previous_state = 'message'
         self._result = []
 
+        text = text.replace('```', '`')
         for char in text:
             if char == '<':
                 self.change_state('message', 'link')
@@ -39,15 +40,15 @@ class MarkdownText(urwid.SelectableIcon):
             elif char == '*' and self._state == 'bold':
                 self.change_state('bold', self._previous_state)
             elif char == '*' and self._state not in ('link', 'code'):
-                self.change_state(self._previous_state, 'bold')
+                self.change_state(self._state, 'bold')
             elif char == '_' and self._state == 'italics':
                 self.change_state('italics', self._previous_state)
             elif char == '_' and self._state not in ('link', 'code'):
-                self.change_state(self._previous_state, 'italics')
+                self.change_state(self._state, 'italics')
             elif char == '`' and self._state == 'code':
                 self.change_state('code', self._previous_state)
             elif char == '`' and self._state != 'link':
-                self.change_state(self._previous_state, 'code')
+                self.change_state(self._state, 'code')
             else:
                 self._buffer = self._buffer + char
 
