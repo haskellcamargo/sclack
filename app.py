@@ -210,7 +210,8 @@ class App:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
             is_app = False
-            if message.get('subtype') == 'bot_message':
+            subtype = message.get('subtype')
+            if subtype == 'bot_message':
                 bot = (self.store.find_user_by_id(message['bot_id'])
                     or self.store.find_or_load_bot(message['bot_id']))
                 if bot:
@@ -220,6 +221,13 @@ class App:
                     is_app = 'app_id' in bot
                 else:
                     continue
+            elif subtype == 'file_comment':
+                user = self.store.find_user_by_id(message['comment']['user'])
+                user_id = user['id']
+                user_name = user['profile']['display_name'] or user.get('name')
+                color = user.get('color')
+                if message.get('file'):
+                    message['file'] = None
             else:
                 user = self.store.find_user_by_id(message['user'])
                 user_id = user['id']
@@ -242,6 +250,7 @@ class App:
                     title=attachment.get('title'),
                     fields=attachment.get('fields'),
                     color=attachment.get('color'),
+                    author_name=attachment.get('author_name'),
                     pretext=attachment.get('pretext'),
                     text=attachment.get('text'),
                     footer=attachment.get('footer')

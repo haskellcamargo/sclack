@@ -44,7 +44,7 @@ class Box(urwid.AttrWrap):
 
 class Attachment(Box):
     def __init__(self, color=None, service_name=None, title=None, title_link=None,
-        pretext=None, text=None, fields=None, footer=None):
+        author_name=None, pretext=None, text=None, fields=None, footer=None):
         body = []
         if not color:
             color = 'CCCCCC'
@@ -55,6 +55,9 @@ class Attachment(Box):
             self._image_index = self._image_index + 1
         if title:
             body.append(urwid.Text(('attachment_title', title)))
+            self._image_index = self._image_index + 1
+        if author_name:
+            body.append(urwid.Text(('attachment_title', author_name)))
             self._image_index = self._image_index + 1
         if pretext:
             body.append(urwid.Text(MarkdownText(pretext).markup))
