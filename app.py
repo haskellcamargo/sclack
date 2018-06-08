@@ -243,6 +243,7 @@ class App:
                     fields=attachment.get('fields'),
                     color=attachment.get('color'),
                     pretext=attachment.get('pretext'),
+                    text=attachment.get('text'),
                     footer=attachment.get('footer')
                 )
                 image_url = attachment.get('image_url')

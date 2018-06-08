@@ -44,7 +44,7 @@ class Box(urwid.AttrWrap):
 
 class Attachment(Box):
     def __init__(self, color=None, service_name=None, title=None, title_link=None,
-        pretext=None, fields=None, footer=None):
+        pretext=None, text=None, fields=None, footer=None):
         body = []
         if not color:
             color = 'CCCCCC'
@@ -59,9 +59,10 @@ class Attachment(Box):
         if pretext:
             body.append(urwid.Text(MarkdownText(pretext).markup))
             self._image_index = self._image_index + 1
+        if text:
+            body.append(urwid.Text(MarkdownText(text).markup))
         if fields:
             body.append(Fields(fields))
-            self._image_index = self._image_index + 1
         if footer:
             body.append(urwid.Text(MarkdownText(footer).markup))
         self.pile = urwid.Pile(body)
