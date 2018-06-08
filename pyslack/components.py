@@ -33,34 +33,6 @@ options = {
     }
 }
 
-class Attachment(urwid.Pile):
-    def __init__(self, color=None, title=None, title_link=None, pretext=None, fields=None, footer=None):
-        body = []
-        if not color:
-            color = 'CCCCCC'
-        color = '#{}'.format(shorten_hex(color))
-        self._image_index = 0
-        if title:
-            body.append(urwid.Text(('attachment_title', title)))
-            self._image_index = self._image_index + 1
-        if pretext:
-            body.append(urwid.Text(MarkdownText(pretext).markup))
-            self._image_index = self._image_index + 1
-        if fields:
-            body.append(Box(Fields(fields), color=color))
-            self._image_index = self._image_index + 1
-        if footer:
-            body.append(urwid.Text(MarkdownText(footer).markup))
-        super(Attachment, self).__init__(body)
-
-    @property
-    def file(self):
-        return None
-
-    @file.setter
-    def file(self, image):
-        self.contents.insert(self._image_index, (image, ('pack', 1)))
-
 class Box(urwid.AttrWrap):
     def __init__(self, widget, color):
         body = urwid.LineBox(widget,
@@ -69,6 +41,39 @@ class Box(urwid.AttrWrap):
             blcorner=options['icons']['block_bottom'],
             tline='', trcorner='', rline='', bline='', brcorner='.')
         super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
+
+class Attachment(Box):
+    def __init__(self, color=None, service_name=None, title=None, title_link=None,
+        pretext=None, fields=None, footer=None):
+        body = []
+        if not color:
+            color = 'CCCCCC'
+        color = '#{}'.format(shorten_hex(color))
+        self._image_index = 0
+        if service_name:
+            body.append(urwid.Text(('attachment_title', service_name)))
+            self._image_index = self._image_index + 1
+        if title:
+            body.append(urwid.Text(('attachment_title', title)))
+            self._image_index = self._image_index + 1
+        if pretext:
+            body.append(urwid.Text(MarkdownText(pretext).markup))
+            self._image_index = self._image_index + 1
+        if fields:
+            body.append(Fields(fields))
+            self._image_index = self._image_index + 1
+        if footer:
+            body.append(urwid.Text(MarkdownText(footer).markup))
+        self.pile = urwid.Pile(body)
+        super(Attachment, self).__init__(self.pile, color)
+
+    @property
+    def file(self):
+        return None
+
+    @file.setter
+    def file(self, image):
+        self.pile.contents.insert(self._image_index, (image, ('pack', 1)))
 
 class BreadCrumbs(urwid.Text):
     def intersperse(self, iterable, delimiter):

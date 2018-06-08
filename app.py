@@ -238,6 +238,7 @@ class App:
             attachments = []
             for attachment in message.get('attachments', []):
                 attachment_widget = Attachment(
+                    service_name=attachment.get('service_name'),
                     title=attachment.get('title'),
                     fields=attachment.get('fields'),
                     color=attachment.get('color'),
