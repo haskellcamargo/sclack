@@ -1,4 +1,5 @@
 import urwid
+from .store import Store
 
 class MarkdownText(urwid.SelectableIcon):
     _buffer = ''
@@ -23,6 +24,12 @@ class MarkdownText(urwid.SelectableIcon):
         self._previous_state = self._state
         self._state = next_state
 
+    def resolve_mention(self):
+        if self._buffer.startswith('@'):
+            user = Store.instance.find_user_by_id(self._buffer[1:])
+            if user:
+                self._buffer = user.get('real_name', user['name'])
+
     def parse_message(self, text):
         self._buffer = ''
         self._state = 'message'
@@ -34,6 +41,7 @@ class MarkdownText(urwid.SelectableIcon):
             if char == '<':
                 self.change_state('message', 'link')
             elif char == '>' and self._state == 'link':
+                self.resolve_mention()
                 self.change_state('link', 'message')
             elif char == '|' and self._state == 'link':
                 self._buffer = ''

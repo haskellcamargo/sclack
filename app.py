@@ -86,6 +86,7 @@ class App:
 
     def start(self):
         self.store = Store(slack_token)
+        Store.instance = self.store
         self._loading = True
         loop.create_task(self.animate_loading())
         loop.create_task(self.component_did_mount())
