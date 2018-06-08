@@ -235,16 +235,24 @@ class App:
                 for reaction in message.get('reactions', [])
             ]
             file = message.get('file')
-            attachments = [
-                Attachment(
+            attachments = []
+            for attachment in message.get('attachments', []):
+                attachment_widget = Attachment(
                     title=attachment.get('title'),
                     fields=attachment.get('fields'),
                     color=attachment.get('color'),
                     pretext=attachment.get('pretext'),
                     footer=attachment.get('footer')
                 )
-                for attachment in message.get('attachments', [])
-            ]
+                image_url = attachment.get('image_url')
+                if image_url:
+                    loop.create_task(self.load_picture_async(
+                        image_url,
+                        attachment.get('image_width', 500),
+                        attachment_widget,
+                        auth=False
+                    ))
+                attachments.append(attachment_widget)
             message = Message(
                 time,
                 user,
@@ -283,18 +291,19 @@ class App:
         loop.create_task(self._go_to_channel(channel_id))
 
     @asyncio.coroutine
-    def load_picture_async(self, url, width, message_widget):
+    def load_picture_async(self, url, width, message_widget, auth=True):
         width = min(width, 800)
         bytes_in_cache = self.store.cache.picture.get(url)
         if bytes_in_cache:
             message_widget.file = bytes_in_cache
             return
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            headers = {}
+            if auth:
+                headers = {'Authorization': 'Bearer {}'.format(self.store.slack_token)}
             bytes = yield from loop.run_in_executor(
                 executor,
-                functools.partial(requests.get, url, headers={
-                    'Authorization': 'Bearer {}'.format(self.store.slack_token)
-                })
+                functools.partial(requests.get, url, headers=headers)
             )
             file = tempfile.NamedTemporaryFile(delete=False)
             file.write(bytes.content)

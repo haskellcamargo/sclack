@@ -39,15 +39,27 @@ class Attachment(urwid.Pile):
         if not color:
             color = 'CCCCCC'
         color = '#{}'.format(shorten_hex(color))
+        self._image_index = 0
         if title:
             body.append(urwid.Text(('attachment_title', title)))
+            self._image_index = self._image_index + 1
         if pretext:
             body.append(urwid.Text(MarkdownText(pretext).markup))
+            self._image_index = self._image_index + 1
         if fields:
             body.append(Box(Fields(fields), color=color))
+            self._image_index = self._image_index + 1
         if footer:
             body.append(urwid.Text(MarkdownText(footer).markup))
         super(Attachment, self).__init__(body)
+
+    @property
+    def file(self):
+        return None
+
+    @file.setter
+    def file(self, image):
+        self.contents.insert(self._image_index, (image, ('pack', 1)))
 
 class Box(urwid.AttrWrap):
     def __init__(self, widget, color):
