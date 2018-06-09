@@ -80,16 +80,12 @@ class Attachment(Box):
         self.pile.contents.insert(self._image_index, (image, ('pack', 1)))
 
 class BreadCrumbs(urwid.Text):
-    def intersperse(self, iterable, delimiter):
-        it = iter(iterable)
-        yield next(it)
-        for elem in it:
-            yield delimiter
-            yield elem
-
     def __init__(self, elements=[]):
         separator = ('separator', ' {} '.format(options['icons']['divider']))
-        body = list(self.intersperse(elements, separator))
+        body = []
+        for element in elements:
+            body.append(element)
+            body.append(separator)
         super(BreadCrumbs, self).__init__([' '] + body)
 
 class Channel(urwid.AttrMap):
@@ -136,20 +132,45 @@ class ChannelHeader(urwid.Pile):
         else:
             date_divider = urwid.Divider('─')
 
-        body = [
+        self.original_topic = topic
+        self.topic_widget = ChannelTopic(topic)
+        body = urwid.Columns([
+            ('pack', BreadCrumbs([
+                star_icon,
+                '{} {}'.format(options['icons']['person'], num_members),
+                '{} {}'.format(options['icons']['pin'], pin_count)
+            ])),
+            urwid.AttrMap(self.topic_widget, None, 'edit_topic_focus')
+        ])
+        contents = [
             TextDivider(' {} {}'.format(
                 options['icons']['private_channel' if is_private else 'channel'],
                 name
             )),
-            BreadCrumbs([
-                star_icon,
-                '{} {}'.format(options['icons']['person'], num_members),
-                '{} {}'.format(options['icons']['pin'], pin_count),
-                topic
-            ]),
+            body,
             date_divider
         ]
-        super(ChannelHeader, self).__init__(body)
+        super(ChannelHeader, self).__init__(contents)
+
+    def restore_topic(self):
+        self.topic_widget.set_edit_text(self.original_topic)
+
+    def go_to_end_of_topic(self):
+        self.topic_widget.set_edit_pos(len(self.original_topic))
+
+class ChannelTopic(urwid.Edit):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['done']
+
+    def __init__(self, topic):
+        caption = '{} '.format(options['icons']['edit'])
+        super(ChannelTopic, self).__init__(caption, edit_text=topic)
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'done', self, self.get_edit_text())
+            return True
+        return super(ChannelTopic, self).keypress(size, key)
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
@@ -168,6 +189,7 @@ class ChatBox(urwid.Frame):
             urwid.emit_signal(self, 'set_insert_mode')
             return True
         elif key == 'esc':
+            self.header.restore_topic()
             urwid.emit_signal(self, 'go_to_sidebar')
             return True
         return super(ChatBox, self).keypress(size, key)

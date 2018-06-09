@@ -60,7 +60,8 @@ palette = [
     ('bold', '', '', '', 'bold,h254', 'h235'),
     ('code', '', '', '', 'h124', 'h252'),
     ('loading_message', '', '', '', 'white', 'h235'),
-    ('loading_active_block', '', '', '', 'h99', 'h235')
+    ('loading_active_block', '', '', '', 'h99', 'h235'),
+    ('edit_topic_focus', '', '', '', 'h27', 'h235')
 ]
 
 loop = asyncio.get_event_loop()
@@ -187,7 +188,7 @@ class App:
             self.columns.contents.append((profile, ('given', 35, False)))
 
     def render_chatbox_header(self):
-        return ChannelHeader(
+        header = ChannelHeader(
             name=self.store.state.channel['name'],
             topic=self.store.state.channel['topic']['value'],
             num_members=len(self.store.state.channel['members']),
@@ -195,6 +196,11 @@ class App:
             is_private=self.store.state.channel.get('is_group', False),
             is_starred=self.store.state.channel.get('is_starred', False)
         )
+        urwid.connect_signal(header.topic_widget, 'done', self.on_change_topic)
+        return header
+
+    def on_change_topic(self, widget, text):
+        print(text) # TODO: Change topic
 
     def render_messages(self, messages):
         _messages = []
@@ -343,6 +349,11 @@ class App:
         self.chatbox.focus_position = 'footer'
         self.message_box.focus_position = 1
 
+    def set_edit_topic_mode(self):
+        self.columns.focus_position = 1
+        self.chatbox.focus_position = 'header'
+        self.chatbox.header.go_to_end_of_topic()
+
     def go_to_chatbox(self):
         self.columns.focus_position = 1
         self.chatbox.focus_position = 'body'
@@ -355,13 +366,12 @@ class App:
     def unhandled_input(self, key):
         if key == 'c' and self.message_box:
             return self.go_to_chatbox()
-
-        if key == 'i' and self.message_box:
+        elif key == 'i' and self.message_box:
             return self.set_insert_mode()
-
+        elif key == 't' and self.message_box:
+            return self.set_edit_topic_mode()
         elif key == 'esc':
             return self.go_to_sidebar()
-
         elif key == 'q':
             raise urwid.ExitMainLoop
 
