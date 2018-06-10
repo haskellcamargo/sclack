@@ -199,8 +199,9 @@ class App:
         urwid.connect_signal(header.topic_widget, 'done', self.on_change_topic)
         return header
 
-    def on_change_topic(self, widget, text):
-        print(text) # TODO: Change topic
+    def on_change_topic(self, text):
+        self.chatbox.header.original_topic = text
+        self.go_to_sidebar()
 
     def render_messages(self, messages):
         _messages = []

@@ -168,7 +168,7 @@ class ChannelTopic(urwid.Edit):
 
     def keypress(self, size, key):
         if key == 'enter':
-            urwid.emit_signal(self, 'done', self, self.get_edit_text())
+            urwid.emit_signal(self, 'done', self.get_edit_text())
             return True
         return super(ChannelTopic, self).keypress(size, key)
 
