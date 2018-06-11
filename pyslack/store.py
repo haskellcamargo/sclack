@@ -96,3 +96,6 @@ class Store:
             if user.get('is_bot', False):
                 self._users_dict[user['profile']['bot_id']] = user
             self._users_dict[user['id']] = user
+
+    def set_topic(self, channel_id, topic):
+        return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)

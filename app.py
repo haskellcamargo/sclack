@@ -205,6 +205,7 @@ class App:
 
     def on_change_topic(self, text):
         self.chatbox.header.original_topic = text
+        self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
     def render_messages(self, messages):

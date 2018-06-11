@@ -2,7 +2,7 @@
 
 ## Monday
 - [X] Emoji
-- [ ] Edit topic
+- [X] Edit topic
 - [ ] Delete message
 - [ ] Header for direct message
 
