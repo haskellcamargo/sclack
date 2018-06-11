@@ -23,5 +23,6 @@
 - [ ] Navigate throught users and conversations I don't belong to.
 
 ## Friday
+- [ ] Customize themes
 - [ ] Publish on PIP
 - [ ] Update documentation and screenshots
