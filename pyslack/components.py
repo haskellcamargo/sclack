@@ -257,6 +257,17 @@ class Dm(urwid.AttrMap):
         body = urwid.SelectableIcon([' ', icon, ' ', name])
         super(Dm, self).__init__(body, None, 'active_channel')
 
+    def select(self):
+        self.is_selected = True
+        self.attr_map = {
+            None: 'selected_channel',
+            'presence_away': 'selected_channel'
+        }
+
+    def deselect(self):
+        self.is_selected = False
+        self.attr_map = {None: None}
+
 class Fields(urwid.Pile):
     def chunks(self, list, size):
         for i in range(0, len(list), size):
@@ -440,6 +451,7 @@ class SideBar(urwid.Frame):
 
     def __init__(self, profile, channels=[], dms=[], title=''):
         self.channels = channels
+        self.dms = dms
         header = TextDivider(title)
         footer = urwid.Divider('─')
         stack = [
@@ -459,6 +471,11 @@ class SideBar(urwid.Frame):
                 channel.select()
             else:
                 channel.deselect()
+        for dm in self.dms:
+            if dm.id == channel_id:
+                dm.select()
+            else:
+                dm.deselect()
 
     def keypress(self, size, key):
         if key == 'enter':
