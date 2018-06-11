@@ -272,8 +272,9 @@ class ChatBoxMessages(urwid.ListBox):
 
 class Dm(urwid.AttrMap):
     def __init__(self, name, user):
-        if len(name) > 21:
-            name = name[:18] + '...'
+        sidebar_width = Store.instance.config['sidebar']['width']
+        if len(name) > sidebar_width - 4:
+            name = name[:(sidebar_width - 7)] + '...'
         if user == 'USLACKBOT':
             icon = ('presence_active', options['icons']['heart'])
         else:

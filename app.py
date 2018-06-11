@@ -67,12 +67,13 @@ loop = asyncio.get_event_loop()
 class App:
     message_box = None
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
         self.columns = urwid.Columns([
-            ('fixed', 25, urwid.AttrWrap(sidebar, 'sidebar')),
+            ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
         ])
         self.urwid_loop = urwid.MainLoop(
@@ -83,8 +84,8 @@ class App:
         )
         self.configure_screen(self.urwid_loop.screen)
 
-    def start(self, slack_token, config):
-        self.store = Store(slack_token, config)
+    def start(self, slack_token):
+        self.store = Store(slack_token, self.config)
         Store.instance = self.store
         self._loading = True
         loop.create_task(self.animate_loading())
@@ -385,5 +386,5 @@ if __name__ == '__main__':
         json_config.update(json.load(config_file))
     with open(os.path.expanduser('~/.pyslack'), 'r') as user_file:
         json_config.update(json.load(user_file))
-    app = App()
-    app.start(json_config['workspaces'][0], json_config)
+    app = App(json_config)
+    app.start(json_config['workspaces'][0])
