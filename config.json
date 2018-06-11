@@ -12,6 +12,7 @@
         "width": 25
     },
     "features": {
+        "markdown": true,
         "pictures": true
     },
     "icons": {

@@ -9,7 +9,10 @@ class MarkdownText(urwid.SelectableIcon):
 
     def __init__(self, text):
         self.original_text = text
-        self.markup = self.parse_message(text)
+        if Store.instance.config['features']['markdown']:
+            self.markup = self.parse_message(text)
+        else:
+            self.markup = [('message', text)]
         super(MarkdownText, self).__init__(self.markup)
 
     def decode_buffer(self):
