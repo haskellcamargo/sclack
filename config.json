@@ -1,0 +1,11 @@
+{
+    "keymap": {
+        "go_to_chatbox": "c",
+        "go_to_profile": "p",
+        "go_to_sidebar": "esc",
+        "quit_application": "q",
+        "set_edit_topic_mode": "t",
+        "set_insert_mode": "i",
+        "yank_message": "y"
+    }
+}

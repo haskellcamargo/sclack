@@ -3,6 +3,7 @@ import pprint
 import pyperclip
 from datetime import datetime
 from .markdown import MarkdownText
+from .store import Store
 
 options = {
     'icons': {
@@ -185,12 +186,13 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
-        if key == 'i':
-            urwid.emit_signal(self, 'set_insert_mode')
-            return True
-        elif key == 'esc':
+        keymap = Store.instance.config['keymap']
+        if key == keymap['go_to_sidebar']:
             self.header.restore_topic()
             urwid.emit_signal(self, 'go_to_sidebar')
+            return True
+        elif key == keymap['set_insert_mode']:
+            urwid.emit_signal(self, 'set_insert_mode')
             return True
         return super(ChatBox, self).keypress(size, key)
 
@@ -340,11 +342,12 @@ class Message(urwid.AttrMap):
         super(Message, self).__init__(self.contents, None, 'active_message')
 
     def keypress(self, size, key):
-        if key == 'y':
-            pyperclip.copy(self.original_text)
-            return True
-        elif key == 'p':
+        keymap = Store.instance.config['keymap']
+        if key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
+            return True
+        elif key == keymap['yank_message']:
+            pyperclip.copy(self.original_text)
             return True
         return super(Message, self).keypress(size, key)
 

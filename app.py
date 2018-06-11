@@ -6,12 +6,10 @@ import json
 import os
 import requests
 import subprocess
-import sys
 import tempfile
 import urwid
 from datetime import datetime
 from slackclient import SlackClient
-from pyslack import config
 from pyslack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from pyslack.components import Indicators, MarkdownText
 from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
@@ -69,7 +67,7 @@ loop = asyncio.get_event_loop()
 class App:
     message_box = None
 
-    def __init__(self, service_path, slack_token):
+    def __init__(self):
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
@@ -85,8 +83,8 @@ class App:
         )
         self.configure_screen(self.urwid_loop.screen)
 
-    def start(self):
-        self.store = Store(slack_token)
+    def start(self, slack_token, config):
+        self.store = Store(slack_token, config)
         Store.instance = self.store
         self._loading = True
         loop.create_task(self.animate_loading())
@@ -365,23 +363,27 @@ class App:
         self.columns.focus_position = 0
 
     def unhandled_input(self, key):
-        if key == 'c' and self.message_box:
+        keymap = self.store.config['keymap']
+        if key == keymap['go_to_chatbox'] and self.message_box:
             return self.go_to_chatbox()
-        elif key == 'i' and self.message_box:
-            return self.set_insert_mode()
-        elif key == 't' and self.message_box:
-            return self.set_edit_topic_mode()
-        elif key == 'esc':
+        elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
-        elif key == 'q':
+        elif key == keymap['quit_application']:
             raise urwid.ExitMainLoop
+        elif key == keymap['set_edit_topic_mode'] and self.message_box:
+            return self.set_edit_topic_mode()
+        elif key == keymap['set_insert_mode'] and self.message_box:
+            return self.set_insert_mode()
 
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=256)
         screen.set_mouse_tracking()
 
 if __name__ == '__main__':
-    slack_token = config.get_pyslack_config().get('DEFAULT', 'Token')
-    service_path = os.path.join(os.path.dirname(sys.argv[0]), 'service.py')
-    app = App(service_path, slack_token)
-    app.start()
+    json_config = {}
+    with open('./config.json', 'r') as config_file:
+        json_config.update(json.load(config_file))
+    with open(os.path.expanduser('~/.pyslack'), 'r') as user_file:
+        json_config.update(json.load(user_file))
+    app = App()
+    app.start(json_config['workspaces'][0], json_config)
