@@ -8,6 +8,11 @@
 
 `pip install pyslack`
 
+## Setup
+
+The first thing you need to do is getting a [legacy Slack token here](https://api.slack.com/custom-integrations/legacy-tokens).
+Use, create or request a token for each workspace that you'll use on PySlack. Not all workspaces allow you to generate a token, so sometimes you'll need to ask for the administrator to enable the feature.
+
 ## Features
 
 - :heavy_check_mark: Multiple workspaces
