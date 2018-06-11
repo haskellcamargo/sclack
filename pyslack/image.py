@@ -55,11 +55,18 @@ def img_to_ansi(path, width, height):
         command.extend(['-W', str(width)])
     if height:
         command.extend(['-H', str(height)])
-    ansi_text = subprocess.check_output(command)
+    try:
+        ansi_text = subprocess.check_output(command)
+    except:
+        ansi_text = None
     return ansi_text
 
 class Image(urwid.Text):
     def __init__(self, path, width=None, height=None):
-        self.markup = ansi_to_urwid(img_to_ansi(path, width, height))
+        ansi_text = img_to_ansi(path, width, height)
+        if ansi_text:
+            self.markup = ansi_to_urwid(ansi_text)
+        else:
+            self.markup = ['']
         super(Image, self).__init__(self.markup)
 
