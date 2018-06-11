@@ -183,7 +183,8 @@ class App:
                 user['profile'].get('email', None),
                 user['profile'].get('skype', None)
             )
-            loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
+            if self.config['features']['pictures']:
+                loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
 
     def render_chatbox_header(self):
@@ -263,7 +264,7 @@ class App:
                     footer=attachment.get('footer')
                 )
                 image_url = attachment.get('image_url')
-                if image_url:
+                if image_url and self.config['features']['pictures']:
                     loop.create_task(self.load_picture_async(
                         image_url,
                         attachment.get('image_width', 500),
@@ -279,7 +280,8 @@ class App:
                 attachments=attachments,
                 reactions=reactions
             )
-            if file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png'):
+            if (file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png')
+                and self.config['features']['pictures']):
                 loop.create_task(self.load_picture_async(
                     file['url_private'],
                     file.get('original_w', 500),

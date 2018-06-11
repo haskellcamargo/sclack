@@ -10,5 +10,8 @@
     },
     "sidebar": {
         "width": 25
+    },
+    "features": {
+        "pictures": true
     }
 }
