@@ -1,4 +1,5 @@
 {
+    "colors": 256,
     "keymap": {
         "go_to_chatbox": "c",
         "go_to_profile": "p",

@@ -379,7 +379,7 @@ class App:
             return self.set_insert_mode()
 
     def configure_screen(self, screen):
-        screen.set_terminal_properties(colors=256)
+        screen.set_terminal_properties(colors=self.store.config['colors'])
         screen.set_mouse_tracking()
 
 if __name__ == '__main__':
