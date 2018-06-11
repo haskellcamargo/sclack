@@ -13,6 +13,7 @@
         "width": 25
     },
     "features": {
+        "emoji": true,
         "markdown": true,
         "pictures": true
     },

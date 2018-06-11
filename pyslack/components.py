@@ -2,6 +2,7 @@ import urwid
 import pprint
 import pyperclip
 from datetime import datetime
+from .emoji import emoji_codemap
 from .markdown import MarkdownText
 from .store import Store
 
@@ -442,7 +443,8 @@ class ProfileSideBar(urwid.AttrWrap):
 
 class Reaction(urwid.Text):
     def __init__(self, name, count=0):
-        text = '[:{}: {}]'.format(name, count)
+        name = emoji_codemap.get(name, name)
+        text = '[{} {}]'.format(name, count)
         super(Reaction, self).__init__(('reaction', text))
 
 class SideBar(urwid.Frame):

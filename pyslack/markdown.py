@@ -1,5 +1,7 @@
+import re
 import urwid
 from .store import Store
+from .emoji import emoji_codemap
 
 class MarkdownText(urwid.SelectableIcon):
     _buffer = ''
@@ -38,7 +40,11 @@ class MarkdownText(urwid.SelectableIcon):
         self._state = 'message'
         self._previous_state = 'message'
         self._result = []
+        def render_emoji(result):
+            return emoji_codemap.get(result.group(1), result.group(0))
 
+        if Store.instance.config['features']['emoji']:
+            text = re.sub(r':([a-zA-Z][a-zA-Z0-9_-]*):', render_emoji, text)
         text = text.replace('```', '`')
         for char in text:
             if char == '<' and self._state != 'code':
@@ -54,7 +60,7 @@ class MarkdownText(urwid.SelectableIcon):
                 self.change_state(self._state, 'bold')
             elif char == '_' and self._state == 'italics':
                 self.change_state('italics', self._previous_state)
-            elif char == '_' and self._state not in ('link', 'code'):
+            elif char == '_' and self._state not in ('link', 'code', 'emoji'):
                 self.change_state(self._state, 'italics')
             elif char == '`' and self._state == 'code':
                 self.change_state('code', self._previous_state)
