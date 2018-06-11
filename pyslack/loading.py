@@ -1,9 +1,9 @@
 import urwid
-from .components import TextDivider, options
+from .components import TextDivider, get_icon
 
 def placeholder(size=10, left=0):
     return ((' ' * left)[:left] +
-        (options['icons']['square'] * size)[:size])
+        (get_icon('square') * size)[:size])
 
 class CircularLoading(urwid.Pile):
     _matrix = [

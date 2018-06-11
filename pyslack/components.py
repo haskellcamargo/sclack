@@ -5,41 +5,15 @@ from datetime import datetime
 from .markdown import MarkdownText
 from .store import Store
 
-options = {
-    'icons': {
-        'block': '\u258C',
-        'block_bottom': '\u2598',
-        'block_top': '\u2596',
-        'channel': '\uF198',
-        'divider': '\uE0B1',
-        'edit': '\uF040',
-        'email': '\uF42F',
-        'full_divider': '\uE0C6',
-        'full_star': '\uF005',
-        'heart': '\uF004',
-        'keyboard': '\uF11C',
-        'line_star': '\uF006',
-        'offline': '\uF10C',
-        'online': '\uF111',
-        'person': '\uF415',
-        'phone': '\uF095',
-        'pin': '\uF435',
-        'private_channel': '\uF023',
-        'skype': '\uF17E',
-        'square': '\uF445',
-        'status': '\uF075',
-        'timezone': '\uF0AC',
-        'triangle_left': '\uE0BA',
-        'triangle_right': '\uE0B8'
-    }
-}
+def get_icon(name):
+    return Store.instance.config['icons'][name]
 
 class Box(urwid.AttrWrap):
     def __init__(self, widget, color):
         body = urwid.LineBox(widget,
-            lline=options['icons']['block'],
-            tlcorner=options['icons']['block_top'],
-            blcorner=options['icons']['block_bottom'],
+            lline=get_icon('block'),
+            tlcorner=get_icon('block_top'),
+            blcorner=get_icon('block_bottom'),
             tline='', trcorner='', rline='', bline='', brcorner='.')
         super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
 
@@ -82,7 +56,7 @@ class Attachment(Box):
 
 class BreadCrumbs(urwid.Text):
     def __init__(self, elements=[]):
-        separator = ('separator', ' {} '.format(options['icons']['divider']))
+        separator = ('separator', ' {} '.format(get_icon('divider')))
         body = []
         for element in elements:
             body.append(element)
@@ -95,7 +69,7 @@ class Channel(urwid.AttrMap):
         self.name = name
         self.is_private = is_private
         body = urwid.SelectableIcon(' {} {}'.format(
-            options['icons']['private_channel' if is_private else 'channel'],
+            get_icon('private_channel' if is_private else 'channel'),
             name
         ))
         attr_map = None
@@ -123,9 +97,9 @@ class ChannelHeader(urwid.Pile):
     def __init__(self, name, topic, date=None, num_members=0, is_private=False,
         pin_count=0, is_starred=False):
         if is_starred:
-            star_icon = ('starred', options['icons']['full_star'])
+            star_icon = ('starred', get_icon('full_star'))
         else:
-            star_icon = options['icons']['line_star']
+            star_icon = get_icon('line_star')
 
         # Fixed date divider
         if date:
@@ -138,14 +112,14 @@ class ChannelHeader(urwid.Pile):
         body = urwid.Columns([
             ('pack', BreadCrumbs([
                 star_icon,
-                '{} {}'.format(options['icons']['person'], num_members),
-                '{} {}'.format(options['icons']['pin'], pin_count)
+                '{} {}'.format(get_icon('person'), num_members),
+                '{} {}'.format(get_icon('pin'), pin_count)
             ])),
             urwid.AttrMap(self.topic_widget, None, 'edit_topic_focus')
         ])
         contents = [
             TextDivider(' {} {}'.format(
-                options['icons']['private_channel' if is_private else 'channel'],
+                get_icon('private_channel' if is_private else 'channel'),
                 name
             )),
             body,
@@ -164,7 +138,7 @@ class ChannelTopic(urwid.Edit):
     signals = ['done']
 
     def __init__(self, topic):
-        caption = '{} '.format(options['icons']['edit'])
+        caption = '{} '.format(get_icon('edit'))
         super(ChannelTopic, self).__init__(caption, edit_text=topic)
 
     def keypress(self, size, key):
@@ -276,9 +250,9 @@ class Dm(urwid.AttrMap):
         if len(name) > sidebar_width - 4:
             name = name[:(sidebar_width - 7)] + '...'
         if user == 'USLACKBOT':
-            icon = ('presence_active', options['icons']['heart'])
+            icon = ('presence_active', get_icon('heart'))
         else:
-            icon = ('presence_away', options['icons']['offline'])
+            icon = ('presence_away', get_icon('offline'))
         body = urwid.SelectableIcon([' ', icon, ' ', name])
         super(Dm, self).__init__(body, None, 'active_channel')
 
@@ -310,11 +284,11 @@ class Indicators(urwid.Columns):
         indicators = []
         self.size = 0
         if is_edited:
-            edited_text = urwid.Text(('edited', ' {} '.format(options['icons']['edit'])))
+            edited_text = urwid.Text(('edited', ' {} '.format(get_icon('edit'))))
             indicators.append(edited_text)
             self.size = self.size + 3
         if is_starred:
-            starred_text = urwid.Text(('starred', ' {} '.format(options['icons']['full_star'])))
+            starred_text = urwid.Text(('starred', ' {} '.format(get_icon('full_star'))))
             indicators.append(starred_text)
             self.size = self.size + 3
         super(Indicators, self).__init__(indicators)
@@ -368,13 +342,13 @@ class MessageBox(urwid.AttrMap):
         self.read_only_widget = urwid.Text('You have no power here!', align='center')
         if typing != None:
             top_separator = TextDivider(('is_typing', '{} {} is typing...'.format(
-                options['icons']['keyboard'],
+                get_icon('keyboard'),
                 typing
             )))
         else:
             top_separator = urwid.Divider('─')
         self.prompt_widget = urwid.Edit(('prompt', [
-            ' ', user, ' ', ('prompt_arrow', options['icons']['full_divider'] + ' ')
+            ' ', user, ' ', ('prompt_arrow', get_icon('full_divider') + ' ')
         ]))
         middle = urwid.WidgetPlaceholder(self.read_only_widget if is_read_only else self.prompt_widget)
         self.body = urwid.Pile([
@@ -409,9 +383,9 @@ class MessageBox(urwid.AttrMap):
 class Profile(urwid.Text):
     def __init__(self, name, is_online=False):
         if is_online:
-            presence_icon = ('presence_active', ' {} '.format(options['icons']['online']))
+            presence_icon = ('presence_active', ' {} '.format(get_icon('online')))
         else:
-            presence_icon = ('presence_away', ' {} '.format(options['icons']['offline']))
+            presence_icon = ('presence_away', ' {} '.format(get_icon('offline')))
         body = [presence_icon, name]
         super(Profile, self).__init__(body)
 
@@ -419,7 +393,7 @@ class ProfileSideBar(urwid.AttrWrap):
     def format_row(self, icon, text):
         return urwid.Text([
             ' ',
-            ('profile_icon', options['icons'][icon]),
+            ('profile_icon', get_icon(icon)),
             ' ',
             text
         ])
@@ -543,7 +517,7 @@ class TriangleDivider(urwid.Text):
         text = []
         for index in range(0, maxcol):
             triangle = 'triangle_left' if index % 2 == 0 else 'triangle_right'
-            text.append(('triangle_divider', options['icons'][triangle]))
+            text.append(('triangle_divider', get_icon(triangle)))
         self.set_text(text)
         return super(TriangleDivider, self).render(size, focus)
 
@@ -562,7 +536,7 @@ class User(urwid.Text):
         color='#{}'.format(shorten_hex(color))
         markup = [
             (urwid.AttrSpec('white', color), ' {} '.format(name)),
-            (urwid.AttrSpec(color, 'h235'), options['icons']['full_divider']),
+            (urwid.AttrSpec(color, 'h235'), get_icon('full_divider')),
             ' '
         ]
         if is_app:

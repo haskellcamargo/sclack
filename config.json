@@ -13,5 +13,31 @@
     },
     "features": {
         "pictures": true
+    },
+    "icons": {
+        "block": "\u258C",
+        "block_bottom": "\u2598",
+        "block_top": "\u2596",
+        "channel": "\uF198",
+        "divider": "\uE0B1",
+        "edit": "\uF040",
+        "email": "\uF42F",
+        "full_divider": "\uE0C6",
+        "full_star": "\uF005",
+        "heart": "\uF004",
+        "keyboard": "\uF11C",
+        "line_star": "\uF006",
+        "offline": "\uF10C",
+        "online": "\uF111",
+        "person": "\uF415",
+        "phone": "\uF095",
+        "pin": "\uF435",
+        "private_channel": "\uF023",
+        "skype": "\uF17E",
+        "square": "\uF445",
+        "status": "\uF075",
+        "timezone": "\uF0AC",
+        "triangle_left": "\uE0BA",
+        "triangle_right": "\uE0B8"
     }
 }

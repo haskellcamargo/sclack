@@ -69,6 +69,8 @@ class App:
 
     def __init__(self, config):
         self.config = config
+        self.store = Store(config['workspaces'][0], self.config)
+        Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
@@ -84,9 +86,7 @@ class App:
         )
         self.configure_screen(self.urwid_loop.screen)
 
-    def start(self, slack_token):
-        self.store = Store(slack_token, self.config)
-        Store.instance = self.store
+    def start(self):
         self._loading = True
         loop.create_task(self.animate_loading())
         loop.create_task(self.component_did_mount())
@@ -389,4 +389,4 @@ if __name__ == '__main__':
     with open(os.path.expanduser('~/.pyslack'), 'r') as user_file:
         json_config.update(json.load(user_file))
     app = App(json_config)
-    app.start(json_config['workspaces'][0])
+    app.start()
