@@ -1,6 +1,7 @@
 # MVP
 
 - [X] Emoji
+- [ ] Shorten direct messages
 - [ ] User presence
 - [ ] Load more on up
 - [ ] Header for direct message
@@ -12,3 +13,4 @@
 - [ ] Share message
 - [ ] Unread messages indicator
 - [ ] Post message
+- [ ] Navigate throught users and conversations I don't belong to
