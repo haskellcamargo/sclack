@@ -245,7 +245,8 @@ class ChatBoxMessages(urwid.ListBox):
         urwid.emit_signal(self, 'set_date', text_divider)
 
 class Dm(urwid.AttrMap):
-    def __init__(self, name, user):
+    def __init__(self, id, name, user):
+        self.id = id
         sidebar_width = Store.instance.config['sidebar']['width']
         if len(name) > sidebar_width - 4:
             name = name[:(sidebar_width - 7)] + '...'

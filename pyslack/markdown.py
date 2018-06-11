@@ -41,7 +41,7 @@ class MarkdownText(urwid.SelectableIcon):
 
         text = text.replace('```', '`')
         for char in text:
-            if char == '<':
+            if char == '<' and self._state != 'code':
                 self.change_state('message', 'link')
             elif char == '>' and self._state == 'link':
                 self.resolve_mention()

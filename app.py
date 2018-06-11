@@ -143,7 +143,11 @@ class App:
         for dm in self.store.state.dms:
             user = self.store.find_user_by_id(dm['user'])
             if user:
-                dms.append(Dm(name=user.get('real_name', user['name']), user=dm['user']))
+                dms.append(Dm(
+                    dm['id'],
+                    name=user.get('real_name', user['name']),
+                    user=dm['user']
+                ))
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
 
