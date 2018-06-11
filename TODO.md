@@ -4,12 +4,12 @@
 - [X] Emoji
 - [X] Edit topic
 - [X] Delete message
+- [X] Shorten direct messages
 
 ## Tuesday
 - [ ] Edit message
 - [ ] Share message
 - [ ] Header for direct message
-- [ ] Shorten direct messages
 - [ ] Group messages
 
 ## Wednesday

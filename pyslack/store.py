@@ -77,7 +77,7 @@ class Store:
             elif channel.get('is_group', False):
                 self.state.channels.append(channel)
             # Direct message
-            elif channel.get('is_im', False):
+            elif channel.get('is_im', False) and not channel.get('is_user_deleted', False):
                 self.state.dms.append(channel)
         self.state.channels.sort(key=lambda channel: channel['name'])
         self.state.dms.sort(key=lambda dm: dm['created'])

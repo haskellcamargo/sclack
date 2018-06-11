@@ -140,7 +140,7 @@ class App:
             for channel in self.store.state.channels
         ]
         dms = []
-        for dm in self.store.state.dms:
+        for dm in self.store.state.dms[:15]:
             user = self.store.find_user_by_id(dm['user'])
             if user:
                 dms.append(Dm(
