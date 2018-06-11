@@ -523,6 +523,9 @@ class TriangleDivider(urwid.Text):
         return super(TriangleDivider, self).render(size, focus)
 
 def shorten_hex(color):
+    if color.startswith('#'):
+        color = color[1:]
+
     return '{}{}{}'.format(
         hex(round(int(color[:2], 16) / 17))[-1],
         hex(round(int(color[2:4], 16) / 17))[-1],
