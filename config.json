@@ -1,6 +1,7 @@
 {
     "colors": 256,
     "keymap": {
+        "delete_message": "d",
         "go_to_chatbox": "c",
         "go_to_profile": "p",
         "go_to_sidebar": "esc",

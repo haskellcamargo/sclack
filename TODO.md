@@ -3,12 +3,12 @@
 ## Monday
 - [X] Emoji
 - [X] Edit topic
-- [ ] Delete message
-- [ ] Header for direct message
+- [X] Delete message
 
 ## Tuesday
 - [ ] Edit message
 - [ ] Share message
+- [ ] Header for direct message
 - [ ] Shorten direct messages
 - [ ] Group messages
 

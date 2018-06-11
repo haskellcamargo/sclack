@@ -14,7 +14,7 @@ from pyslack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from pyslack.components import Indicators, MarkdownText
 from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
 from pyslack.components import Reaction, SideBar, TextDivider
-from pyslack.components import Time, User
+from pyslack.components import User
 from pyslack.image import Image
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
@@ -169,6 +169,11 @@ class App:
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
 
+    def delete_message(self, widget, user_id, ts):
+        if self.store.state.auth['user_id'] == user_id:
+            if self.store.delete_message(self.store.state.channel['id'], ts)['ok']:
+                self.chatbox.body.body.remove(widget)
+
     def go_to_profile(self, user_id):
         if len(self.columns.contents) > 2:
             self.columns.contents.pop()
@@ -247,7 +252,6 @@ class App:
                 user_name = user['profile']['display_name'] or user.get('name')
                 color = user.get('color')
 
-            time = Time(message['ts'])
             user = User(user_id, user_name, color, is_app)
             text = MarkdownText(message['text'])
             indicators = Indicators('edited' in message, message.get('is_starred', False))
@@ -278,7 +282,7 @@ class App:
                     ))
                 attachments.append(attachment_widget)
             message = Message(
-                time,
+                message['ts'],
                 user,
                 text,
                 indicators,
@@ -293,6 +297,7 @@ class App:
                     message
                 ))
             urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
+            urwid.connect_signal(message, 'delete_message', self.delete_message)
             _messages.append(message)
         return _messages
 

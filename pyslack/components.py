@@ -308,9 +308,10 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
-    signals = ['go_to_profile']
+    signals = ['delete_message', 'go_to_profile']
 
-    def __init__(self, time, user, text, indicators, reactions=[], attachments=[]):
+    def __init__(self, ts, user, text, indicators, reactions=[], attachments=[]):
+        self.ts = ts
         self.user_id = user.id
         self.original_text = text.original_text
         main_column = [urwid.Columns([('pack', user), text])]
@@ -322,7 +323,7 @@ class Message(urwid.AttrMap):
             ]))
         self.main_column = urwid.Pile(main_column)
         columns = [
-            ('fixed', 8, time),
+            ('fixed', 8, Time(ts)),
             self.main_column,
             ('fixed', indicators.size, indicators)
         ]
@@ -331,7 +332,10 @@ class Message(urwid.AttrMap):
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
-        if key == keymap['go_to_profile']:
+        if key == keymap['delete_message']:
+            urwid.emit_signal(self, 'delete_message', self, self.user_id, self.ts)
+            return True
+        elif key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
             return True
         elif key == keymap['yank_message']:

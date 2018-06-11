@@ -99,3 +99,11 @@ class Store:
 
     def set_topic(self, channel_id, topic):
         return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)
+
+    def delete_message(self, channel_id, ts):
+        return self.slack.api_call(
+            'chat.delete',
+            channel=channel_id,
+            ts=ts,
+            as_user=True
+        )
