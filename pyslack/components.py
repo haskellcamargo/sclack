@@ -248,15 +248,26 @@ class ChatBoxMessages(urwid.ListBox):
 class Dm(urwid.AttrMap):
     def __init__(self, id, name, user):
         self.id = id
-        sidebar_width = Store.instance.config['sidebar']['width']
-        if len(name) > sidebar_width - 4:
-            name = name[:(sidebar_width - 7)] + '...'
-        if user == 'USLACKBOT':
+        self.user = user
+        self.name = name
+        body = urwid.SelectableIcon(self.get_markup())
+        super(Dm, self).__init__(body, None, 'active_channel')
+
+    def get_markup(self, presence='away'):
+        if self.user == 'USLACKBOT':
             icon = ('presence_active', get_icon('heart'))
+        elif presence == 'active':
+            icon = ('presence_active', get_icon('online'))
         else:
             icon = ('presence_away', get_icon('offline'))
-        body = urwid.SelectableIcon([' ', icon, ' ', name])
-        super(Dm, self).__init__(body, None, 'active_channel')
+        sidebar_width = Store.instance.config['sidebar']['width']
+        name = self.name
+        if len(self.name) > sidebar_width - 4:
+            name = self.name[:(sidebar_width - 7)] + '...'
+        return [' ', icon, ' ', name]
+
+    def set_presence(self, presence):
+        self.original_widget.set_text(self.get_markup(presence))
 
     def select(self):
         self.is_selected = True

@@ -107,3 +107,6 @@ class Store:
             ts=ts,
             as_user=True
         )
+
+    def get_presence(self, user_id):
+        return self.slack.api_call('users.getPresence', user=user_id)

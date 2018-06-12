@@ -150,6 +150,22 @@ class App:
                 ))
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
+        loop.create_task(self.get_presences(executor, dms))
+
+    @asyncio.coroutine
+    def get_presences(self, executor, dm_widgets):
+        def get_presence(dm_widget):
+            # Compute and return presence because updating UI from another thread is unsafe
+            presence = self.store.get_presence(dm_widget.user)
+            return [dm_widget, presence]
+        presences = yield from asyncio.gather(*[
+            loop.run_in_executor(executor, get_presence, dm_widget)
+            for dm_widget in dm_widgets
+        ])
+        for presence in presences:
+            [widget, response] = presence
+            if response['ok']:
+                widget.set_presence(response['presence'])
 
     @asyncio.coroutine
     def mount_chatbox(self, executor, channel):
