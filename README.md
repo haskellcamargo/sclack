@@ -4,6 +4,8 @@
 
 > The best CLI client for Slack, because everything is terrible!
 
+![PySlack](./resources/example.png)
+
 ## Installation
 
 `pip install pyslack`
