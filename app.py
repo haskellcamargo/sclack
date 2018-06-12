@@ -145,6 +145,17 @@ class App:
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
 
+    def edit_message(self, widget, user_id, ts, original_text):
+        is_logged_user = self.store.state.auth['user_id'] == user_id
+        current_date = datetime.today()
+        message_date = datetime.fromtimestamp(float(ts))
+        # Only messages sent in the last 5 minutes can be edited
+        if is_logged_user and (current_date - message_date).total_seconds() < 60 * 5:
+            self.store.state.is_editing = True
+            self.set_insert_mode()
+            self.chatbox.message_box.text = original_text
+            widget.set_edit_mode()
+
     def delete_message(self, widget, user_id, ts):
         if self.store.state.auth['user_id'] == user_id:
             if self.store.delete_message(self.store.state.channel['id'], ts)['ok']:
@@ -272,6 +283,7 @@ class App:
                     file.get('original_w', 500),
                     message
                 ))
+            urwid.connect_signal(message, 'edit_message', self.edit_message)
             urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
             urwid.connect_signal(message, 'delete_message', self.delete_message)
             _messages.append(message)

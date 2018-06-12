@@ -33,7 +33,8 @@ themes = {
         ('code', '', '', '', 'h124', 'h252'),
         ('loading_message', '', '', '', 'white', 'h235'),
         ('loading_active_block', '', '', '', 'h99', 'h235'),
-        ('edit_topic_focus', '', '', '', 'h27', 'h235')
+        ('edit_topic_focus', '', '', '', 'h27', 'h235'),
+        ('editing_message', '', '', '', 'black', 'h178')
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),
@@ -69,6 +70,7 @@ themes = {
         ('code', '', '', '', 'h124', 'h252'),
         ('loading_message', '', '', '', 'black', 'h254'),
         ('loading_active_block', '', '', '', 'h99', 'h254'),
-        ('edit_topic_focus', '', '', '', 'h27', 'h254')
+        ('edit_topic_focus', '', '', '', 'h27', 'h254'),
+        ('editing_message', '', '', '', 'black', 'h178')
     ]
 }

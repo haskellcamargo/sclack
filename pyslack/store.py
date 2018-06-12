@@ -12,6 +12,7 @@ class State:
         self.is_limited = False
         self.profile_user_id = None
         self.bots = {}
+        self.is_editing = False
 
 class Cache:
     def __init__(self):

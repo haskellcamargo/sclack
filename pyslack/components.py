@@ -363,6 +363,12 @@ class Message(urwid.AttrMap):
             return True
         return super(Message, self).keypress(size, key)
 
+    def set_edit_mode(self):
+        self.set_attr_map({
+            None: 'editing_message',
+            'message': 'editing_message'
+        })
+
     def selectable(self):
         return True
 
@@ -411,6 +417,15 @@ class MessageBox(urwid.AttrMap):
     @focus_position.setter
     def focus_position(self, focus_position):
         self.body.focus_position = focus_position
+
+    @property
+    def text(self):
+        return None
+
+    @text.setter
+    def text(self, text):
+        self.prompt_widget.set_edit_text(text)
+        self.prompt_widget.set_edit_pos(len(text))
 
 class Profile(urwid.Text):
     def __init__(self, name, is_online=False):
