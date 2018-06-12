@@ -9,6 +9,8 @@
 - [X] Customize themes
 
 ## Tuesday
+- [X] Simplify user naming
+- [X] Show "you" on your own direct message
 - [ ] Edit message
 - [ ] Share message
 - [ ] Header for direct message

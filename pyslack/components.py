@@ -246,10 +246,11 @@ class ChatBoxMessages(urwid.ListBox):
         urwid.emit_signal(self, 'set_date', text_divider)
 
 class Dm(urwid.AttrMap):
-    def __init__(self, id, name, user):
+    def __init__(self, id, name, user, you=False):
         self.id = id
         self.user = user
         self.name = name
+        self.you = you
         body = urwid.SelectableIcon(self.get_markup())
         super(Dm, self).__init__(body, None, 'active_channel')
 
@@ -262,6 +263,8 @@ class Dm(urwid.AttrMap):
             icon = ('presence_away', get_icon('offline'))
         sidebar_width = Store.instance.config['sidebar']['width']
         name = self.name
+        if self.you:
+            self.name = self.name + ' (you)'
         if len(self.name) > sidebar_width - 4:
             name = self.name[:(sidebar_width - 7)] + '...'
         return [' ', icon, ' ', name]
