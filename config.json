@@ -1,6 +1,6 @@
 {
     "colors": 256,
-    "theme": "light",
+    "theme": "default",
     "keymap": {
         "delete_message": "d",
         "go_to_chatbox": "c",
