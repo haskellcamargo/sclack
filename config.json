@@ -3,6 +3,7 @@
     "theme": "default",
     "keymap": {
         "delete_message": "d",
+        "edit_message": "e",
         "go_to_chatbox": "c",
         "go_to_profile": "p",
         "go_to_sidebar": "esc",
@@ -27,7 +28,6 @@
         "divider": "\uE0B1",
         "edit": "\uF040",
         "email": "\uF42F",
-        "full_divider": "\uE0C6",
         "full_star": "\uF005",
         "heart": "\uF004",
         "keyboard": "\uF11C",

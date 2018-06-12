@@ -101,11 +101,15 @@ class Store:
         return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)
 
     def delete_message(self, channel_id, ts):
+        return self.slack.api_call('chat.delete', channel=channel_id, ts=ts, as_user=True)
+
+    def edit_message(self, channel_id, ts, text):
         return self.slack.api_call(
-            'chat.delete',
+            'chat.update',
             channel=channel_id,
             ts=ts,
-            as_user=True
+            as_user=True,
+            link_names=True
         )
 
     def get_presence(self, user_id):

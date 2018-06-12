@@ -319,7 +319,7 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
-    signals = ['delete_message', 'go_to_profile']
+    signals = ['delete_message', 'edit_message', 'go_to_profile']
 
     def __init__(self, ts, user, text, indicators, reactions=[], attachments=[]):
         self.ts = ts
@@ -339,12 +339,18 @@ class Message(urwid.AttrMap):
             ('fixed', indicators.size, indicators)
         ]
         self.contents = urwid.Columns(columns)
-        super(Message, self).__init__(self.contents, None, 'active_message')
+        super(Message, self).__init__(self.contents, None, {
+            None: 'active_message',
+            'message': 'active_message'
+        })
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
         if key == keymap['delete_message']:
             urwid.emit_signal(self, 'delete_message', self, self.user_id, self.ts)
+            return True
+        elif key == keymap['edit_message']:
+            urwid.emit_signal(self, 'edit_message', self, self.user_id, self.ts, self.original_text)
             return True
         elif key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
@@ -375,19 +381,14 @@ class MessageBox(urwid.AttrMap):
             )))
         else:
             top_separator = urwid.Divider('─')
-        self.prompt_widget = urwid.Edit(('prompt', [
-            ' ', user, ' ', ('prompt_arrow', get_icon('full_divider') + ' ')
-        ]))
+        self.prompt_widget = urwid.Edit([('prompt', ' {}'.format(user)), ' '])
         middle = urwid.WidgetPlaceholder(self.read_only_widget if is_read_only else self.prompt_widget)
         self.body = urwid.Pile([
             top_separator,
             middle,
             urwid.Divider('─')
         ])
-        super(MessageBox, self).__init__(self.body, None, {
-            'prompt': 'active_prompt',
-            'prompt_arrow': 'active_prompt_arrow'
-        })
+        super(MessageBox, self).__init__(self.body, None, {'prompt': 'active_prompt'})
 
     @property
     def is_read_only(self):
@@ -559,9 +560,7 @@ class User(urwid.Text):
             color = '333333'
         color='#{}'.format(shorten_hex(color))
         markup = [
-            (urwid.AttrSpec('white', color), ' {} '.format(name)),
-            (urwid.AttrSpec(color, 'h235'), get_icon('full_divider')),
-            ' '
+            (urwid.AttrSpec(color, 'h235'), ' {} '.format(name))
         ]
         if is_app:
             markup.append(('app_badge', '[APP]'))
