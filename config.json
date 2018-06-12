@@ -1,5 +1,6 @@
 {
     "colors": 256,
+    "theme": "light",
     "keymap": {
         "delete_message": "d",
         "go_to_chatbox": "c",
@@ -40,8 +41,6 @@
         "skype": "\uF17E",
         "square": "\uF445",
         "status": "\uF075",
-        "timezone": "\uF0AC",
-        "triangle_left": "\uE0BA",
-        "triangle_right": "\uE0B8"
+        "timezone": "\uF0AC"
     }
 }

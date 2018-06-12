@@ -6,6 +6,7 @@
 - [X] Delete message
 - [X] Shorten direct messages
 - [X] User presence
+- [X] Customize themes
 
 ## Tuesday
 - [ ] Edit message
@@ -21,6 +22,5 @@
 - [ ] Navigate throught users and conversations I don't belong to.
 
 ## Thursday
-- [ ] Customize themes
 - [ ] Publish on PIP
 - [ ] Update documentation and screenshots

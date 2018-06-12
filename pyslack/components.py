@@ -15,7 +15,7 @@ class Box(urwid.AttrWrap):
             lline=get_icon('block'),
             tlcorner=get_icon('block_top'),
             blcorner=get_icon('block_bottom'),
-            tline='', trcorner='', rline='', bline='', brcorner='.')
+            tline='', trcorner='', rline='', bline='', brcorner='')
         super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
 
 class Attachment(Box):
@@ -541,20 +541,6 @@ class Time(urwid.Text):
     def __init__(self, timestamp):
         time = datetime.fromtimestamp(float(timestamp)).strftime('%H:%M')
         super(Time, self).__init__(('datetime', ' {} │'.format(time)))
-
-class TriangleDivider(urwid.Text):
-    def __init__(self):
-        return super(TriangleDivider, self).__init__('')
-
-    def render(self, size, focus=False):
-        (maxcol,) = size
-        _, attr = self.get_text()
-        text = []
-        for index in range(0, maxcol):
-            triangle = 'triangle_left' if index % 2 == 0 else 'triangle_right'
-            text.append(('triangle_divider', get_icon(triangle)))
-        self.set_text(text)
-        return super(TriangleDivider, self).render(size, focus)
 
 def shorten_hex(color):
     if color.startswith('#'):

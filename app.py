@@ -18,49 +18,7 @@ from pyslack.components import User
 from pyslack.image import Image
 from pyslack.loading import LoadingChatBox, LoadingSideBar
 from pyslack.store import Store
-
-palette = [
-    ('app', '', '', '', 'h99', 'h235'),
-    ('sidebar', '', '', '', 'white', 'h24'),
-    ('profile', '', '', '', 'white', 'h233'),
-    ('profile_icon', '', '', '', 'h244', 'h233'),
-    ('attachment_title', '', '', '', 'bold,h33', 'h235'),
-    ('chatbox', '', '', '', 'white', 'h235'),
-    ('chatbox_header', '', '', '', 'h255', 'h235'),
-    ('free_slack_limit', '', '', '', 'white', 'h238'),
-    ('triangle_divider', '', '', '', 'h235', 'h238'),
-    ('message_input', '', '', '', 'h255', 'h235'),
-    ('prompt', '', '', '', 'white', 'h244'),
-    ('prompt_arrow', '', '', '', 'h244', 'h235'),
-    ('active_prompt', '', '', '', 'white', 'h27'),
-    ('active_prompt_arrow', '', '', '', 'h27', 'h235'),
-    ('datetime', '', '', '', 'h239', 'h235'),
-    ('username', '', '', '', 'h71,underline', 'h235'),
-    ('message', '', '', '', 'h253', 'h235'),
-    ('history_date', '', '', '', 'h244', 'h235'),
-    ('is_typing', '', '', '', 'h244', 'h235'),
-    ('selected_channel', '', '', '', 'white', 'h162'),
-    ('active_channel', '', '', '', 'white', 'h33'),
-    ('active_message', '', '', '', 'white', 'h237'),
-    ('active_link', '', '', '', 'h21,underline', 'h237'),
-    ('separator', '', '', '', 'h244', 'h235'),
-    ('edited', '', '', '', 'h239', 'h235'),
-    ('starred', '', '', '', 'h214', 'h235'),
-    ('reaction', '', '', '', 'h27', 'h235'),
-    ('presence_active', '', '', '', 'h40', 'h24'),
-    ('presence_away', '', '', '', 'h239', 'h24'),
-    ('link', '', '', '', 'h21,underline', 'h235'),
-    ('cite', '', '', '', 'italics,white', 'h235'),
-    ('app_badge', '', '', '', 'h235', 'h248'),
-    ('field_title', '', '', '', 'white,bold,underline', 'h235'),
-    ('field_value', '', '', '', 'h253', 'h235'),
-    ('italics', '', '', '', 'italics,white', 'h235'),
-    ('bold', '', '', '', 'bold,h254', 'h235'),
-    ('code', '', '', '', 'h124', 'h252'),
-    ('loading_message', '', '', '', 'white', 'h235'),
-    ('loading_active_block', '', '', '', 'h99', 'h235'),
-    ('edit_topic_focus', '', '', '', 'h27', 'h235')
-]
+from pyslack.themes import themes
 
 loop = asyncio.get_event_loop()
 
@@ -74,12 +32,13 @@ class App:
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
+        palette = themes.get(config['theme'], themes['default'])
         self.columns = urwid.Columns([
             ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
         ])
         self.urwid_loop = urwid.MainLoop(
-            urwid.Frame(urwid.AttrMap(self.columns, 'app')),
+            urwid.Frame(self.columns),
             palette=palette,
             event_loop=urwid.AsyncioEventLoop(loop=loop),
             unhandled_input=self.unhandled_input
