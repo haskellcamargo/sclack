@@ -1,58 +1,71 @@
-<p align="center">
-  <img alt="PySlack" src="./logo.png" />
-</p>
+# Sclack
 
 > The best CLI client for Slack, because everything is terrible!
 
-![PySlack](./resources/example.png)
-
-## Installation
-
-`pip install pyslack`
+![Sclack](./resources/example.png)
 
 ## Setup
 
-The first thing you need to do is getting a [legacy Slack token here](https://api.slack.com/custom-integrations/legacy-tokens).
-Use, create or request a token for each workspace that you'll use on PySlack. Not all workspaces allow you to generate a token, so sometimes you'll need to ask for the administrator to enable the feature.
+The first thing you need to do is to get a [Slack token here](https://api.slack.com/custom-integrations/legacy-tokens).
+Use, create or request a token for each workspace that you'll use on Sclack.
+Not all workspaces allow you to generate a token, so sometimes you'll need to
+ask for the administrator to enable the feature.
 
-## Features
+## Optional Dependencies
 
-- :heavy_check_mark: Multiple workspaces
-- :heavy_check_mark: Real-time messaging
-- :heavy_check_mark: Image rendering
-- :heavy_check_mark: Profile view
-- :heavy_check_mark: Attachments and bot messages
-- :heavy_check_mark: Custom themes
-- :heavy_check_mark: Custom icons
-- :heavy_check_mark: User presence
-- :heavy_check_mark: Slack Markdown
-- :heavy_check_mark: Vim keybindings
-- :heavy_check_mark: Mouse scrolling
-- :heavy_check_mark: Edit topic
-- :heavy_check_mark: Notifications
-- :heavy_check_mark: Syntax highlighting for snippets
+### Nerd Fonts
 
-## Default Keymap
+Sclack seems better when used with a [Nerd Font](https://nerdfonts.com/). Using
+them is completely optional, but it is how some Sclack icons are possible.
+Personally, I use [Fire Code Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases/download/v2.0.0/FiraCode.zip).
+Download, install and set as the default font of your terminal emulator.
 
-- <kbd>i</kbd> set insert mode
-- <kbd>q</kbd> quit application
-- <kbd>up</kbd>, <kbd>down</kbd>, <kbd>page up</kbd>, <kbd>page down</kbd> vertical navigation
-- <kbd>esc</kbd> set channel mode, go to sidebar
-- <kbd>p</kbd> open profile sidebar of the focused message user
-- <kbd>c</kbd> focus on chatbox
-- <kbd>e</kbd> edit your focused message
-- <kbd>dd</kbd> delete your focused message
-- <kbd>s</kbd> share focused message
-- <kbd>f</kbd> star focused message
-- <kbd>y</kbd> yank focused message (copy to clipboard)
-- <kbd>gg</kbd> go to first line (of sidebar or chatbox)
-- <kbd>G</kbd> go to last line (of sidebar or chatbox)
-- <kbd>ctrl+k</kbd> open "jump to channel or dm" dialog
+### libcaca
+
+Sclack uses `caca-utils` to create ANSI/VT100 + ASCII versions of pictures and
+render them. Images will only be rendered if both `caca-utils` is installed
+and `features.pictures` is configured to `true`. To install `caca-utils`, just
+run `sudo apt-get install caca-utils` on Debian and `brew install caca-utils` on
+OS X.
+
+## Installation
+
+### Using pip
+
+`pip install sclack`
+
+### From Source
+
+Ensure you have Python 3.4 or superior version.
+
+```bash
+git clone https://github.com/haskellcamargo/sclack.git
+cd sclack
+pip install -r requirements.txt
+chmod +x ./app.py
+./app.py
+```
+
+### From Binary
+
+If you don't have Python installed, you can get the compiled binary for Sclack
+on [releases](https://github.com/takanuva/pyslack/releases) page. Versions are
+available for Linux x86/x64 and OS X.
+
+## Tested Terminals
+
+Sclack has been tested with the following terminal emulators:
+
+- iTerm2
+- QTerminal
+- Terminal (OS X)
+- Terminator
+- XTerm
 
 ## Contributing
 
 Contributions are very welcome, and there is a lot of work to do! You can...
-- Check out our [open issues](https://github.com/haskellcamargo/pyslack/issues)
+- Check out our [open issues](https://github.com/haskellcamargo/sclack/issues)
 - Provide bug reports
 - Create packages for apt, dnf, rpm, pacman and brew
 - Improve documentation
