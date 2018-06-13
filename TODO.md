@@ -13,7 +13,8 @@
 - [X] Show "you" on your own direct message
 
 ## Wednesday
-- [ ] Edit message
+- [X] Edit message
+- [X] Fix bug that blocks 'i' on messagebox
 - [ ] Share message
 - [ ] Header for direct message
 - [ ] Group messages

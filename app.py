@@ -377,6 +377,7 @@ class App:
             ts = self.store.state.editing_widget.ts
             edit_result = self.store.edit_message(channel, ts, message)
             if edit_result['ok']:
+                self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
             self.leave_edit_mode()
 

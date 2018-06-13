@@ -168,7 +168,6 @@ class ChatBox(urwid.Frame):
             return True
         elif key == keymap['set_insert_mode']:
             urwid.emit_signal(self, 'set_insert_mode')
-            return True
         return super(ChatBox, self).keypress(size, key)
 
     @property
