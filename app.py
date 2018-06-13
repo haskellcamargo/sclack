@@ -151,7 +151,7 @@ class App:
         message_date = datetime.fromtimestamp(float(ts))
         # Only messages sent in the last 5 minutes can be edited
         if is_logged_user and (current_date - message_date).total_seconds() < 60 * 5:
-            self.store.state.is_editing = True
+            self.store.state.editing_widget = widget
             self.set_insert_mode()
             self.chatbox.message_box.text = original_text
             widget.set_edit_mode()
@@ -362,6 +362,10 @@ class App:
         if len(self.columns.contents) > 2:
             self.columns.contents.pop()
         self.columns.focus_position = 0
+        if self.store.state.editing_widget:
+            self.store.state.editing_widget.unset_edit_mode()
+            self.store.state.editing_widget = None
+            self.chatbox.message_box.text = ''
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']

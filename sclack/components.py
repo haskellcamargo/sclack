@@ -369,6 +369,12 @@ class Message(urwid.AttrMap):
             'message': 'editing_message'
         })
 
+    def unset_edit_mode(self):
+        self.set_attr_map({
+            None: None,
+            'message': None
+        })
+
     def selectable(self):
         return True
 
