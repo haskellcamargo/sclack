@@ -49,7 +49,7 @@ chmod +x ./app.py
 ### From Binary
 
 If you don't have Python installed, you can get the compiled binary for Sclack
-on [releases](https://github.com/takanuva/pyslack/releases) page. Versions are
+on [releases](https://github.com/haskellcamargo/sclack/releases) page. Versions are
 available for Linux x86/x64 and OS X.
 
 ## Tested Terminals

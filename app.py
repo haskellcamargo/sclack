@@ -10,15 +10,15 @@ import tempfile
 import urwid
 from datetime import datetime
 from slackclient import SlackClient
-from pyslack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
-from pyslack.components import Indicators, MarkdownText
-from pyslack.components import Message, MessageBox, Profile, ProfileSideBar
-from pyslack.components import Reaction, SideBar, TextDivider
-from pyslack.components import User
-from pyslack.image import Image
-from pyslack.loading import LoadingChatBox, LoadingSideBar
-from pyslack.store import Store
-from pyslack.themes import themes
+from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
+from sclack.components import Indicators, MarkdownText
+from sclack.components import Message, MessageBox, Profile, ProfileSideBar
+from sclack.components import Reaction, SideBar, TextDivider
+from sclack.components import User
+from sclack.image import Image
+from sclack.loading import LoadingChatBox, LoadingSideBar
+from sclack.store import Store
+from sclack.themes import themes
 
 loop = asyncio.get_event_loop()
 
@@ -27,7 +27,7 @@ class App:
 
     def __init__(self, config):
         self.config = config
-        self.store = Store(config['workspaces'][0], self.config)
+        self.store = Store(config['token'], self.config)
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -384,7 +384,7 @@ if __name__ == '__main__':
     json_config = {}
     with open('./config.json', 'r') as config_file:
         json_config.update(json.load(config_file))
-    with open(os.path.expanduser('~/.pyslack'), 'r') as user_file:
+    with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
         json_config.update(json.load(user_file))
     app = App(json_config)
     app.start()
