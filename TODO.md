@@ -15,14 +15,17 @@
 ## Wednesday
 - [X] Edit message
 - [X] Fix bug that blocks 'i' on messagebox
+- [ ] Show indicator when a message is edited
 - [ ] Share message
 - [ ] Header for direct message
 - [ ] Group messages
-- [ ] Load more on up
 
 ## Thursday
+- [ ] Load more on up
 - [ ] Live events
 - [ ] Post message
+
+## Friday
 - [ ] Unread messages indicator
 - [ ] Navigate throught users and conversations I don't belong to.
 - [ ] Publish on PIP
