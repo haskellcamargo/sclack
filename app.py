@@ -144,6 +144,7 @@ class App:
         self.chatbox = ChatBox(messages, header, self.message_box)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
+        urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
 
     def edit_message(self, widget, user_id, ts, original_text):
         is_logged_user = self.store.state.auth['user_id'] == user_id
@@ -358,14 +359,26 @@ class App:
         self.columns.focus_position = 1
         self.chatbox.focus_position = 'body'
 
+    def leave_edit_mode(self):
+        self.store.state.editing_widget.unset_edit_mode()
+        self.store.state.editing_widget = None
+        self.chatbox.message_box.text = ''
+
     def go_to_sidebar(self):
         if len(self.columns.contents) > 2:
             self.columns.contents.pop()
         self.columns.focus_position = 0
         if self.store.state.editing_widget:
-            self.store.state.editing_widget.unset_edit_mode()
-            self.store.state.editing_widget = None
-            self.chatbox.message_box.text = ''
+            self.leave_edit_mode()
+
+    def submit_message(self, message):
+        if self.store.state.editing_widget:
+            channel = self.store.state.channel['id']
+            ts = self.store.state.editing_widget.ts
+            edit_result = self.store.edit_message(channel, ts, message)
+            if edit_result['ok']:
+                self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
+            self.leave_edit_mode()
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']

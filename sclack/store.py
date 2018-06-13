@@ -110,7 +110,8 @@ class Store:
             channel=channel_id,
             ts=ts,
             as_user=True,
-            link_names=True
+            link_names=True,
+            text=text
         )
 
     def get_presence(self, user_id):

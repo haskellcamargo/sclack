@@ -328,7 +328,8 @@ class Message(urwid.AttrMap):
         self.ts = ts
         self.user_id = user.id
         self.original_text = text.original_text
-        main_column = [urwid.Columns([('pack', user), text])]
+        self.text_widget = urwid.WidgetPlaceholder(text)
+        main_column = [urwid.Columns([('pack', user), self.text_widget])]
         main_column.extend(attachments)
         self._file_index = len(main_column)
         if reactions:
@@ -363,6 +364,9 @@ class Message(urwid.AttrMap):
             return True
         return super(Message, self).keypress(size, key)
 
+    def set_text(self, text):
+        self.text_widget.original_widget = text
+
     def set_edit_mode(self):
         self.set_attr_map({
             None: 'editing_message',
@@ -396,7 +400,7 @@ class MessageBox(urwid.AttrMap):
             )))
         else:
             top_separator = urwid.Divider('─')
-        self.prompt_widget = urwid.Edit([('prompt', ' {}'.format(user)), ' '])
+        self.prompt_widget = MessagePrompt(user)
         middle = urwid.WidgetPlaceholder(self.read_only_widget if is_read_only else self.prompt_widget)
         self.body = urwid.Pile([
             top_separator,
@@ -432,6 +436,19 @@ class MessageBox(urwid.AttrMap):
     def text(self, text):
         self.prompt_widget.set_edit_text(text)
         self.prompt_widget.set_edit_pos(len(text))
+
+class MessagePrompt(urwid.Edit):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['submit_message']
+
+    def __init__(self, user):
+        super(MessagePrompt, self).__init__([('prompt', ' {}'.format(user)), ' '])
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'submit_message', self.get_edit_text())
+            return True
+        return super(MessagePrompt, self).keypress(size, key)
 
 class Profile(urwid.Text):
     def __init__(self, name, is_online=False):
