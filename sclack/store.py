@@ -1,4 +1,5 @@
 from slackclient import SlackClient
+import time
 
 class State:
     def __init__(self):
@@ -40,6 +41,13 @@ class Store:
         if request['ok']:
             self.state.bots[bot_id] = request['bot']
             return self.state.bots[bot_id]
+
+    def start_real_time(self):
+        pass
+        # self.slack.rtm_connect()
+        # while self.slack.server.connected is True:
+        #     print(self.slack.rtm_read())
+        #     time.sleep(1)
 
     def load_messages(self, channel_id):
         history = self.slack.api_call(

@@ -6,6 +6,7 @@ import json
 import os
 import requests
 import subprocess
+import sys
 import tempfile
 import urwid
 from datetime import datetime
@@ -145,6 +146,7 @@ class App:
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
+        yield from loop.run_in_executor(executor, self.store.start_real_time)
 
     def edit_message(self, widget, user_id, ts, original_text):
         is_logged_user = self.store.state.auth['user_id'] == user_id
@@ -393,7 +395,8 @@ class App:
         elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
         elif key == keymap['quit_application']:
-            raise urwid.ExitMainLoop
+            self.urwid_loop.stop()
+            sys.exit()
         elif key == keymap['set_edit_topic_mode'] and self.message_box:
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
