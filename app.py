@@ -360,8 +360,9 @@ class App:
         self.chatbox.focus_position = 'body'
 
     def leave_edit_mode(self):
-        self.store.state.editing_widget.unset_edit_mode()
-        self.store.state.editing_widget = None
+        if self.store.state.editing_widget:
+            self.store.state.editing_widget.unset_edit_mode()
+            self.store.state.editing_widget = None
         self.chatbox.message_box.text = ''
 
     def go_to_sidebar(self):
@@ -379,6 +380,10 @@ class App:
             if edit_result['ok']:
                 self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
+            self.leave_edit_mode()
+        else:
+            channel = self.store.state.channel['id']
+            # TODO: send message
             self.leave_edit_mode()
 
     def unhandled_input(self, key):
