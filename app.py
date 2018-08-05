@@ -398,11 +398,22 @@ class App:
         screen.set_terminal_properties(colors=self.store.config['colors'])
         screen.set_mouse_tracking()
 
+def ask_for_token(json_config):
+    if os.path.isfile(os.path.expanduser('~/.sclack')):
+        with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
+            json_config.update(json.load(user_file))
+    else:
+        print('There is no ~/.sclack file. Let\'s create one!')
+        token = input('What is your Slack workspace token? ')
+        with open(os.path.expanduser('~/.sclack'), 'w') as config_file:
+            token_config = {'token': token}
+            config_file.write(json.dumps(token_config, indent=False))
+            json_config.update(token_config)
+
 if __name__ == '__main__':
     json_config = {}
     with open('./config.json', 'r') as config_file:
         json_config.update(json.load(config_file))
-    with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
-        json_config.update(json.load(user_file))
+    ask_for_token(json_config)
     app = App(json_config)
     app.start()
