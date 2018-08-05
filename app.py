@@ -146,7 +146,7 @@ class App:
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
-        yield from loop.run_in_executor(executor, self.store.start_real_time)
+        self.real_time_task = loop.create_task(self.start_real_time())
 
     def edit_message(self, widget, user_id, ts, original_text):
         is_logged_user = self.store.state.auth['user_id'] == user_id
@@ -203,93 +203,99 @@ class App:
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
+    def render_message(self, message):
+        is_app = False
+        subtype = message.get('subtype')
+        if subtype == 'bot_message':
+            bot = (self.store.find_user_by_id(message['bot_id'])
+                or self.store.find_or_load_bot(message['bot_id']))
+            if bot:
+                user_id = message['bot_id']
+                user_name = bot.get('profile', {}).get('display_name') or bot.get('name')
+                color = bot.get('color')
+                is_app = 'app_id' in bot
+            else:
+                return None
+        elif subtype == 'file_comment':
+            user = self.store.find_user_by_id(message['comment']['user'])
+            user_id = user['id']
+            user_name = user['profile']['display_name'] or user.get('name')
+            color = user.get('color')
+            if message.get('file'):
+                message['file'] = None
+        else:
+            user = self.store.find_user_by_id(message['user'])
+            user_id = user['id']
+            user_name = user['profile']['display_name'] or user.get('name')
+            color = user.get('color')
+
+        user = User(user_id, user_name, color, is_app)
+        text = MarkdownText(message['text'])
+        indicators = Indicators('edited' in message, message.get('is_starred', False))
+        reactions = [
+            Reaction(reaction['name'], reaction['count'])
+            for reaction in message.get('reactions', [])
+        ]
+        file = message.get('file')
+        attachments = []
+        for attachment in message.get('attachments', []):
+            attachment_widget = Attachment(
+                service_name=attachment.get('service_name'),
+                title=attachment.get('title'),
+                fields=attachment.get('fields'),
+                color=attachment.get('color'),
+                author_name=attachment.get('author_name'),
+                pretext=attachment.get('pretext'),
+                text=attachment.get('text'),
+                footer=attachment.get('footer')
+            )
+            image_url = attachment.get('image_url')
+            if image_url and self.config['features']['pictures']:
+                loop.create_task(self.load_picture_async(
+                    image_url,
+                    attachment.get('image_width', 500),
+                    attachment_widget,
+                    auth=False
+                ))
+            attachments.append(attachment_widget)
+        message = Message(
+            message['ts'],
+            user,
+            text,
+            indicators,
+            attachments=attachments,
+            reactions=reactions
+        )
+        if (file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png')
+            and self.config['features']['pictures']):
+            loop.create_task(self.load_picture_async(
+                file['url_private'],
+                file.get('original_w', 500),
+                message
+            ))
+        urwid.connect_signal(message, 'edit_message', self.edit_message)
+        urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
+        urwid.connect_signal(message, 'delete_message', self.delete_message)
+        return message
+
     def render_messages(self, messages):
         _messages = []
-        previous_date = None
+        previous_date = self.store.state.last_date
         today = datetime.today().date()
         for message in messages:
             message_date = datetime.fromtimestamp(float(message['ts'])).date()
             if not previous_date or previous_date != message_date:
                 previous_date = message_date
+                self.store.state.last_date = previous_date
                 if message_date == today:
                     date_text = 'Today'
                 else:
                     date_text = message_date.strftime('%A, %B %d')
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
-            is_app = False
-            subtype = message.get('subtype')
-            if subtype == 'bot_message':
-                bot = (self.store.find_user_by_id(message['bot_id'])
-                    or self.store.find_or_load_bot(message['bot_id']))
-                if bot:
-                    user_id = message['bot_id']
-                    user_name = bot.get('profile', {}).get('display_name') or bot.get('name')
-                    color = bot.get('color')
-                    is_app = 'app_id' in bot
-                else:
-                    continue
-            elif subtype == 'file_comment':
-                user = self.store.find_user_by_id(message['comment']['user'])
-                user_id = user['id']
-                user_name = user['profile']['display_name'] or user.get('name')
-                color = user.get('color')
-                if message.get('file'):
-                    message['file'] = None
-            else:
-                user = self.store.find_user_by_id(message['user'])
-                user_id = user['id']
-                user_name = user['profile']['display_name'] or user.get('name')
-                color = user.get('color')
-
-            user = User(user_id, user_name, color, is_app)
-            text = MarkdownText(message['text'])
-            indicators = Indicators('edited' in message, message.get('is_starred', False))
-            reactions = [
-                Reaction(reaction['name'], reaction['count'])
-                for reaction in message.get('reactions', [])
-            ]
-            file = message.get('file')
-            attachments = []
-            for attachment in message.get('attachments', []):
-                attachment_widget = Attachment(
-                    service_name=attachment.get('service_name'),
-                    title=attachment.get('title'),
-                    fields=attachment.get('fields'),
-                    color=attachment.get('color'),
-                    author_name=attachment.get('author_name'),
-                    pretext=attachment.get('pretext'),
-                    text=attachment.get('text'),
-                    footer=attachment.get('footer')
-                )
-                image_url = attachment.get('image_url')
-                if image_url and self.config['features']['pictures']:
-                    loop.create_task(self.load_picture_async(
-                        image_url,
-                        attachment.get('image_width', 500),
-                        attachment_widget,
-                        auth=False
-                    ))
-                attachments.append(attachment_widget)
-            message = Message(
-                message['ts'],
-                user,
-                text,
-                indicators,
-                attachments=attachments,
-                reactions=reactions
-            )
-            if (file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png')
-                and self.config['features']['pictures']):
-                loop.create_task(self.load_picture_async(
-                    file['url_private'],
-                    file.get('original_w', 500),
-                    message
-                ))
-            urwid.connect_signal(message, 'edit_message', self.edit_message)
-            urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
-            urwid.connect_signal(message, 'delete_message', self.delete_message)
-            _messages.append(message)
+            message = self.render_message(message)
+            if message is not None:
+                _messages.append(message)
         return _messages
 
     @asyncio.coroutine
@@ -299,6 +305,7 @@ class App:
                 loop.run_in_executor(executor, self.store.load_channel, channel_id),
                 loop.run_in_executor(executor, self.store.load_messages, channel_id)
             )
+            self.store.state.last_date = None
             messages = self.render_messages(self.store.state.messages)
             header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
@@ -346,6 +353,39 @@ class App:
             avatar = Image(file.name, width=35)
             self.store.cache.avatar[url] = avatar
             profile.avatar = avatar
+
+    @asyncio.coroutine
+    def start_real_time(self):
+        self.store.slack.rtm_connect()
+        while self.store.slack.server.connected is True:
+            events = self.store.slack.rtm_read()
+            for event in events:
+                if event.get('channel') == self.store.state.channel['id']:
+                    if event['type'] == 'message':
+                        # Delete message
+                        if event.get('subtype') == 'message_deleted':
+                            for widget in self.chatbox.body.body:
+                                if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['deleted_ts']:
+                                    self.chatbox.body.body.remove(widget)
+                                    break
+                        elif event.get('subtype') == 'message_changed':
+                            for index, widget in enumerate(self.chatbox.body.body):
+                                if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['message']['ts']:
+                                    self.chatbox.body.body[index] = self.render_message(event['message'])
+                                    break
+                        else:
+                            self.store.state.messages.append(event)
+                            self.chatbox.body.body.extend(self.render_messages([event]))
+                            self.chatbox.body.scroll_to_bottom()
+                    elif event['type'] == 'user_typing':
+                        user = self.store.find_user_by_id(event['user'])
+                        name = user.get('real_name', user['name'])
+                        self.chatbox.message_box.typing = name
+                    else:
+                        print(json.dumps(event, indent=2))
+                else:
+                    print(json.dumps(event, indent=2))
+            yield from asyncio.sleep(1)
 
     def set_insert_mode(self):
         self.columns.focus_position = 1
@@ -396,6 +436,7 @@ class App:
             return self.go_to_sidebar()
         elif key == keymap['quit_application']:
             self.urwid_loop.stop()
+            self.real_time_task.cancel()
             sys.exit()
         elif key == keymap['set_edit_topic_mode'] and self.message_box:
             return self.set_edit_topic_mode()

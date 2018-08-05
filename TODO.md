@@ -6,7 +6,7 @@
 - [ ] Share message
 - [ ] Header for direct message
 - [ ] Load more on up
-- [ ] Live events
+- [x] Live events
 - [ ] Post message
 - [ ] Unread messages indicator
 - [ ] Navigate throught users and conversations I don't belong to.
@@ -18,3 +18,5 @@
 - React to a message
 - 'Do not disturb' status
 - Integration with reminders
+- Handle slash commands
+- RTM events (see https://api.slack.com/rtm)
