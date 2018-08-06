@@ -373,7 +373,6 @@ class App:
     @asyncio.coroutine
     def start_real_time(self):
         self.store.slack.rtm_connect()
-        self.chatbox.message_box.typing = 'Foo'
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
             for event in events:
