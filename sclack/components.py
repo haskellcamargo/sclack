@@ -370,7 +370,7 @@ class Message(urwid.AttrMap):
             ]))
         self.main_column = urwid.Pile(main_column)
         columns = [
-            ('fixed', 8, Time(ts)),
+            ('fixed', 7, Time(ts)),
             self.main_column,
             ('fixed', indicators.size, indicators)
         ]
@@ -633,7 +633,7 @@ class TextDivider(urwid.Columns):
 class Time(urwid.Text):
     def __init__(self, timestamp):
         time = datetime.fromtimestamp(float(timestamp)).strftime('%H:%M')
-        super(Time, self).__init__(('datetime', ' {} │'.format(time)))
+        super(Time, self).__init__(('datetime', ' {} '.format(time)))
 
 def shorten_hex(color):
     if color.startswith('#'):
@@ -652,7 +652,7 @@ class User(urwid.Text):
             color = '333333'
         color='#{}'.format(shorten_hex(color))
         markup = [
-            (urwid.AttrSpec(color, 'h235'), ' {} '.format(name))
+            (urwid.AttrSpec(color, 'h235'), '{} '.format(name))
         ]
         if is_app:
             markup.append(('app_badge', '[APP]'))
