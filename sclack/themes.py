@@ -36,7 +36,9 @@ themes = {
         ('loading_message', '', '', '', 'white', 'h235'),
         ('loading_active_block', '', '', '', 'h99', 'h235'),
         ('edit_topic_focus', '', '', '', 'h27', 'h235'),
-        ('editing_message', '', '', '', 'black', 'h178')
+        ('editing_message', '', '', '', 'black', 'h178'),
+        ('new_messages_text', '', '', '', 'h249', 'h197'),
+        ('new_messages_line', '', '', '', 'h197', 'h235')
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),

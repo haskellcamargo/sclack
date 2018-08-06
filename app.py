@@ -12,8 +12,8 @@ import urwid
 from datetime import datetime
 from slackclient import SlackClient
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
-from sclack.components import Indicators, MarkdownText
-from sclack.components import Message, MessageBox, Profile, ProfileSideBar
+from sclack.components import Indicators, MarkdownText, Message, MessageBox
+from sclack.components import NewMessagesDivider, Profile, ProfileSideBar
 from sclack.components import Reaction, SideBar, TextDivider
 from sclack.components import User
 from sclack.image import Image
@@ -297,9 +297,13 @@ class App:
     def render_messages(self, messages):
         _messages = []
         previous_date = self.store.state.last_date
+        last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read')))
         today = datetime.today().date()
         for message in messages:
-            message_date = datetime.fromtimestamp(float(message['ts'])).date()
+            message_datetime = datetime.fromtimestamp(float(message['ts']))
+            message_date = message_datetime.date()
+            date_text = None
+            unread_text = None
             if not previous_date or previous_date != message_date:
                 previous_date = message_date
                 self.store.state.last_date = previous_date
@@ -307,8 +311,14 @@ class App:
                     date_text = 'Today'
                 else:
                     date_text = message_date.strftime('%A, %B %d')
+            # New messages badge
+            if message_datetime > last_read_datetime and not self.store.state.did_render_new_messages:
+                self.store.state.did_render_new_messages = True
+                unread_text = 'new messages'
+            if unread_text is not None:
+                _messages.append(NewMessagesDivider(unread_text, date=date_text))
+            elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
-
             message = self.render_message(message)
             if message is not None:
                 _messages.append(message)

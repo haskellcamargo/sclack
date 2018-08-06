@@ -14,6 +14,7 @@ class State:
         self.bots = {}
         self.editing_widget = None
         self.last_date = None
+        self.did_render_new_messages = False
 
 class Cache:
     def __init__(self):
@@ -60,6 +61,7 @@ class Store:
             return self.slack.api_call('channels.info', channel=channel_id)['channel']
 
     def load_channel(self, channel_id):
+        self.state.did_render_new_messages = False
         if channel_id[0] in ('C', 'G'):
             self.state.channel = self.get_channel_info(channel_id)
 

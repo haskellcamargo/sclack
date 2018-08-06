@@ -610,6 +610,25 @@ class SideBar(urwid.Frame):
                 return True
         return super(SideBar, self).mouse_event(size, event, button, col, row, focus)
 
+class NewMessagesDivider(urwid.AttrWrap):
+    def __init__(self, text='', date=None, char='─'):
+        text_size = len(text if isinstance(text, str) else text[1]) + 2
+        self.text_widget = ('fixed', text_size, urwid.Text(('new_messages_text', text), align='center'))
+        body = [
+            urwid.Divider(char)
+        ]
+        if date is None:
+            body.append(self.text_widget)
+            body.append(('fixed', 1, urwid.Divider(char)))
+        else:
+            date_size = len(date if isinstance(date, str) else date[1]) + 2
+            date_widget = ('fixed', date_size, urwid.Text(date, align='center'))
+            body.append(date_widget)
+            body.append(urwid.Divider(char))
+            body.append(self.text_widget)
+            body.append(('fixed', 1, urwid.Divider(char)))
+        super(NewMessagesDivider, self).__init__(urwid.Columns(body), 'new_messages_line')
+
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
         self.text = text
