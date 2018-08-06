@@ -374,7 +374,6 @@ class App:
                                     self.chatbox.body.body[index] = self.render_message(event['message'])
                                     break
                         else:
-                            self.store.state.messages.append(event)
                             self.chatbox.body.body.extend(self.render_messages([event]))
                             self.chatbox.body.scroll_to_bottom()
                     elif event['type'] == 'user_typing':
@@ -383,9 +382,17 @@ class App:
                         self.chatbox.message_box.typing = name
                     else:
                         print(json.dumps(event, indent=2))
+                elif event.get('ok', False):
+                    # Message was sent, Slack confirmed it.
+                    self.chatbox.body.body.extend(self.render_messages([{
+                        'text': event['text'],
+                        'ts': event['ts'],
+                        'user': self.store.state.auth['user_id']
+                    }]))
+                    self.chatbox.body.scroll_to_bottom()
                 else:
                     print(json.dumps(event, indent=2))
-            yield from asyncio.sleep(1)
+            yield from asyncio.sleep(0.5)
 
     def set_insert_mode(self):
         self.columns.focus_position = 1
@@ -425,8 +432,9 @@ class App:
             self.leave_edit_mode()
         else:
             channel = self.store.state.channel['id']
-            # TODO: send message
-            self.leave_edit_mode()
+            if message.strip() != '':
+                result = self.store.slack.rtm_send_message(channel, message)
+                self.leave_edit_mode()
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']

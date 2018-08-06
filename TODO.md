@@ -1,16 +1,15 @@
 # MVP
 
 - [x] Ask for token when there is no configuration file
-- [ ] Group messages
-- [ ] Show indicator when a message is edited
-- [ ] Share message
+- [x] Show indicator when a message is edited
+- [x] Live events
+- [x] Post message
 - [ ] Header for direct message
 - [ ] Load more on up
-- [x] Live events
-- [ ] Post message
 - [ ] Unread messages indicator
 - [ ] Navigate throught users and conversations I don't belong to.
 - [ ] Publish on PIP
+- [ ] Group messages
 - [ ] Update documentation and screenshots
 
 # Good to have
