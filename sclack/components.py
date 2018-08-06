@@ -82,6 +82,7 @@ class Channel(urwid.AttrMap):
             attr_map = 'selected_channel'
         self.last_time_clicked = None
         self.unread = 0
+        self.is_selected = is_selected
         super(Channel, self).__init__(body, attr_map, 'active_channel')
 
     def mouse_event(self, size, event, button, col, row, focus):
@@ -93,10 +94,11 @@ class Channel(urwid.AttrMap):
 
     def set_unread(self, count):
         self.unread = count
-        if count > 0:
-            self.attr_map = {None: 'unread_channel'}
-        else:
-            self.attr_map = {None: 'inactive'}
+        if not self.is_selected:
+            if count > 0:
+                self.attr_map = {None: 'unread_channel'}
+            else:
+                self.attr_map = {None: 'inactive'}
 
     def select(self):
         self.is_selected = True
@@ -354,7 +356,7 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
-    signals = ['delete_message', 'edit_message', 'go_to_profile']
+    signals = ['delete_message', 'edit_message', 'go_to_profile', 'set_insert_mode']
 
     def __init__(self, ts, user, text, indicators, reactions=[], attachments=[]):
         self.ts = ts
@@ -390,6 +392,9 @@ class Message(urwid.AttrMap):
             return True
         elif key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
+            return True
+        elif key == keymap['set_insert_mode']:
+            urwid.emit_signal(self, 'set_insert_mode')
             return True
         elif key == keymap['yank_message']:
             pyperclip.copy(self.original_text)

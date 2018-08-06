@@ -158,7 +158,6 @@ class App:
             is_read_only=self.store.state.channel.get('is_read_only', False)
         )
         self.chatbox = ChatBox(messages, header, self.message_box)
-        urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(self.chatbox, 'quit_application', self.quit_application)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
@@ -292,6 +291,7 @@ class App:
         urwid.connect_signal(message, 'edit_message', self.edit_message)
         urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
         urwid.connect_signal(message, 'delete_message', self.delete_message)
+        urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
         return message
 
     def render_messages(self, messages):
@@ -376,12 +376,14 @@ class App:
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
             for event in events:
-                if event.get('type') in ('channel_marked', 'group_marked'):
+                if event.get('type') == 'hello':
+                    pass
+                elif event.get('type') in ('channel_marked', 'group_marked'):
                     unread = event.get('unread_count', 0)
                     for channel in self.sidebar.channels:
                         if channel.id == event['channel']:
                             channel.set_unread(unread)
-                if event.get('channel') == self.store.state.channel['id']:
+                elif event.get('channel') == self.store.state.channel['id']:
                     if event['type'] == 'message':
                         # Delete message
                         if event.get('subtype') == 'message_deleted':
