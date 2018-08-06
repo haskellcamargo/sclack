@@ -81,6 +81,7 @@ class Channel(urwid.AttrMap):
         if is_selected:
             attr_map = 'selected_channel'
         self.last_time_clicked = None
+        self.unread = 0
         super(Channel, self).__init__(body, attr_map, 'active_channel')
 
     def mouse_event(self, size, event, button, col, row, focus):
@@ -91,6 +92,7 @@ class Channel(urwid.AttrMap):
             self.last_time_clicked = now
 
     def set_unread(self, count):
+        self.unread = count
         if count > 0:
             self.attr_map = {None: 'unread_channel'}
         else:
@@ -100,11 +102,13 @@ class Channel(urwid.AttrMap):
         self.is_selected = True
         self.attr_map = {None: 'selected_channel'}
         self.focus_map = {None: 'selected_channel'}
+        self.set_unread(self.unread)
 
     def deselect(self):
         self.is_selected = False
         self.attr_map = {None: 'inactive'}
         self.focus_map = {None: 'active_channel'}
+        self.set_unread(self.unread)
 
 class ChannelHeader(urwid.Pile):
     def on_set_date(self, divider):
@@ -274,6 +278,7 @@ class Dm(urwid.AttrMap):
         self.user = user
         self.name = name
         self.you = you
+        self.presence = 'away'
         body = urwid.SelectableIcon(self.get_markup())
         super(Dm, self).__init__(body, 'inactive', 'active_channel')
 
@@ -293,6 +298,7 @@ class Dm(urwid.AttrMap):
         return [' ', icon, ' ', name]
 
     def set_presence(self, presence):
+        self.presence = presence
         self.original_widget.set_text(self.get_markup(presence))
         if presence == 'active':
             self.attr_map = {None: 'unread_channel'}
@@ -305,10 +311,12 @@ class Dm(urwid.AttrMap):
             None: 'selected_channel',
             'presence_away': 'selected_channel'
         }
+        self.set_presence(self.presence)
 
     def deselect(self):
         self.is_selected = False
         self.attr_map = {None: None}
+        self.set_presence(self.presence)
 
 class Fields(urwid.Pile):
     def chunks(self, list, size):
