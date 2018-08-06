@@ -435,11 +435,10 @@ class MessageBox(urwid.AttrMap):
             )))
         else:
             top_separator = urwid.Divider('─')
-        self.top_separator = urwid.WidgetWrap(top_separator)
         self.prompt_widget = MessagePrompt(user)
         middle = urwid.WidgetPlaceholder(self.read_only_widget if is_read_only else self.prompt_widget)
         self.body = urwid.Pile([
-            self.top_separator,
+            top_separator,
             middle,
             urwid.Divider('─')
         ])
@@ -452,9 +451,9 @@ class MessageBox(urwid.AttrMap):
     @typing.setter
     def typing(self, typing=None):
         if typing is None:
-            self.top_separator.original_widget = urwid.Divider('─')
+            self.body.contents[0].original_widget = urwid.Divider('─')
         else:
-            self.top_separator.original_widget = TextDivider(
+            self.body.contents[0].original_widget = TextDivider(
                 ('is_typing', '{} {} is typing...'.format(get_icon('keyboard'), typing))
             )
 
