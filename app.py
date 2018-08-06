@@ -376,6 +376,11 @@ class App:
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
             for event in events:
+                if event.get('type') in ('channel_marked', 'group_marked'):
+                    unread = event.get('unread_count', 0)
+                    for channel in self.sidebar.channels:
+                        if channel.id == event['channel']:
+                            channel.set_unread(unread)
                 if event.get('channel') == self.store.state.channel['id']:
                     if event['type'] == 'message':
                         # Delete message
