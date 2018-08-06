@@ -1,6 +1,7 @@
 import urwid
 import pprint
 import pyperclip
+import time
 from datetime import datetime
 from .emoji import emoji_codemap
 from .markdown import MarkdownText
@@ -65,6 +66,9 @@ class BreadCrumbs(urwid.Text):
         super(BreadCrumbs, self).__init__([' '] + body)
 
 class Channel(urwid.AttrMap):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['go_to_channel']
+
     def __init__(self, id, name, is_private=False, is_selected=False):
         self.id = id
         self.name = name
@@ -76,7 +80,15 @@ class Channel(urwid.AttrMap):
         attr_map = None
         if is_selected:
             attr_map = 'selected_channel'
+        self.last_time_clicked = None
         super(Channel, self).__init__(body, attr_map, 'active_channel')
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse press':
+            now = time.time()
+            if self.last_time_clicked and (now - self.last_time_clicked < 0.5):
+                urwid.emit_signal(self, 'go_to_channel', self.id)
+            self.last_time_clicked = now
 
     def select(self):
         self.is_selected = True
@@ -530,6 +542,9 @@ class SideBar(urwid.Frame):
     def __init__(self, profile, channels=[], dms=[], title=''):
         self.channels = channels
         self.dms = dms
+        # Subcribe to receive message from channels to select them
+        for channel in self.channels:
+            urwid.connect_signal(channel, 'go_to_channel', self.go_to_channel)
         header = TextDivider(title)
         footer = urwid.Divider('─')
         stack = [
@@ -555,10 +570,13 @@ class SideBar(urwid.Frame):
             else:
                 dm.deselect()
 
+    def go_to_channel(self, channel):
+        urwid.emit_signal(self, 'go_to_channel', channel)
+
     def keypress(self, size, key):
         if key == 'enter':
             channel = self.listbox.focus
-            urwid.emit_signal(self, 'go_to_channel', channel.id)
+            self.go_to_channel(channel.id)
             return True
 
         return super(SideBar, self).keypress(size, key)

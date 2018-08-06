@@ -100,7 +100,8 @@ class App:
             for channel in self.store.state.channels
         ]
         dms = []
-        for dm in self.store.state.dms[:15]:
+        dm_users = self.store.state.dms[:15]
+        for dm in dm_users:
             user = self.store.find_user_by_id(dm['user'])
             if user:
                 dms.append(Dm(
@@ -444,7 +445,7 @@ class App:
         elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
         elif key == keymap['quit_application']:
-            return quit_application()
+            return self.quit_application()
         elif key == keymap['set_edit_topic_mode'] and self.message_box:
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
@@ -456,7 +457,8 @@ class App:
 
     def quit_application(self):
         self.urwid_loop.stop()
-        self.real_time_task.cancel()
+        if hasattr(self, 'real_time_task'):
+            self.real_time_task.cancel()
         sys.exit()
 
 def ask_for_token(json_config):
