@@ -81,10 +81,12 @@ class Channel(urwid.AttrMap):
     def select(self):
         self.is_selected = True
         self.attr_map = {None: 'selected_channel'}
+        self.focus_map = {None: 'selected_channel'}
 
     def deselect(self):
         self.is_selected = False
         self.attr_map = {None: None}
+        self.focus_map = {None: 'active_channel'}
 
 class ChannelHeader(urwid.Pile):
     def on_set_date(self, divider):
@@ -168,6 +170,7 @@ class ChatBox(urwid.Frame):
             return True
         elif key == keymap['set_insert_mode']:
             urwid.emit_signal(self, 'set_insert_mode')
+            return True
         return super(ChatBox, self).keypress(size, key)
 
     @property
