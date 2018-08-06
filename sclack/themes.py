@@ -16,6 +16,8 @@ themes = {
         ('is_typing', '', '', '', 'h244', 'h235'),
         ('selected_channel', '', '', '', 'white', 'h37'),
         ('active_channel', '', '', '', 'white', 'h54'),
+        ('unread_channel', '', '', '', 'white', 'h57'),
+        ('inactive', '', '', '', 'h245', 'h57'),
         ('active_message', '', '', '', 'white', 'h237'),
         ('separator', '', '', '', 'h244', 'h235'),
         ('edited', '', '', '', 'h239', 'h235'),

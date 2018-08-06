@@ -77,7 +77,7 @@ class Channel(urwid.AttrMap):
             get_icon('private_channel' if is_private else 'channel'),
             name
         ))
-        attr_map = None
+        attr_map = 'inactive'
         if is_selected:
             attr_map = 'selected_channel'
         self.last_time_clicked = None
@@ -90,6 +90,12 @@ class Channel(urwid.AttrMap):
                 urwid.emit_signal(self, 'go_to_channel', self.id)
             self.last_time_clicked = now
 
+    def set_unread(self, count):
+        if count > 0:
+            self.attr_map = {None: 'unread_channel'}
+        else:
+            self.attr_map = {None: 'inactive'}
+
     def select(self):
         self.is_selected = True
         self.attr_map = {None: 'selected_channel'}
@@ -97,7 +103,7 @@ class Channel(urwid.AttrMap):
 
     def deselect(self):
         self.is_selected = False
-        self.attr_map = {None: None}
+        self.attr_map = {None: 'inactive'}
         self.focus_map = {None: 'active_channel'}
 
 class ChannelHeader(urwid.Pile):
@@ -269,7 +275,7 @@ class Dm(urwid.AttrMap):
         self.name = name
         self.you = you
         body = urwid.SelectableIcon(self.get_markup())
-        super(Dm, self).__init__(body, None, 'active_channel')
+        super(Dm, self).__init__(body, 'inactive', 'active_channel')
 
     def get_markup(self, presence='away'):
         if self.user == 'USLACKBOT':
@@ -288,6 +294,10 @@ class Dm(urwid.AttrMap):
 
     def set_presence(self, presence):
         self.original_widget.set_text(self.get_markup(presence))
+        if presence == 'active':
+            self.attr_map = {None: 'unread_channel'}
+        else:
+            self.attr_map = {None: 'inactive'}
 
     def select(self):
         self.is_selected = True
