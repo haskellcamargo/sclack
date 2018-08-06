@@ -145,6 +145,7 @@ class App:
         self.chatbox = ChatBox(messages, header, self.message_box)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
+        urwid.connect_signal(self.chatbox, 'quit_application', self.quit_application)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         self.real_time_task = loop.create_task(self.start_real_time())
 
@@ -443,9 +444,7 @@ class App:
         elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
         elif key == keymap['quit_application']:
-            self.urwid_loop.stop()
-            self.real_time_task.cancel()
-            sys.exit()
+            return quit_application()
         elif key == keymap['set_edit_topic_mode'] and self.message_box:
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
@@ -454,6 +453,11 @@ class App:
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=self.store.config['colors'])
         screen.set_mouse_tracking()
+
+    def quit_application(self):
+        self.urwid_loop.stop()
+        self.real_time_task.cancel()
+        sys.exit()
 
 def ask_for_token(json_config):
     if os.path.isfile(os.path.expanduser('~/.sclack')):

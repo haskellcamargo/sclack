@@ -152,7 +152,7 @@ class ChannelTopic(urwid.Edit):
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
-    signals = ['set_insert_mode', 'go_to_sidebar']
+    signals = ['set_insert_mode', 'go_to_sidebar', 'quit_application']
 
     def __init__(self, messages, header, message_box):
         self._header = header
@@ -170,6 +170,9 @@ class ChatBox(urwid.Frame):
             return True
         elif key == keymap['set_insert_mode']:
             urwid.emit_signal(self, 'set_insert_mode')
+            return True
+        elif key == keymap['quit_application']:
+            urwid.emit_signal(self, 'quit_application')
             return True
         return super(ChatBox, self).keypress(size, key)
 
