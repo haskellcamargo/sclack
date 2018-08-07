@@ -122,7 +122,7 @@ class ChannelHeader(urwid.Pile):
             self.contents.append((divider, ('pack', 1)))
 
     def __init__(self, name, topic, date=None, num_members=0, is_private=False,
-        pin_count=0, is_starred=False):
+        pin_count=0, is_starred=False, is_dm_workaround_please_remove_me=False):
         if is_starred:
             star_icon = ('starred', get_icon('full_star'))
         else:
@@ -135,7 +135,10 @@ class ChannelHeader(urwid.Pile):
             date_divider = urwid.Divider('─')
 
         self.original_topic = topic
-        self.topic_widget = ChannelTopic(topic)
+        if is_dm_workaround_please_remove_me:
+            self.topic_widget = urwid.Text(topic)
+        else:
+            self.topic_widget = ChannelTopic(topic)
         body = urwid.Columns([
             ('pack', BreadCrumbs([
                 star_icon,
@@ -144,18 +147,23 @@ class ChannelHeader(urwid.Pile):
             ])),
             urwid.AttrMap(self.topic_widget, None, 'edit_topic_focus')
         ])
-        contents = [
-            TextDivider(' {} {}'.format(
-                get_icon('private_channel' if is_private else 'channel'),
-                name
-            )),
+        icon = TextDivider(' {} {}'.format(
+            get_icon('private_channel' if is_private else 'channel'),
+            name
+        ))
+        contents = []
+        if not is_dm_workaround_please_remove_me:
+            contents.append(icon)
+        contents.extend([
             body,
             date_divider
-        ]
+        ])
+        self.is_dm_workaround_please_remove_me = is_dm_workaround_please_remove_me
         super(ChannelHeader, self).__init__(contents)
 
     def restore_topic(self):
-        self.topic_widget.set_edit_text(self.original_topic)
+        if not self.is_dm_workaround_please_remove_me:
+            self.topic_widget.set_edit_text(self.original_topic)
 
     def go_to_end_of_topic(self):
         self.topic_widget.set_edit_pos(len(self.original_topic))

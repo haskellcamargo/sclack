@@ -202,15 +202,25 @@ class App:
             self.columns.contents.append((profile, ('given', 35, False)))
 
     def render_chatbox_header(self):
-        header = ChannelHeader(
-            name=self.store.state.channel['name'],
-            topic=self.store.state.channel['topic']['value'],
-            num_members=len(self.store.state.channel['members']),
-            pin_count=self.store.state.pin_count,
-            is_private=self.store.state.channel.get('is_group', False),
-            is_starred=self.store.state.channel.get('is_starred', False)
-        )
-        urwid.connect_signal(header.topic_widget, 'done', self.on_change_topic)
+
+        if self.store.state.channel['id'][0] == 'D':
+            user = self.store.find_user_by_id(self.store.state.channel['user'])
+            header = ChannelHeader(
+                name=user.get('real_name', user['name']),
+                topic=user['profile']['status_text'],
+                is_starred=self.store.state.channel.get('is_starred', False),
+                is_dm_workaround_please_remove_me=True
+            )
+        else:
+            header = ChannelHeader(
+                name=self.store.state.channel['name'],
+                topic=self.store.state.channel['topic']['value'],
+                num_members=len(self.store.state.channel['members']),
+                pin_count=self.store.state.pin_count,
+                is_private=self.store.state.channel.get('is_group', False),
+                is_starred=self.store.state.channel.get('is_starred', False)
+            )
+            urwid.connect_signal(header.topic_widget, 'done', self.on_change_topic)
         return header
 
     def on_change_topic(self, text):
@@ -421,7 +431,8 @@ class App:
                         self.chatbox.message_box.typing = name
                         self.urwid_loop.set_alarm_in(3, stop_typing)
                     else:
-                        print(json.dumps(event, indent=2))
+                        pass
+                        # print(json.dumps(event, indent=2))
                 elif event.get('ok', False):
                     # Message was sent, Slack confirmed it.
                     self.chatbox.body.body.extend(self.render_messages([{
@@ -431,7 +442,8 @@ class App:
                     }]))
                     self.chatbox.body.scroll_to_bottom()
                 else:
-                    print(json.dumps(event, indent=2))
+                    pass
+                    # print(json.dumps(event, indent=2))
             yield from asyncio.sleep(0.5)
 
     def set_insert_mode(self):
@@ -484,7 +496,7 @@ class App:
             return self.go_to_sidebar()
         elif key == keymap['quit_application']:
             return self.quit_application()
-        elif key == keymap['set_edit_topic_mode'] and self.message_box:
+        elif key == keymap['set_edit_topic_mode'] and self.message_box and not self.state.channel['id'][0] == 'D':
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
             return self.set_insert_mode()
