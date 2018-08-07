@@ -56,7 +56,7 @@ class MarkdownText(urwid.SelectableIcon):
                 self._buffer = ''
             elif char == '*' and self._state == 'bold':
                 self.change_state('bold', self._previous_state)
-            elif char == :'*' and self._state not in ('link', 'code'):
+            elif char == '*' and self._state not in ('link', 'code'):
                 self.change_state(self._state, 'bold')
             elif char == '_' and self._state == 'italics':
                 self.change_state('italics', self._previous_state)
