@@ -384,6 +384,9 @@ class App:
     @asyncio.coroutine
     def start_real_time(self):
         self.store.slack.rtm_connect()
+        def stop_typing(*args):
+            self.chatbox.message_box.typing = None
+        alarm = None
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
             for event in events:
@@ -413,7 +416,10 @@ class App:
                     elif event['type'] == 'user_typing':
                         user = self.store.find_user_by_id(event['user'])
                         name = user.get('real_name', user['name'])
+                        if alarm is not None:
+                            self.urwid_loop.remove_alarm(alarm)
                         self.chatbox.message_box.typing = name
+                        self.urwid_loop.set_alarm_in(3, stop_typing)
                     else:
                         print(json.dumps(event, indent=2))
                 elif event.get('ok', False):
@@ -467,7 +473,7 @@ class App:
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
-                result = self.store.slack.rtm_send_message(channel, message)
+                self.store.slack.rtm_send_message(channel, message)
                 self.leave_edit_mode()
 
     def unhandled_input(self, key):

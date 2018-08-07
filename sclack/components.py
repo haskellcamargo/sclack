@@ -444,11 +444,12 @@ class MessageBox(urwid.AttrMap):
             middle,
             urwid.Divider('─')
         ])
+        self._typing = typing
         super(MessageBox, self).__init__(self.body, None, {'prompt': 'active_prompt'})
 
     @property
     def typing(self):
-        return None
+        return self._typing
 
     @typing.setter
     def typing(self, typing=None):
