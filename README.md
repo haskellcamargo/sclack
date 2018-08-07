@@ -21,7 +21,7 @@ ask for the administrator to enable the feature.
 
 Sclack seems better when used with a [Nerd Font](https://nerdfonts.com/). Using
 them is completely optional, but it is how some Sclack icons are possible.
-Personally, I use [Fire Code Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases/download/v2.0.0/FiraCode.zip).
+Personally, I use [Fira Code Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases/download/v2.0.0/FiraCode.zip).
 Download, install and set as the default font of your terminal emulator.
 
 ### libcaca
@@ -29,7 +29,7 @@ Download, install and set as the default font of your terminal emulator.
 Sclack uses `caca-utils` to create ANSI/VT100 + ASCII versions of pictures and
 render them. Images will only be rendered if both `caca-utils` is installed
 and `features.pictures` is configured to `true`. To install `caca-utils`, just
-run `sudo apt-get install caca-utils` on Debian and `brew install caca-utils` on
+run `sudo apt-get install caca-utils` on Debian and `brew install libcaca` on
 OS X.
 
 ## Installation
