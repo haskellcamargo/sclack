@@ -44,7 +44,7 @@ class MarkdownText(urwid.SelectableIcon):
             return emoji_codemap.get(result.group(1), result.group(0))
 
         if Store.instance.config['features']['emoji']:
-            text = re.sub(r':([a-zA-Z][a-zA-Z0-9_-]*):', render_emoji, text)
+            text = re.sub(r':([\w_+-]+):', render_emoji, text)
         text = text.replace('```', '`')
         for char in text:
             if char == '<' and self._state != 'code':
@@ -56,7 +56,7 @@ class MarkdownText(urwid.SelectableIcon):
                 self._buffer = ''
             elif char == '*' and self._state == 'bold':
                 self.change_state('bold', self._previous_state)
-            elif char == '*' and self._state not in ('link', 'code'):
+            elif char == :'*' and self._state not in ('link', 'code'):
                 self.change_state(self._state, 'bold')
             elif char == '_' and self._state == 'italics':
                 self.change_state('italics', self._previous_state)
