@@ -291,9 +291,9 @@ class Dm(urwid.AttrMap):
         sidebar_width = Store.instance.config['sidebar']['width']
         name = self.name
         if self.you:
-            self.name = self.name + ' (you)'
-        if len(self.name) > sidebar_width - 4:
-            name = self.name[:(sidebar_width - 7)] + '...'
+            name = self.name + ' (you)'
+        if len(name) > sidebar_width - 4:
+            name = name[:(sidebar_width - 7)] + '...'
         return [' ', icon, ' ', name]
 
     def set_presence(self, presence):
