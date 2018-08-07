@@ -41,7 +41,8 @@ Ensure you have Python 3.4 or superior version.
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
-pip install -r requirements.txt
+pipenv install -r requirements.txt
+pipenv run
 chmod +x ./app.py
 ./app.py
 ```
