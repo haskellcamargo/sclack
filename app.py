@@ -297,7 +297,7 @@ class App:
     def render_messages(self, messages):
         _messages = []
         previous_date = self.store.state.last_date
-        last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read')))
+        last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
         today = datetime.today().date()
         for message in messages:
             message_datetime = datetime.fromtimestamp(float(message['ts']))
@@ -312,7 +312,8 @@ class App:
                 else:
                     date_text = message_date.strftime('%A, %B %d')
             # New messages badge
-            if message_datetime > last_read_datetime and not self.store.state.did_render_new_messages:
+            if (message_datetime > last_read_datetime and not self.store.state.did_render_new_messages
+                and (self.store.state.channel.get('unread_count', 0) > 0)):
                 self.store.state.did_render_new_messages = True
                 unread_text = 'new messages'
             if unread_text is not None:

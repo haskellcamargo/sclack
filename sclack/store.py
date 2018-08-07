@@ -61,9 +61,9 @@ class Store:
             return self.slack.api_call('channels.info', channel=channel_id)['channel']
 
     def load_channel(self, channel_id):
-        self.state.did_render_new_messages = False
         if channel_id[0] in ('C', 'G'):
             self.state.channel = self.get_channel_info(channel_id)
+            self.state.did_render_new_messages = self.state.channel.get('unread_count', 0) == 0
 
     def load_channels(self):
         conversations = self.slack.api_call(
