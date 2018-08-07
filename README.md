@@ -38,12 +38,21 @@ OS X.
 
 Ensure you have Python 3.4 or superior version.
 
+pip
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
 pip install -r requirements.txt
 chmod +x ./app.py
 ./app.py
+```
+pipenv
+```bash
+git clone https://github.com/haskellcamargo/sclack.git
+cd sclack
+pipenv install # install deps
+pipenv shell # enter virtualenv
+python app.py # run app
 ```
 
 ### From Binary
