@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+asyncio = "*"
+urwid = "==2.0.1"
+pyperclip = "==1.6.2"
+requests = "*"
+slackclient = "==1.2.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
