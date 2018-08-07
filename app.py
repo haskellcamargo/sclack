@@ -141,7 +141,7 @@ class App:
         ])
         for channel_info in channels_info:
             [widget, response] = channel_info
-            widget.set_unread(response.get('unread_count', 0))
+            widget.set_unread(response.get('unread_count_display', 0))
 
     @asyncio.coroutine
     def mount_chatbox(self, executor, channel):
@@ -313,7 +313,7 @@ class App:
                     date_text = message_date.strftime('%A, %B %d')
             # New messages badge
             if (message_datetime > last_read_datetime and not self.store.state.did_render_new_messages
-                and (self.store.state.channel.get('unread_count', 0) > 0)):
+                and (self.store.state.channel.get('unread_count_display', 0) > 0)):
                 self.store.state.did_render_new_messages = True
                 unread_text = 'new messages'
             if unread_text is not None:
@@ -390,7 +390,7 @@ class App:
                 if event.get('type') == 'hello':
                     pass
                 elif event.get('type') in ('channel_marked', 'group_marked'):
-                    unread = event.get('unread_count', 0)
+                    unread = event.get('unread_count_display', 0)
                     for channel in self.sidebar.channels:
                         if channel.id == event['channel']:
                             channel.set_unread(unread)
