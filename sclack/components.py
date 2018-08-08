@@ -251,6 +251,12 @@ class ChatBoxMessages(urwid.ListBox):
         else:
             return super(ChatBoxMessages, self).mouse_event(size, event, button, col, row, focus)
 
+    def scroll_to_new_messages(self):
+        for index, widget in enumerate(self.body):
+            if isinstance(widget, NewMessagesDivider):
+                return self.set_focus(index)
+        return self.scroll_to_bottom()
+
     def scroll_to_bottom(self):
         if self.auto_scroll and len(self.body):
             self.set_focus(len(self.body) - 1)
