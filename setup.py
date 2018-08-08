@@ -13,9 +13,6 @@ setup(
     author_email='marcelocamargo@linuxmail.org',
     url='https://github.com/haskellcamargo/sclack',
     packages=['sclack'],
-    entry_points={
-        'console_scripts': ['sclack=sclack.__main__:main'],
-    },
     install_requires=[
         'asyncio',
         'urwid>2',

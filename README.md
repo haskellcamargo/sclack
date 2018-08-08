@@ -43,8 +43,8 @@ pip
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
 pip3 install -r requirements.txt
-pip3 install .
-sclack
+chmod +x ./app.py
+./app.py
 ```
 pipenv
 ```bash
@@ -53,7 +53,7 @@ cd sclack
 export PIPENV_VENV_IN_PROJECT=1
 pipenv install # install deps
 pipenv shell # enter virtualenv
-sclack # run app
+python app.py # run app
 ```
 
 ### From Binary
@@ -62,7 +62,7 @@ If you don't have Python installed, you can get the compiled binary for Sclack
 on [releases](https://github.com/haskellcamargo/sclack/releases) page. Versions **will be** available for Linux x86/x64 and OS X.
 
 ## Running
-Run `sclack`. If you don't have a `~/.sclack` file, you can generate one here by providing your workspace token. You can change the theme, enable or disable images, emojis, markdown, configure keyboards and everything else on `config.json`. Important: use `q` to quit!
+Run `./app.py` after giving the correct permissions. If you don't have a `~/.sclack` file, you can generate one here by providing your workspace token. You can change the theme, enable or disable images, emojis, markdown, configure keyboards and everything else on `config.json`. Important: use `q` to quit!
 
 Your `~/.sclack` file will look like:
 
