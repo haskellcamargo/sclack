@@ -15,7 +15,7 @@ from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from sclack.components import Indicators, MarkdownText, Message, MessageBox
 from sclack.components import NewMessagesDivider, Profile, ProfileSideBar
 from sclack.components import Reaction, SideBar, TextDivider
-from sclack.components import User
+from sclack.components import User, Workspaces
 from sclack.image import Image
 from sclack.loading import LoadingChatBox, LoadingSideBar
 from sclack.store import Store
@@ -28,18 +28,20 @@ class App:
 
     def __init__(self, config):
         self.config = config
-        self.store = Store(config['token'], self.config)
+        self.workspaces = list(config['workspaces'].items())
+        self.store = Store(self.workspaces, self.config)
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
         palette = themes.get(config['theme'], themes['default'])
+        self.workspaces_line = Workspaces(self.workspaces)
         self.columns = urwid.Columns([
             ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
         ])
         self.urwid_loop = urwid.MainLoop(
-            urwid.Frame(self.columns),
+            urwid.Frame(self.columns, header=self.workspaces_line),
             palette=palette,
             event_loop=urwid.AsyncioEventLoop(loop=loop),
             unhandled_input=self.unhandled_input
@@ -51,6 +53,15 @@ class App:
         loop.create_task(self.animate_loading())
         loop.create_task(self.component_did_mount())
         self.urwid_loop.run()
+
+    def switch_to_workspace(self, workspace_number):
+        self.sidebar = LoadingSideBar()
+        self.chatbox = LoadingChatBox('And it becomes worse!')
+        self._loading = True
+        self.message_box = None
+        self.store.switch_to_workspace(workspace_number)
+        loop.create_task(self.animate_loading())
+        loop.create_task(self.component_did_mount())
 
     @property
     def sidebar(self):
@@ -500,10 +511,14 @@ class App:
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
             return self.set_insert_mode()
+        elif key in ('1', '2', '3', '4', '5', '6', '7', '8', '9') and len(self.workspaces) >= int(key):
+            self.workspaces_line.select(int(key))
+            return self.switch_to_workspace(int(key))
 
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=self.store.config['colors'])
         screen.set_mouse_tracking()
+        urwid.connect_signal(self.workspaces_line, 'switch_workspace', self.switch_to_workspace)
 
     def quit_application(self):
         self.urwid_loop.stop()
@@ -514,12 +529,16 @@ class App:
 def ask_for_token(json_config):
     if os.path.isfile(os.path.expanduser('~/.sclack')):
         with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
-            json_config.update(json.load(user_file))
+            # Compatible with legacy configuration file
+            new_config = json.load(user_file)
+            if not 'workspaces' in new_config:
+                new_config['workspaces'] = {'default': new_config['token']}
+            json_config.update(new_config)
     else:
         print('There is no ~/.sclack file. Let\'s create one!')
         token = input('What is your Slack workspace token? ')
         with open(os.path.expanduser('~/.sclack'), 'w') as config_file:
-            token_config = {'token': token}
+            token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
 

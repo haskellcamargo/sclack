@@ -22,12 +22,21 @@ class Cache:
         self.picture = {}
 
 class Store:
-    def __init__(self, slack_token, config):
+    def __init__(self, workspaces, config):
+        self.workspaces = workspaces
+        slack_token = workspaces[0][1]
         self.slack_token = slack_token
         self.slack = SlackClient(slack_token)
         self.state = State()
         self.cache = Cache()
         self.config = config
+
+    def switch_to_workspace(self, workspace_number):
+        self.slack_token = self.workspaces[workspace_number - 1][1]
+        self.slack.token = self.slack_token
+        self.slack.server.token = self.slack_token
+        self.state = State()
+        self.cache = Cache()
 
     def find_user_by_id(self, user_id):
         return self._users_dict.get(user_id)
