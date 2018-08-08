@@ -104,7 +104,9 @@ You can use the keys from 1 up to 9 to switch workspaces or event right-click th
     "quit_application": "q",
     "set_edit_topic_mode": "t",
     "set_insert_mode": "i",
-    "yank_message": "y"
+    "yank_message": "y",
+    "cursor_up": "k",
+    "cursor_down": "j"
 }
 ```
 
