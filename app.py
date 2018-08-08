@@ -106,7 +106,7 @@ class App:
             if user:
                 dms.append(Dm(
                     dm['id'],
-                    name=user.get('real_name', user['name']),
+                    name=user.get('display_name') or user.get('real_name') or user['name'],
                     user=dm['user'],
                     you=user['id'] == self.store.state.auth['user_id']
                 ))
@@ -189,7 +189,7 @@ class App:
                 return
             self.store.state.profile_user_id = user_id
             profile = ProfileSideBar(
-                user.get('real_name', user['name']),
+                user.get('display_name') or user.get('real_name') or user['name'],
                 user['profile'].get('status_text', None),
                 user['profile'].get('tz_label', None),
                 user['profile'].get('phone', None),
@@ -205,7 +205,7 @@ class App:
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
-                name=user.get('real_name', user['name']),
+                name=user.get('display_name') or user.get('real_name') or user['name'],
                 topic=user['profile']['status_text'],
                 is_starred=self.store.state.channel.get('is_starred', False),
                 is_dm_workaround_please_remove_me=True
@@ -425,7 +425,7 @@ class App:
                             self.chatbox.body.scroll_to_bottom()
                     elif event['type'] == 'user_typing':
                         user = self.store.find_user_by_id(event['user'])
-                        name = user.get('real_name', user['name'])
+                        name = user.get('display_name') or user.get('real_name') or user['name']
                         if alarm is not None:
                             self.urwid_loop.remove_alarm(alarm)
                         self.chatbox.message_box.typing = name
