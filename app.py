@@ -279,6 +279,8 @@ class App:
                 return None
         elif subtype == 'file_comment':
             user = self.store.find_user_by_id(message['comment']['user'])
+
+            # A temporary fix for a null pointer exception for truncated or deleted users
             if user is None:
                 return None
 
@@ -290,6 +292,7 @@ class App:
         else:
             user = self.store.find_user_by_id(message['user'])
 
+            # A temporary fix for a null pointer exception for truncated or deleted users
             if user is None:
                 return None
 
