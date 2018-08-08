@@ -50,6 +50,7 @@ pipenv
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
+export PIPENV_VENV_IN_PROJECT=1
 pipenv install # install deps
 pipenv shell # enter virtualenv
 python app.py # run app
