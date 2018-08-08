@@ -23,6 +23,10 @@ from sclack.themes import themes
 
 loop = asyncio.get_event_loop()
 
+class SclackEventLoop(urwid.AsyncioEventLoop):
+    def run(self):
+        self._loop.run_forever()
+
 class App:
     message_box = None
 
@@ -46,7 +50,7 @@ class App:
         self.urwid_loop = urwid.MainLoop(
             urwid.Frame(self.columns, header=self.workspaces_line),
             palette=palette,
-            event_loop=urwid.AsyncioEventLoop(loop=loop),
+            event_loop=SclackEventLoop(loop=loop),
             unhandled_input=self.unhandled_input
         )
         self.configure_screen(self.urwid_loop.screen)
