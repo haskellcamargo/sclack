@@ -580,10 +580,16 @@ def ask_for_token(json_config):
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
 
-if __name__ == '__main__':
+
+def main():
     json_config = {}
     with open('./config.json', 'r') as config_file:
         json_config.update(json.load(config_file))
     ask_for_token(json_config)
     app = App(json_config)
     app.start()
+
+
+if __name__ == '__main__':
+    main()
+
