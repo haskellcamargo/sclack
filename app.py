@@ -349,7 +349,7 @@ class App:
             self.chatbox.header = header
             self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
             self.sidebar.select_channel(channel_id)
-            self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_bottom())
+            self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_new_messages())
             self.go_to_chatbox()
 
     def go_to_channel(self, channel_id):
