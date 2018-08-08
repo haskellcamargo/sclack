@@ -234,10 +234,15 @@ class ChatBoxMessages(urwid.ListBox):
         urwid.emit_signal(self, 'set_auto_scroll', switch)
 
     def keypress(self, size, key):
+        keymap = Store.instance.config['keymap']
         self.handle_floating_date(size)
         super(ChatBoxMessages, self).keypress(size, key)
         if key in ('page up', 'page down'):
             self.auto_scroll = self.get_focus()[1] == len(self.body) - 1
+        if key == keymap['cursor_up']:
+            self.keypress(size, 'up')
+        if key == keymap['cursor_down']:
+            self.keypress(size,'down')
 
     def mouse_event(self, size, event, button, col, row, focus):
         self.handle_floating_date(size)
@@ -613,10 +618,10 @@ class SideBar(urwid.Frame):
             channel = self.listbox.focus
             self.go_to_channel(channel.id)
             return True
-        if key == keymap['sidebar_cursor_up']:
+        if key == keymap['cursor_up']:
             self.keypress(size, 'up')
             return True
-        if key == keymap['sidebar_cursor_down']:
+        if key == keymap['cursor_down']:
             self.keypress(size, 'down')
             return True
 
