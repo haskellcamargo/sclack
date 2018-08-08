@@ -35,7 +35,10 @@ class App:
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
         palette = themes.get(config['theme'], themes['default'])
-        self.workspaces_line = Workspaces(self.workspaces)
+        if len(self.workspaces) <= 1:
+            self.workspaces_line = None
+        else:
+            self.workspaces_line = Workspaces(self.workspaces)
         self.columns = urwid.Columns([
             ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
@@ -512,13 +515,15 @@ class App:
         elif key == keymap['set_insert_mode'] and self.message_box:
             return self.set_insert_mode()
         elif key in ('1', '2', '3', '4', '5', '6', '7', '8', '9') and len(self.workspaces) >= int(key):
-            self.workspaces_line.select(int(key))
-            return self.switch_to_workspace(int(key))
+            if self.workspaces_line is not None:
+                self.workspaces_line.select(int(key))
+                return self.switch_to_workspace(int(key))
 
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=self.store.config['colors'])
         screen.set_mouse_tracking()
-        urwid.connect_signal(self.workspaces_line, 'switch_workspace', self.switch_to_workspace)
+        if self.workspaces_line is not None:
+            urwid.connect_signal(self.workspaces_line, 'switch_workspace', self.switch_to_workspace)
 
     def quit_application(self):
         self.urwid_loop.stop()
