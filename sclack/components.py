@@ -696,3 +696,68 @@ class User(urwid.Text):
         if is_app:
             markup.append(('app_badge', '[APP]'))
         super(User, self).__init__(markup)
+
+class Workspace(urwid.AttrMap):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['select_workspace']
+
+    def __init__(self, number, name):
+        separator = ('inactive', format(get_icon('divider')))
+        self.number = number
+        self.text = ' {}: {} '.format(number, name)
+        self.body = urwid.SelectableIcon([self.text, separator])
+        self.last_time_clicked = None
+        super(Workspace, self).__init__(self.body, 'inactive', None)
+
+    def select(self):
+        self.attr_map = {None: 'selected_workspace'}
+        self.body.set_text([
+            self.text,
+            ('selected_workspace_separator', format(get_icon('full_divider')))
+        ])
+
+    def deselect(self):
+        self.attr_map = {None: None}
+        self.body.set_text([
+            self.text,
+            ('inactive', format(get_icon('divider')))
+        ])
+
+    def select_as_previous(self):
+        self.attr_map = {None: None}
+        self.body.set_text([
+            self.text,
+            ('previous_workspace_separator', format(get_icon('full_divider')))
+        ])
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse press':
+            now = time.time()
+            if self.last_time_clicked and (now - self.last_time_clicked < 0.5):
+                urwid.emit_signal(self, 'select_workspace', self.number)
+            self.last_time_clicked = now
+
+class Workspaces(urwid.AttrWrap):
+    __metaclass__ = urwid.MetaSignals
+    signals = ['switch_workspace']
+
+    def __init__(self, workspaces):
+        body = []
+        for index, (name, _) in enumerate(workspaces):
+            workspace = Workspace(index + 1, name)
+            urwid.connect_signal(workspace, 'select_workspace', self.switch_workspace)
+            body.append(('pack', workspace))
+        self.body = body
+        self.body[0][1].select()
+        super(Workspaces, self).__init__(urwid.Columns(body), 'workspace_line')
+
+    def select(self, number):
+        for workspace in self.body:
+            workspace[1].deselect()
+        if number > 1:
+            self.body[number - 2][1].select_as_previous()
+        self.body[number - 1][1].select()
+
+    def switch_workspace(self, number):
+        self.select(number)
+        urwid.emit_signal(self, 'switch_workspace', number)

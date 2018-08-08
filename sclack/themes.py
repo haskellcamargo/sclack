@@ -36,7 +36,11 @@ themes = {
         ('edit_topic_focus', '', '', '', 'h27', 'h235'),
         ('editing_message', '', '', '', 'black', 'h178'),
         ('new_messages_text', '', '', '', 'h249', 'h197'),
-        ('new_messages_line', '', '', '', 'h197', 'h235')
+        ('new_messages_line', '', '', '', 'h197', 'h235'),
+        ('workspace_line', '', '', '', 'white', 'h54'),
+        ('selected_workspace', '', '', '', 'white', 'h198'),
+        ('selected_workspace_separator', '', '', '', 'h198', 'h54'),
+        ('previous_workspace_separator', '', '', '', 'h54', 'h198'),
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),
