@@ -42,7 +42,7 @@ pip
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 chmod +x ./app.py
 ./app.py
 ```
