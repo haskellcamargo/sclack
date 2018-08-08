@@ -260,6 +260,9 @@ class App:
                 return None
         elif subtype == 'file_comment':
             user = self.store.find_user_by_id(message['comment']['user'])
+            if user is None:
+                return None
+
             user_id = user['id']
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
@@ -267,6 +270,10 @@ class App:
                 message['file'] = None
         else:
             user = self.store.find_user_by_id(message['user'])
+
+            if user is None:
+                return None
+
             user_id = user['id']
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
