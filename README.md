@@ -63,6 +63,35 @@ on [releases](https://github.com/haskellcamargo/sclack/releases) page. Versions 
 ## Running
 Run `./app.py` after giving the correct permissions. If you don't have a `~/.sclack` file, you can generate one here by providing your workspace token. You can change the theme, enable or disable images, emojis, markdown, configure keyboards and everything else on `config.json`. Important: use `q` to quit!
 
+Your `~/.sclack` file will look like:
+
+```json
+{
+    "workspaces": {
+        "default": "wow-such-secret"
+    }
+}
+```
+
+### Multiple workspaces
+
+If you want to, you can use Sclack in multiple workspaces. You can have
+at most 9 workspaces defined inside `workspaces`:
+
+```json
+{
+    "workspaces": {
+        "default": "wow-such-secret",
+        "another": "wow-another-secret"
+    }
+}
+```
+
+You can use the keys from 1 up to 9 to switch workspaces or event right-click the indicator:
+
+![Multiple workspaces](./resources/example_7.png)
+
+
 ### Default keybindings
 ```json
 {
