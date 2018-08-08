@@ -7,6 +7,7 @@ import os
 import requests
 import subprocess
 import sys
+import traceback
 import tempfile
 import urwid
 from datetime import datetime
@@ -25,10 +26,24 @@ loop = asyncio.get_event_loop()
 
 class SclackEventLoop(urwid.AsyncioEventLoop):
     def run(self):
+        self._loop.set_exception_handler(self._custom_exception_handler)
         self._loop.run_forever()
+
+
+    def set_exception_handler(self, handler):
+        self._custom_exception_handler = handler
 
 class App:
     message_box = None
+
+    def _exception_handler(self, loop, context):
+        try:
+            exception = context['exception']
+            message = 'Whoops, something went wrong:\n\n' + str(exception) + '\n' + ''.join(traceback.format_tb(exception.__traceback__))
+            self.chatbox = LoadingChatBox(message)
+        except Exception as exc:
+            self.chatbox = LoadingChatBox('Unable to show exception: ' + str(exc))
+        return
 
     def __init__(self, config):
         self.config = config
@@ -39,6 +54,10 @@ class App:
         sidebar = LoadingSideBar()
         chatbox = LoadingChatBox('Everything is terrible!')
         palette = themes.get(config['theme'], themes['default'])
+
+        custom_loop = SclackEventLoop(loop=loop)
+        custom_loop.set_exception_handler(self._exception_handler)
+
         if len(self.workspaces) <= 1:
             self.workspaces_line = None
         else:
@@ -50,7 +69,7 @@ class App:
         self.urwid_loop = urwid.MainLoop(
             urwid.Frame(self.columns, header=self.workspaces_line),
             palette=palette,
-            event_loop=SclackEventLoop(loop=loop),
+            event_loop=custom_loop,
             unhandled_input=self.unhandled_input
         )
         self.configure_screen(self.urwid_loop.screen)
@@ -260,6 +279,11 @@ class App:
                 return None
         elif subtype == 'file_comment':
             user = self.store.find_user_by_id(message['comment']['user'])
+
+            # A temporary fix for a null pointer exception for truncated or deleted users
+            if user is None:
+                return None
+
             user_id = user['id']
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
@@ -267,6 +291,11 @@ class App:
                 message['file'] = None
         else:
             user = self.store.find_user_by_id(message['user'])
+
+            # A temporary fix for a null pointer exception for truncated or deleted users
+            if user is None:
+                return None
+
             user_id = user['id']
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
