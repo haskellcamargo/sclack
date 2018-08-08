@@ -33,7 +33,7 @@ class MarkdownText(urwid.SelectableIcon):
         if self._buffer.startswith('@'):
             user = Store.instance.find_user_by_id(self._buffer[1:])
             if user:
-                self._buffer = user.get('real_name', user['name'])
+                self._buffer = user.get('display_name') or user.get('real_name') or user['name']
 
     def parse_message(self, text):
         self._buffer = ''
