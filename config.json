@@ -10,7 +10,10 @@
         "quit_application": "q",
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
-        "yank_message": "y"
+        "yank_message": "y",
+        "sidebar_cursor_up": "k",
+        "sidebar_cursor_down": "j"
+
     },
     "sidebar": {
         "width": 25

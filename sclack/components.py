@@ -608,9 +608,16 @@ class SideBar(urwid.Frame):
         urwid.emit_signal(self, 'go_to_channel', channel)
 
     def keypress(self, size, key):
+        keymap = Store.instance.config['keymap']
         if key == 'enter':
             channel = self.listbox.focus
             self.go_to_channel(channel.id)
+            return True
+        if key == keymap['sidebar_cursor_up']:
+            self.keypress(size, 'up')
+            return True
+        if key == keymap['sidebar_cursor_down']:
+            self.keypress(size, 'down')
             return True
 
         return super(SideBar, self).keypress(size, key)
