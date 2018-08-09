@@ -410,11 +410,11 @@ class Message(urwid.AttrMap):
         elif key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
             return True
+        elif key == keymap['go_to_sidebar'] or key == keymap['cursor_left']:
+            urwid.emit_signal(self, 'go_to_sidebar')
+            return True
         elif key == keymap['quit_application']:
             urwid.emit_signal(self, 'quit_application')
-            return True
-        elif key == keymap['cursor_left'] or key == keymap['cursor_left']:
-            urwid.emit_signal(self, 'go_to_sidebar')
             return True
         elif key == keymap['set_insert_mode']:
             urwid.emit_signal(self, 'set_insert_mode')

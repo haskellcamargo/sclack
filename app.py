@@ -539,10 +539,10 @@ class App:
         keymap = self.store.config['keymap']
         if key == keymap['go_to_chatbox'] or key == keymap['cursor_right'] and self.message_box:
             return self.go_to_chatbox()
-        elif key == keymap['quit_application']:
-            return self.quit_application()
         elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
+        elif key == keymap['quit_application']:
+            return self.quit_application()
         elif key == keymap['set_edit_topic_mode'] and self.message_box and not self.store.state.channel['id'][0] == 'D':
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
