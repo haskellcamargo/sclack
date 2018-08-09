@@ -2,6 +2,7 @@ import urwid
 import pprint
 import pyperclip
 import time
+import urwid_readline
 from datetime import datetime
 from .emoji import emoji_codemap
 from .markdown import MarkdownText
@@ -510,7 +511,7 @@ class MessageBox(urwid.AttrMap):
         self.prompt_widget.set_edit_text(text)
         self.prompt_widget.set_edit_pos(len(text))
 
-class MessagePrompt(urwid.Edit):
+class MessagePrompt(urwid_readline.ReadlineEdit):
     __metaclass__ = urwid.MetaSignals
     signals = ['submit_message']
 
