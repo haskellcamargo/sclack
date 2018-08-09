@@ -96,23 +96,38 @@ You can use the keys from 1 up to 9 to switch workspaces or event right-click th
 ### Default keybindings
 ```json
 {
-    "cursor_down": "j",
-    "cursor_left": "h",
-    "cursor_right":"l",
-    "cursor_up": "k",
-    "delete_message": "d",
-    "edit_message": "e",
-    "go_to_chatbox": "c",
-    "go_to_profile": "p",
-    "go_to_sidebar": "esc",
-    "quit_application": "q",
-    "set_edit_topic_mode": "t",
-    "set_insert_mode": "i",
-    "yank_message": "y",
+    "keymap": {
+        "cursor_down": "j",
+        "cursor_left": "h",
+        "cursor_right":"l",
+        "cursor_up": "k",
+        "delete_message": "d",
+        "edit_message": "e",
+        "go_to_chatbox": "c",
+        "go_to_profile": "p",
+        "go_to_sidebar": "esc",
+        "quit_application": "q",
+        "set_edit_topic_mode": "t",
+        "set_insert_mode": "i",
+        "yank_message": "y"
+  }
 }
 ```
 
 The mouse support also has been programmed. You can scroll the chatbox and the sidebar and double click the channels to select.
+
+### Sidebar
+
+```json
+{
+    "sidebar": {
+        "width": 25,
+        "max_users": 20
+    }
+}
+```
+
+* `max_users`: Max users who are shown in the sidebar
 
 ## Tested Terminals
 
