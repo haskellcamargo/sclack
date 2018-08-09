@@ -415,7 +415,10 @@ class Message(urwid.AttrMap):
             urwid.emit_signal(self, 'set_insert_mode')
             return True
         elif key == keymap['yank_message']:
-            pyperclip.copy(self.original_text)
+            try:
+                pyperclip.copy(self.original_text)
+            except pyperclip.PyperclipException:
+                pass
             return True
         return super(Message, self).keypress(size, key)
 
