@@ -3,14 +3,17 @@ import asyncio
 import concurrent.futures
 import functools
 import json
+import re
 import os
 import requests
 import sys
+import platform
 import time
 import traceback
 import tempfile
 import urwid
 from datetime import datetime
+
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from sclack.components import Indicators, MarkdownText, MessageBox
 from sclack.component.message import Message
@@ -90,6 +93,48 @@ class App:
         )
         self.configure_screen(self.urwid_loop.screen)
         self.last_keypress = (0, None)
+        self.mentioned_patterns = None
+
+    def get_mentioned_patterns(self):
+        slack_mentions = [
+            '<!everyone>',
+            '<!here>',
+            '<!channel>',
+            '<@{}>'.format(self.store.state.auth['user_id']),
+        ]
+
+        patterns = []
+
+        for mention in slack_mentions:
+            patterns.append('^{}[ ]+'.format(mention))
+            patterns.append('^{}$'.format(mention))
+            patterns.append('[ ]+{}'.format(mention))
+
+        return re.compile('|'.join(patterns))
+
+    def should_notify_me(self, message_obj):
+        """
+        Checking whether notify to user
+        :param message_obj:
+        :return:
+        """
+        # You send message, don't need notification
+        if self.config['features']['notification'] in ['', 'none'] or message_obj['user'] == self.store.state.auth['user_id']:
+            return False
+
+        if self.config['features']['notification'] == 'all':
+            return True
+
+        # Private message
+        if message_obj.get('channel') is not None and message_obj.get('channel')[0] == 'D':
+            return True
+
+        regex = self.mentioned_patterns
+        if regex is None:
+            regex = self.get_mentioned_patterns()
+            self.mentioned_patterns = regex
+
+        return len(re.findall(regex, message_obj['text'])) > 0
 
     @property
     def sidebar_column(self):
@@ -156,6 +201,8 @@ class App:
             loop.run_in_executor(executor, self.store.load_users),
             loop.run_in_executor(executor, self.store.load_user_dnd),
         )
+        self.mentioned_patterns = self.get_mentioned_patterns()
+
         profile = Profile(name=self.store.state.auth['user'], is_snoozed=self.store.state.is_snoozed)
 
         channels = []
@@ -350,7 +397,7 @@ class App:
                 return
             self.store.state.profile_user_id = user_id
             profile = ProfileSideBar(
-                user.get('display_name') or user.get('real_name') or user['name'],
+                self.store.get_user_display_name(user),
                 user['profile'].get('status_text', None),
                 user['profile'].get('tz_label', None),
                 user['profile'].get('phone', None),
@@ -366,7 +413,7 @@ class App:
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
-                name=user.get('display_name') or user.get('real_name') or user['name'],
+                name=self.store.get_user_display_name(user),
                 topic=user['profile']['status_text'],
                 is_starred=self.store.state.channel.get('is_starred', False),
                 is_dm_workaround_please_remove_me=True
@@ -392,6 +439,16 @@ class App:
         self.chatbox.header.original_topic = text
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
+
+    def notification_messages(self, messages):
+        """
+        Check and send notifications
+        :param messages:
+        :return:
+        """
+        for message in messages:
+            if self.should_notify_me(message):
+                self.send_notification(message, MarkdownText(message['text']))
 
     def render_message(self, message, channel_id=None):
         is_app = False
@@ -444,6 +501,7 @@ class App:
                 return None
 
             user_id = user['id']
+            # TODO
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
             if message.get('file'):
@@ -456,6 +514,7 @@ class App:
                 return None
 
             user_id = user['id']
+            # TODO
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
 
@@ -468,6 +527,7 @@ class App:
         ]
 
         attachments = []
+
         for attachment in message.get('attachments', []):
             attachment_widget = Attachment(
                 service_name=attachment.get('service_name'),
@@ -548,8 +608,9 @@ class App:
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
         today = datetime.today().date()
-        for message in messages:
-            message_datetime = datetime.fromtimestamp(float(message['ts']))
+
+        for raw_message in messages:
+            message_datetime = datetime.fromtimestamp(float(raw_message['ts']))
             message_date = message_datetime.date()
             date_text = None
             unread_text = None
@@ -577,6 +638,42 @@ class App:
                 _messages.append(message)
 
         return _messages
+
+    def send_notification(self, raw_message, markdown_text):
+        """
+        Only MacOS
+        @TODO Linux libnotify and Windows
+        :param raw_message:
+        :param markdown_text:
+        :return:
+        """
+        user = self.store.find_user_by_id(raw_message.get('user'))
+        sender_name = self.store.get_user_display_name(user)
+
+        # TODO Checking bot
+        if raw_message.get('channel')[0] == 'D':
+            notification_title = 'New message in {}'.format(
+                self.store.state.auth['team']
+            )
+        else:
+            notification_title = 'New message in {} #{}'.format(
+                self.store.state.auth['team'],
+                self.store.get_channel_name(raw_message.get('channel')),
+            )
+
+        sub_title = sender_name
+
+        if platform.system() == 'Darwin':
+            # Macos
+            import pync
+            pync.notify(
+                markdown_text.render_text(),
+                title=notification_title,
+                subtitle=sub_title,
+                appIcon='./resources/slack_icon.png'
+            )
+        else:
+            pass
 
     def handle_mark_read(self, data):
         """
@@ -770,13 +867,18 @@ class App:
                             self.chatbox.body.scroll_to_bottom()
                     else:
                         pass
+
+                    if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
+                        # Notification
+                        self.notification_messages([event])
                 elif event['type'] == 'user_typing':
                     if not self.is_chatbox_rendered:
                         return
 
                     if event.get('channel') == self.store.state.channel['id']:
                         user = self.store.find_user_by_id(event['user'])
-                        name = user.get('display_name') or user.get('real_name') or user['name']
+                        name = self.store.get_user_display_name(user)
+
                         if alarm is not None:
                             self.urwid_loop.remove_alarm(alarm)
                         self.chatbox.message_box.typing = name
@@ -957,6 +1059,7 @@ def ask_for_token(json_config):
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
+
 
 if __name__ == '__main__':
     json_config = {}

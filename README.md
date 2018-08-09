@@ -98,8 +98,7 @@ Your `~/.sclack` file will look like:
 
 ### Multiple workspaces
 
-If you want to, you can use Sclack in multiple workspaces. You can have
-at most 9 workspaces defined inside `workspaces`:
+If you want to, you can use Sclack in multiple workspaces. You can have at most 9 workspaces defined inside `workspaces`:
 
 ```json
 {
@@ -128,6 +127,26 @@ You can use <kbd>ctrl d</kbd> (or your custom shortcut) to set snooze time.
 ### Get permalink
 
 Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permalink (Quote message) and it will be put into your chat box.
+
+
+### Enable features
+
+There are some features available, you can adjust them by change the config file
+
+
+```json
+{
+    "features": {
+        "emoji": true,
+        "markdown": true,
+        "pictures": true,
+        "notification": ""
+    },
+}
+```
+
+* notification: How we send notification for you (*MacOS* supported now): `none` Disable notification / `mentioned` Direct message or mentioned in channel / `all` Receive all notifications
+
 
 ### Default keybindings
 ```json
@@ -222,5 +241,7 @@ Contributions are very welcome, and there is a lot of work to do! You can...
 ![](./resources/example_4.png)
 ![](./resources/example_5.png)
 ![](./resources/example_6.png)
+![](./resources/example_7.png)
+![](./resources/example_8.png)
 
 <p align="center">Made with :rage: by <a href="https://github.com/haskellcamargo">@haskellcamargo</a></p>

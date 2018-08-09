@@ -5,3 +5,4 @@ requests
 slackclient==1.2.1
 urwid_readline
 websocket-client==0.47.0
+pync
