@@ -196,11 +196,6 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
-        keymap = Store.instance.config['keymap']
-        if key == keymap['go_to_sidebar']:
-            self.header.restore_topic()
-            urwid.emit_signal(self, 'go_to_sidebar')
-            return key
         return super(ChatBox, self).keypress(size, key)
 
     @property
