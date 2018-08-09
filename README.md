@@ -96,6 +96,10 @@ You can use the keys from 1 up to 9 to switch workspaces or event right-click th
 ### Default keybindings
 ```json
 {
+    "cursor_down": "j",
+    "cursor_left": "h",
+    "cursor_right":"l",
+    "cursor_up": "k",
     "delete_message": "d",
     "edit_message": "e",
     "go_to_chatbox": "c",
@@ -105,8 +109,6 @@ You can use the keys from 1 up to 9 to switch workspaces or event right-click th
     "set_edit_topic_mode": "t",
     "set_insert_mode": "i",
     "yank_message": "y",
-    "cursor_up": "k",
-    "cursor_down": "j"
 }
 ```
 

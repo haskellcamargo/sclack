@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a50e8111d73f28bb917e599be6306cce8659b45e16f35a1cc6d1f31713835778"
+            "sha256": "914c882a77becf79497b64cf1c8d0d8c6cac31a1e608275818cf65cc7c56ca78"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -81,7 +81,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.1.*' and python_version < '4' and python_version >= '2.6' and python_version != '3.3.*'",
+            "markers": "python_version >= '2.6' and python_version != '3.3.*' and python_version != '3.0.*' and python_version < '4' and python_version != '3.1.*' and python_version != '3.2.*'",
             "version": "==1.23"
         },
         "urwid": {
@@ -90,6 +90,13 @@
             ],
             "index": "pypi",
             "version": "==2.0.1"
+        },
+        "urwid-readline": {
+            "hashes": [
+                "sha256:dff6937247421f8cf17c406e41043e70171af5ee8bdd625756d7ac1a26a16555"
+            ],
+            "index": "pypi",
+            "version": "==0.7"
         },
         "websocket-client": {
             "hashes": [
