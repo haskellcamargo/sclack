@@ -196,11 +196,6 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
-        keymap = Store.instance.config['keymap']
-        if key == keymap['go_to_sidebar']:
-            self.header.restore_topic()
-            urwid.emit_signal(self, 'go_to_sidebar')
-            return True
         return super(ChatBox, self).keypress(size, key)
 
     @property
@@ -373,7 +368,7 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
-    signals = ['delete_message', 'edit_message', 'go_to_profile', 'quit_application', 'set_insert_mode']
+    signals = ['delete_message', 'edit_message', 'go_to_profile', 'go_to_sidebar', 'quit_application', 'set_insert_mode']
 
     def __init__(self, ts, user, text, indicators, reactions=[], attachments=[]):
         self.ts = ts
@@ -409,6 +404,9 @@ class Message(urwid.AttrMap):
             return True
         elif key == keymap['go_to_profile']:
             urwid.emit_signal(self, 'go_to_profile', self.user_id)
+            return True
+        elif key == keymap['go_to_sidebar'] or key == keymap['cursor_left']:
+            urwid.emit_signal(self, 'go_to_sidebar')
             return True
         elif key == keymap['quit_application']:
             urwid.emit_signal(self, 'quit_application')

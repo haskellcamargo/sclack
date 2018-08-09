@@ -195,7 +195,6 @@ class App:
             is_read_only=self.store.state.channel.get('is_read_only', False)
         )
         self.chatbox = ChatBox(messages, header, self.message_box)
-        urwid.connect_signal(self.chatbox, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         self.real_time_task = loop.create_task(self.start_real_time())
 
@@ -346,6 +345,7 @@ class App:
             ))
         urwid.connect_signal(message, 'edit_message', self.edit_message)
         urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
+        urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(message, 'delete_message', self.delete_message)
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
@@ -537,7 +537,7 @@ class App:
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']
-        if key == keymap['go_to_chatbox'] and self.message_box:
+        if key == keymap['go_to_chatbox'] or key == keymap['cursor_right'] and self.message_box:
             return self.go_to_chatbox()
         elif key == keymap['go_to_sidebar']:
             return self.go_to_sidebar()
