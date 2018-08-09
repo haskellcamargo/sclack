@@ -532,7 +532,7 @@ class App:
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
-                self.store.slack.rtm_send_message(channel, message)
+                self.store.post_message(channel, message)
                 self.leave_edit_mode()
 
     def unhandled_input(self, key):
