@@ -126,5 +126,14 @@ class Store:
             text=text
         )
 
+    def post_message(self, channel_id, message):
+        return self.slack.api_call(
+            'chat.postMessage',
+            channel=channel_id,
+            as_user=True,
+            link_names=True,
+            text=message
+        )
+
     def get_presence(self, user_id):
         return self.slack.api_call('users.getPresence', user=user_id)
