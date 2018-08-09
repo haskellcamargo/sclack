@@ -19,6 +19,7 @@ from sclack.components import Reaction, SideBar, TextDivider
 from sclack.components import User, Workspaces
 from sclack.image import Image
 from sclack.loading import LoadingChatBox, LoadingSideBar
+from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
 
@@ -28,7 +29,6 @@ class SclackEventLoop(urwid.AsyncioEventLoop):
     def run(self):
         self._loop.set_exception_handler(self._custom_exception_handler)
         self._loop.run_forever()
-
 
     def set_exception_handler(self, handler):
         self._custom_exception_handler = handler
@@ -40,6 +40,7 @@ class App:
         try:
             exception = context['exception']
             message = 'Whoops, something went wrong:\n\n' + str(exception) + '\n' + ''.join(traceback.format_tb(exception.__traceback__))
+            print(message)
             self.chatbox = LoadingChatBox(message)
         except Exception as exc:
             self.chatbox = LoadingChatBox('Unable to show exception: ' + str(exc))
@@ -66,8 +67,10 @@ class App:
             ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
         ])
+        self._body = urwid.Frame(self.columns, header=self.workspaces_line)
+        self.quick_switcher = None
         self.urwid_loop = urwid.MainLoop(
-            urwid.Frame(self.columns, header=self.workspaces_line),
+            self._body,
             palette=palette,
             event_loop=custom_loop,
             unhandled_input=self.unhandled_input
@@ -195,6 +198,7 @@ class App:
             is_read_only=self.store.state.channel.get('is_read_only', False)
         )
         self.chatbox = ChatBox(messages, header, self.message_box)
+        urwid.connect_signal(self.chatbox, 'open_quick_switcher', self.open_quick_switcher)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         self.real_time_task = loop.create_task(self.start_real_time())
 
@@ -519,6 +523,9 @@ class App:
         self.columns.focus_position = 0
         if self.store.state.editing_widget:
             self.leave_edit_mode()
+        if self.quick_switcher:
+            self.urwid_loop.widget = self._body
+            self.quick_switcher = None
 
     def submit_message(self, message):
         if self.store.state.editing_widget:
@@ -547,10 +554,17 @@ class App:
             return self.set_edit_topic_mode()
         elif key == keymap['set_insert_mode'] and self.message_box:
             return self.set_insert_mode()
+        elif key == keymap['open_quick_switcher']:
+            return self.open_quick_switcher()
         elif key in ('1', '2', '3', '4', '5', '6', '7', '8', '9') and len(self.workspaces) >= int(key):
             if self.workspaces_line is not None:
                 self.workspaces_line.select(int(key))
                 return self.switch_to_workspace(int(key))
+
+    def open_quick_switcher(self):
+        if not self.quick_switcher:
+            self.quick_switcher = QuickSwitcher(self.urwid_loop.widget)
+            self.urwid_loop.widget = self.quick_switcher
 
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=self.store.config['colors'])

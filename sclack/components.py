@@ -1,5 +1,4 @@
 import urwid
-import pprint
 import pyperclip
 import time
 import urwid_readline
@@ -185,7 +184,7 @@ class ChannelTopic(urwid.Edit):
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
-    signals = ['go_to_sidebar']
+    signals = ['go_to_sidebar', 'open_quick_switcher']
 
     def __init__(self, messages, header, message_box):
         self._header = header
@@ -196,6 +195,10 @@ class ChatBox(urwid.Frame):
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def keypress(self, size, key):
+        keymap = Store.instance.config['keymap']
+        if key == keymap['open_quick_switcher']:
+            urwid.emit_signal(self, 'open_quick_switcher')
+            return True
         return super(ChatBox, self).keypress(size, key)
 
     @property

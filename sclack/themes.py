@@ -41,6 +41,8 @@ themes = {
         ('selected_workspace', '', '', '', 'white', 'h198'),
         ('selected_workspace_separator', '', '', '', 'h198', 'h54'),
         ('previous_workspace_separator', '', '', '', 'h54', 'h198'),
+        ('quick_switcher_dialog', '', '', '', 'white', 'h239'),
+        ('active_quick_switcher_item', '', '', '', 'white', 'h32')
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),
