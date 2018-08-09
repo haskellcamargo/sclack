@@ -27,7 +27,8 @@
         "emoji": true,
         "markdown": true,
         "pictures": true,
-        "browser": ""
+        "browser": "",
+        "notification": ""
     },
     "icons": {
         "block": "\u258C",
