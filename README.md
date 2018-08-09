@@ -118,11 +118,13 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
 
 Sclack has been tested with the following terminal emulators:
 
+- Gnome Terminal
 - iTerm2
 - QTerminal
 - Terminal (OS X)
 - Terminator
 - XTerm
+
 
 ## Contributing
 
