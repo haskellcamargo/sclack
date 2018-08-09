@@ -2,6 +2,10 @@
     "colors": 256,
     "theme": "default",
     "keymap": {
+        "cursor_down": "j",
+        "cursor_left": "h",
+        "cursor_right":"l",
+        "cursor_up": "k",
         "delete_message": "d",
         "edit_message": "e",
         "go_to_chatbox": "c",
@@ -10,10 +14,7 @@
         "quit_application": "q",
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
-        "yank_message": "y",
-        "cursor_up": "k",
-        "cursor_down": "j"
-
+        "yank_message": "y"
     },
     "sidebar": {
         "width": 25
