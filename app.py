@@ -38,7 +38,9 @@ class App:
 
     def _exception_handler(self, loop, context):
         try:
-            exception = context['exception']
+            exception = context.get('exception')
+            if not exception:
+                raise Exception
             message = 'Whoops, something went wrong:\n\n' + str(exception) + '\n' + ''.join(traceback.format_tb(exception.__traceback__))
             self.chatbox = LoadingChatBox(message)
         except Exception as exc:
@@ -403,6 +405,10 @@ class App:
             self.go_to_chatbox()
 
     def go_to_channel(self, channel_id):
+        if self.quick_switcher:
+            urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
+            self.urwid_loop.widget = self._body
+            self.quick_switcher = None
         loop.create_task(self._go_to_channel(channel_id))
 
     @asyncio.coroutine
@@ -523,6 +529,7 @@ class App:
         if self.store.state.editing_widget:
             self.leave_edit_mode()
         if self.quick_switcher:
+            urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self._body
             self.quick_switcher = None
 
@@ -563,6 +570,7 @@ class App:
     def open_quick_switcher(self):
         if not self.quick_switcher:
             self.quick_switcher = QuickSwitcher(self.urwid_loop.widget, self.urwid_loop)
+            urwid.connect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self.quick_switcher
 
     def configure_screen(self, screen):
