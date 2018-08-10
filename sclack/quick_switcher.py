@@ -102,6 +102,7 @@ class QuickSwitcher(urwid.AttrWrap):
     def set_filter(self, loop, data):
         text = self.header.get_edit_text()
         if len(text) > 0:
+            text = remove_diacritic(text)
             if text[0] == '@':
                 self.filtered_items = [
                     item for item in self.original_items
