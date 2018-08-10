@@ -1,9 +1,17 @@
 import urwid
 import time
+import unicodedata
 from .store import Store
 
 def get_icon(name):
     return Store.instance.config['icons'][name]
+
+def remove_diacritic(input):
+    '''
+    Accept a unicode string, and return a normal string (bytes in Python 3)
+    without any diacritical marks.
+    '''
+    return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore').decode()
 
 class QuickSwitcherItem(urwid.AttrMap):
     def __init__(self, icon, title, id):
@@ -97,17 +105,17 @@ class QuickSwitcher(urwid.AttrWrap):
             if text[0] == '@':
                 self.filtered_items = [
                     item for item in self.original_items
-                    if (item['type'] == 'user' and (text[1:].lower() in item['title'].lower() or text[1:].strip() == ''))
+                    if (item['type'] == 'user' and (text[1:].lower() in remove_diacritic(item['title'].lower()) or text[1:].strip() == ''))
                 ]
             elif text[0] == '#':
                 self.filtered_items = [
                     item for item in self.original_items
-                    if (item['type'] == 'channel' and (text[1:].lower() in item['title'].lower() or text[1:].strip() == ''))
+                    if (item['type'] == 'channel' and (text[1:].lower() in remove_diacritic(item['title'].lower()) or text[1:].strip() == ''))
                 ]
             else:
                 self.filtered_items = [
                     item for item in self.original_items
-                    if text.lower() in item['title'].lower()
+                    if text.lower() in remove_diacritic(item['title'].lower())
                 ]
         else:
             self.filtered_items = self.original_items
