@@ -41,6 +41,11 @@ themes = {
         ('selected_workspace', '', '', '', 'white', 'h198'),
         ('selected_workspace_separator', '', '', '', 'h198', 'h54'),
         ('previous_workspace_separator', '', '', '', 'h54', 'h198'),
+        ('quick_switcher_dialog', '', '', '', 'white', 'h239'),
+        ('active_quick_switcher_item', '', '', '', 'white', 'h32'),
+        ('quick_search_presence_active', '', '', '', 'h40', 'h239'),
+        ('quick_search_active_focus', '', '', '', 'h40', 'h32'),
+        ('quick_search_presence_away', '', '', '', 'white', 'h239')
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),

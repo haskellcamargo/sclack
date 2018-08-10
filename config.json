@@ -11,6 +11,7 @@
         "go_to_chatbox": "c",
         "go_to_profile": "p",
         "go_to_sidebar": "esc",
+        "open_quick_switcher": "ctrl k",
         "quit_application": "q",
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
