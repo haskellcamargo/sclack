@@ -40,7 +40,6 @@ class App:
         try:
             exception = context['exception']
             message = 'Whoops, something went wrong:\n\n' + str(exception) + '\n' + ''.join(traceback.format_tb(exception.__traceback__))
-            print(message)
             self.chatbox = LoadingChatBox(message)
         except Exception as exc:
             self.chatbox = LoadingChatBox('Unable to show exception: ' + str(exc))
@@ -563,7 +562,7 @@ class App:
 
     def open_quick_switcher(self):
         if not self.quick_switcher:
-            self.quick_switcher = QuickSwitcher(self.urwid_loop.widget)
+            self.quick_switcher = QuickSwitcher(self.urwid_loop.widget, self.urwid_loop)
             self.urwid_loop.widget = self.quick_switcher
 
     def configure_screen(self, screen):
