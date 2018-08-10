@@ -81,6 +81,7 @@ class Store:
         conversations = self.slack.api_call(
             'users.conversations',
             exclude_archived=True,
+            limit=1000, # 1k is max limit
             types='public_channel,private_channel,im'
         )['channels']
         for channel in conversations:
