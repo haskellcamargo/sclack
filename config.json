@@ -18,7 +18,8 @@
         "yank_message": "y"
     },
     "sidebar": {
-        "width": 25
+        "width": 25,
+        "max_users": 20
     },
     "features": {
         "emoji": true,

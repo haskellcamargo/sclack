@@ -25,6 +25,9 @@ from sclack.themes import themes
 
 loop = asyncio.get_event_loop()
 
+SCLACK_SUBTYPE = 'sclack_message'
+
+
 class SclackEventLoop(urwid.AsyncioEventLoop):
     def run(self):
         self._loop.set_exception_handler(self._custom_exception_handler)
@@ -141,7 +144,9 @@ class App:
             for channel in self.store.state.channels
         ]
         dms = []
-        dm_users = self.store.state.dms[:15]
+        max_users_sidebar = self.store.config['sidebar']['max_users']
+        dm_users = self.store.state.dms[:max_users_sidebar]
+
         for dm in dm_users:
             user = self.store.find_user_by_id(dm['user'])
             if user:
@@ -151,6 +156,7 @@ class App:
                     user=dm['user'],
                     you=user['id'] == self.store.state.auth['user_id']
                 ))
+
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
         loop.create_task(self.get_channels_info(executor, channels))
@@ -271,6 +277,20 @@ class App:
     def render_message(self, message):
         is_app = False
         subtype = message.get('subtype')
+
+        if subtype == SCLACK_SUBTYPE:
+            message = Message(
+                message['ts'],
+                User('1', 'sclack'),
+                MarkdownText(message['text']),
+                Indicators(False, False)
+            )
+            urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
+            urwid.connect_signal(message, 'quit_application', self.quit_application)
+            urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
+
+            return message
+
         if subtype == 'bot_message':
             bot = (self.store.find_user_by_id(message['bot_id'])
                 or self.store.find_or_load_bot(message['bot_id']))
@@ -354,6 +374,7 @@ class App:
         urwid.connect_signal(message, 'delete_message', self.delete_message)
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
+
         return message
 
     def render_messages(self, messages):
@@ -395,14 +416,27 @@ class App:
                 loop.run_in_executor(executor, self.store.load_messages, channel_id)
             )
             self.store.state.last_date = None
-            messages = self.render_messages(self.store.state.messages)
+
+            if len(self.store.state.messages) == 0:
+                messages = self.render_messages([{
+                    'text': "There's no conversation in this channel",
+                    'ts': '0',
+                    'subtype': SCLACK_SUBTYPE,
+                }])
+            else:
+                messages = self.render_messages(self.store.state.messages)
+
             header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
             self.chatbox.header = header
             self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
             self.sidebar.select_channel(channel_id)
             self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_new_messages())
-            self.go_to_chatbox()
+
+            if len(self.store.state.messages) == 0:
+                self.go_to_sidebar()
+            else:
+                self.go_to_chatbox()
 
     def go_to_channel(self, channel_id):
         if self.quick_switcher:
@@ -550,6 +584,7 @@ class App:
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']
+
         if key == keymap['go_to_chatbox'] or key == keymap['cursor_right'] and self.message_box:
             return self.go_to_chatbox()
         elif key == keymap['go_to_sidebar']:
