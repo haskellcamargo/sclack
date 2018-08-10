@@ -205,8 +205,10 @@ class App:
             is_read_only=self.store.state.channel.get('is_read_only', False)
         )
         self.chatbox = ChatBox(messages, header, self.message_box)
+        urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'open_quick_switcher', self.open_quick_switcher)
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
+        urwid.connect_signal(self.message_box.prompt_widget, 'go_to_last_message', self.go_to_last_message)
         self.real_time_task = loop.create_task(self.start_real_time())
 
     def edit_message(self, widget, user_id, ts, original_text):
@@ -581,6 +583,10 @@ class App:
             if message.strip() != '':
                 self.store.post_message(channel, message)
                 self.leave_edit_mode()
+
+    def go_to_last_message(self):
+        self.go_to_chatbox()
+        self.chatbox.body.go_to_last_message()
 
     def unhandled_input(self, key):
         keymap = self.store.config['keymap']

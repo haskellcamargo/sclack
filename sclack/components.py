@@ -191,7 +191,7 @@ class ChannelTopic(urwid.Edit):
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
-    signals = ['go_to_sidebar', 'open_quick_switcher']
+    signals = ['go_to_sidebar', 'open_quick_switcher', 'set_insert_mode']
 
     def __init__(self, messages, header, message_box):
         self._header = header
@@ -199,7 +199,11 @@ class ChatBox(urwid.Frame):
         self.body = ChatBoxMessages(messages=messages)
         self.body.scroll_to_bottom()
         urwid.connect_signal(self.body, 'set_date', self._header.on_set_date)
+        urwid.connect_signal(self.body, 'set_insert_mode', self.set_insert_mode)
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
+
+    def set_insert_mode(self):
+        urwid.emit_signal(self, 'set_insert_mode')
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
@@ -221,7 +225,7 @@ class ChatBox(urwid.Frame):
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals
-    signals = ['set_auto_scroll', 'set_date']
+    signals = ['set_auto_scroll', 'set_date', 'set_insert_mode']
 
     def __init__(self, messages=[]):
         self.body = urwid.SimpleFocusListWalker(messages)
@@ -242,6 +246,10 @@ class ChatBoxMessages(urwid.ListBox):
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
         self.handle_floating_date(size)
+        # Go to insert mode
+        if key == 'down' and self.get_focus()[1] == len(self.body) - 1:
+            urwid.emit_signal(self, 'set_insert_mode')
+            return True
         super(ChatBoxMessages, self).keypress(size, key)
         if key in ('page up', 'page down'):
             self.auto_scroll = self.get_focus()[1] == len(self.body) - 1
@@ -249,6 +257,7 @@ class ChatBoxMessages(urwid.ListBox):
             self.keypress(size, 'up')
         if key == keymap['cursor_down']:
             self.keypress(size,'down')
+
 
     def mouse_event(self, size, event, button, col, row, focus):
         self.handle_floating_date(size)
@@ -270,6 +279,10 @@ class ChatBoxMessages(urwid.ListBox):
 
     def scroll_to_bottom(self):
         if self.auto_scroll and len(self.body):
+            self.set_focus(len(self.body) - 1)
+
+    def go_to_last_message(self):
+        if len(self.body) > 0:
             self.set_focus(len(self.body) - 1)
 
     def render(self, size, *args, **kwargs):
@@ -536,7 +549,7 @@ class MessageBox(urwid.AttrMap):
 
 class MessagePrompt(urwid_readline.ReadlineEdit):
     __metaclass__ = urwid.MetaSignals
-    signals = ['submit_message']
+    signals = ['submit_message', 'go_to_last_message']
 
     def __init__(self, user):
         super(MessagePrompt, self).__init__([('prompt', ' {}'.format(user)), ' '])
@@ -544,6 +557,9 @@ class MessagePrompt(urwid_readline.ReadlineEdit):
     def keypress(self, size, key):
         if key == 'enter':
             urwid.emit_signal(self, 'submit_message', self.get_edit_text())
+            return True
+        elif key == 'up':
+            urwid.emit_signal(self, 'go_to_last_message')
             return True
         return super(MessagePrompt, self).keypress(size, key)
 
