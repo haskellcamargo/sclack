@@ -88,6 +88,12 @@ at most 9 workspaces defined inside `workspaces`:
 }
 ```
 
+### Quick Switcher
+
+You can use <kbd>ctrl k</kbd> (or your custom shortcut) to navigate in your DMs and channels.
+
+![](./resources/example_8.png)
+
 You can use the keys from 1 up to 9 to switch workspaces or event right-click the indicator:
 
 ![Multiple workspaces](./resources/example_7.png)
@@ -105,6 +111,7 @@ You can use the keys from 1 up to 9 to switch workspaces or event right-click th
     "go_to_chatbox": "c",
     "go_to_profile": "p",
     "go_to_sidebar": "esc",
+    "open_quick_switcher": "ctrl k",
     "quit_application": "q",
     "set_edit_topic_mode": "t",
     "set_insert_mode": "i",
