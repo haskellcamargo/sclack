@@ -140,7 +140,9 @@ class App:
             for channel in self.store.state.channels
         ]
         dms = []
-        dm_users = self.store.state.dms[:15]
+        max_users_sidebar = self.store.config['sidebar']['max_users']
+        dm_users = self.store.state.dms[:max_users_sidebar]
+
         for dm in dm_users:
             user = self.store.find_user_by_id(dm['user'])
             if user:
@@ -150,6 +152,7 @@ class App:
                     user=dm['user'],
                     you=user['id'] == self.store.state.auth['user_id']
                 ))
+
         self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
         loop.create_task(self.get_channels_info(executor, channels))
