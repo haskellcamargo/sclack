@@ -293,6 +293,20 @@ class App:
 
             return message
 
+        message_text = message['text']
+        files = message.get('files', [])
+
+        # Files uploaded
+        if len(files) > 0:
+            file_links = ['"{}" <{}>'.format(file.get('title'), file.get('url_private')) for file in message.get('files')]
+            file_upload_text = 'File{} uploaded'.format('' if len(files) == 1 else 's')
+            file_text = '{} {}'.format(file_upload_text ,', '.join(file_links))
+
+            if message_text == '':
+                message_text = file_text
+            else:
+                message_text = '{}\n{}'.format(message_text, file_text)
+
         if subtype == 'bot_message':
             bot = (self.store.find_user_by_id(message['bot_id'])
                 or self.store.find_or_load_bot(message['bot_id']))
@@ -327,13 +341,13 @@ class App:
             color = user.get('color')
 
         user = User(user_id, user_name, color, is_app)
-        text = MarkdownText(message['text'])
+        text = MarkdownText(message_text)
         indicators = Indicators('edited' in message, message.get('is_starred', False))
         reactions = [
             Reaction(reaction['name'], reaction['count'])
             for reaction in message.get('reactions', [])
         ]
-        file = message.get('file')
+
         attachments = []
         for attachment in message.get('attachments', []):
             attachment_widget = Attachment(
@@ -343,7 +357,7 @@ class App:
                 color=attachment.get('color'),
                 author_name=attachment.get('author_name'),
                 pretext=attachment.get('pretext'),
-                text=attachment.get('text'),
+                text=message_text,
                 footer=attachment.get('footer')
             )
             image_url = attachment.get('image_url')
@@ -355,6 +369,12 @@ class App:
                     auth=False
                 ))
             attachments.append(attachment_widget)
+
+        file = message.get('file')
+
+        if file:
+            files.append(file)
+
         message = Message(
             message['ts'],
             user,
@@ -363,13 +383,9 @@ class App:
             attachments=attachments,
             reactions=reactions
         )
-        if (file and file.get('filetype') in ('bmp', 'gif', 'jpeg', 'jpg', 'png')
-            and self.config['features']['pictures']):
-            loop.create_task(self.load_picture_async(
-                file['url_private'],
-                file.get('original_w', 500),
-                message
-            ))
+
+        self.lazy_load_images(files, message)
+
         urwid.connect_signal(message, 'edit_message', self.edit_message)
         urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
         urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
@@ -378,6 +394,28 @@ class App:
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
 
         return message
+
+    def lazy_load_images(self, files, widget):
+        """
+        Load images lazily and attache to widget
+        :param files:
+        :param widget:
+        :return:
+        """
+        if not self.config['features']['pictures']:
+            return
+
+        allowed_file_types =  ('bmp', 'gif', 'jpeg', 'jpg', 'png')
+
+        for file in files:
+            if file.get('filetype') in allowed_file_types:
+                loop.create_task(self.load_picture_async(
+                    file['url_private'],
+                    file.get('original_w', 500),
+                    widget,
+                    not file.get('is_external', True)
+                ))
+
 
     def render_messages(self, messages):
         _messages = []
