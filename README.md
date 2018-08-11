@@ -173,11 +173,25 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
         "emoji": true,
         "markdown": true,
         "pictures": true,
-        "browser": ""
+        "browser": "",
+        "notification": ""
     }
 }
 ```
-* `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"`
+* `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"` 
+* `notification`: How do you want to receive notification. `all` receive all; `none` disable notification, `mentioned` Only mentioned and direct message
+
+#### Notification
+
+Supported:
+* Linux
+* Macos >= 10.10 use [terminal-notifier](https://github.com/julienXX/terminal-notifier), you can install your custom terminal-notifier or using default binary in pync package
+
+To test your notification availability, trigger below command, if you can see notification you can use this feature
+
+```bash
+python sclack/notification.py
+```
 
 ## Tested Terminals
 
@@ -219,7 +233,5 @@ Contributions are very welcome, and there is a lot of work to do! You can...
 ![](./resources/example_4.png)
 ![](./resources/example_5.png)
 ![](./resources/example_6.png)
-![](./resources/example_7.png)
-![](./resources/example_8.png)
 
 <p align="center">Made with :rage: by <a href="https://github.com/haskellcamargo">@haskellcamargo</a></p>

@@ -74,5 +74,5 @@ class MarkdownText(urwid.SelectableIcon):
         self._result.append(('message', self.decode_buffer()))
         return self._result
 
-    def render_text(self):
+    def __str__(self):
         return urwid.Text(self.markup).text
