@@ -25,6 +25,7 @@ from sclack.loading import LoadingChatBox, LoadingSideBar
 from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
+from sclack.notification import TerminalNotifier
 
 from sclack.widgets.set_snooze import SetSnoozeWidget
 from sclack.utils.channel import is_dm, is_group, is_channel
@@ -119,7 +120,7 @@ class App:
         :return:
         """
         # You send message, don't need notification
-        if self.config['features']['notification'] in ['', 'none'] or message_obj['user'] == self.store.state.auth['user_id']:
+        if self.config['features']['notification'] in ['', 'none'] or message_obj.get('user') == self.store.state.auth['user_id']:
             return False
 
         if self.config['features']['notification'] == 'all':
@@ -448,7 +449,9 @@ class App:
         """
         for message in messages:
             if self.should_notify_me(message):
-                self.send_notification(message, MarkdownText(message['text']))
+                loop.create_task(
+                    self.send_notification(message, MarkdownText(message['text']))
+                )
 
     def render_message(self, message, channel_id=None):
         is_app = False
@@ -501,7 +504,6 @@ class App:
                 return None
 
             user_id = user['id']
-            # TODO
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
             if message.get('file'):
@@ -514,7 +516,6 @@ class App:
                 return None
 
             user_id = user['id']
-            # TODO
             user_name = user['profile']['display_name'] or user.get('name')
             color = user.get('color')
 
@@ -632,17 +633,18 @@ class App:
             elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
-            message = self.render_message(message, channel_id)
+            message = self.render_message(raw_message, channel_id)
 
             if message is not None:
                 _messages.append(message)
 
         return _messages
 
+    @asyncio.coroutine
     def send_notification(self, raw_message, markdown_text):
         """
-        Only MacOS
-        @TODO Linux libnotify and Windows
+        Only MacOS and Linux
+        @TODO Windows
         :param raw_message:
         :param markdown_text:
         :return:
@@ -650,7 +652,6 @@ class App:
         user = self.store.find_user_by_id(raw_message.get('user'))
         sender_name = self.store.get_user_display_name(user)
 
-        # TODO Checking bot
         if raw_message.get('channel')[0] == 'D':
             notification_title = 'New message in {}'.format(
                 self.store.state.auth['team']
@@ -661,19 +662,20 @@ class App:
                 self.store.get_channel_name(raw_message.get('channel')),
             )
 
-        sub_title = sender_name
 
-        if platform.system() == 'Darwin':
-            # Macos
-            import pync
-            pync.notify(
-                markdown_text.render_text(),
-                title=notification_title,
-                subtitle=sub_title,
-                appIcon='./resources/slack_icon.png'
+        icon_path = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                'resources/slack_icon.png'
             )
-        else:
-            pass
+        )
+        TerminalNotifier().notify(
+            str(markdown_text),
+            title=notification_title,
+            subtitle=sender_name,
+            appIcon=icon_path,
+            sound='default'
+        )
 
     def handle_mark_read(self, data):
         """
