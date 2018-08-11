@@ -148,7 +148,7 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
     }
 }
 ```
-* `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"` 
+* `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"`
 
 ## Tested Terminals
 
@@ -161,6 +161,14 @@ Sclack has been tested with the following terminal emulators:
 - Terminator
 - XTerm
 
+## Testing
+
+To run the tests first install the development dependencies via:
+```
+pip3 install -r requirements-dev.txt
+```
+
+and then run `pytest`.
 
 ## Contributing
 
