@@ -27,12 +27,6 @@ loop = asyncio.get_event_loop()
 
 SCLACK_SUBTYPE = 'sclack_message'
 
-def get_token_file():
-    base = os.path.expanduser(os.environ.get('XDG_DATA_HOME', '~'))
-    return os.path.join(base, 'sclack')
-
-TOKEN_FILE = get_token_file()
-
 
 class SclackEventLoop(urwid.AsyncioEventLoop):
     def run(self):
@@ -671,17 +665,17 @@ class App:
         sys.exit()
 
 def ask_for_token(json_config):
-    if os.path.isfile(TOKEN_FILE):
-        with open(TOKEN_FILE, 'r') as user_file:
+    if os.path.isfile(os.path.expanduser('~/.sclack')):
+        with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
             # Compatible with legacy configuration file
             new_config = json.load(user_file)
             if not 'workspaces' in new_config:
                 new_config['workspaces'] = {'default': new_config['token']}
             json_config.update(new_config)
     else:
-        print('There is no %s file. Let\'s create one!' % TOKEN_FILE)
+        print('There is no ~/.sclack file. Let\'s create one!')
         token = input('What is your Slack workspace token? ')
-        with open(TOKEN_FILE, 'w') as config_file:
+        with open(os.path.expanduser('~/.sclack'), 'w') as config_file:
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
