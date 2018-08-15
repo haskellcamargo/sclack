@@ -51,6 +51,7 @@ class App:
         return
 
     def __init__(self, config):
+        self._loading = False
         self.config = config
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
@@ -67,6 +68,7 @@ class App:
             self.workspaces_line = None
         else:
             self.workspaces_line = Workspaces(self.workspaces)
+
         self.columns = urwid.Columns([
             ('fixed', config['sidebar']['width'], urwid.AttrWrap(sidebar, 'sidebar')),
             urwid.AttrWrap(chatbox, 'chatbox')
@@ -88,13 +90,14 @@ class App:
         self.urwid_loop.run()
 
     def switch_to_workspace(self, workspace_number):
-        self.sidebar = LoadingSideBar()
-        self.chatbox = LoadingChatBox('And it becomes worse!')
-        self._loading = True
-        self.message_box = None
-        self.store.switch_to_workspace(workspace_number)
-        loop.create_task(self.animate_loading())
-        loop.create_task(self.component_did_mount())
+        if not self._loading:
+            self._loading = True
+            self.sidebar = LoadingSideBar()
+            self.chatbox = LoadingChatBox('And it becomes worse!')
+            self.message_box = None
+            self.store.switch_to_workspace(workspace_number)
+            loop.create_task(self.animate_loading())
+            loop.create_task(self.component_did_mount())
 
     @property
     def sidebar(self):
