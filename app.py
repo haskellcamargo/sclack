@@ -5,13 +5,11 @@ import functools
 import json
 import os
 import requests
-import subprocess
 import sys
 import traceback
 import tempfile
 import urwid
 from datetime import datetime
-from slackclient import SlackClient
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from sclack.components import Indicators, MarkdownText, Message, MessageBox
 from sclack.components import NewMessagesDivider, Profile, ProfileSideBar
@@ -35,6 +33,7 @@ class SclackEventLoop(urwid.AsyncioEventLoop):
 
     def set_exception_handler(self, handler):
         self._custom_exception_handler = handler
+
 
 class App:
     message_box = None
@@ -165,21 +164,50 @@ class App:
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
         loop.create_task(self.get_channels_info(executor, channels))
         loop.create_task(self.get_presences(executor, dms))
+        loop.create_task(self.get_dms_unread(executor, dms))
 
     @asyncio.coroutine
     def get_presences(self, executor, dm_widgets):
+        """
+        Compute and return presence because updating UI from another thread is unsafe
+        :param executor:
+        :param dm_widgets:
+        :return:
+        """
         def get_presence(dm_widget):
-            # Compute and return presence because updating UI from another thread is unsafe
             presence = self.store.get_presence(dm_widget.user)
             return [dm_widget, presence]
         presences = yield from asyncio.gather(*[
             loop.run_in_executor(executor, get_presence, dm_widget)
             for dm_widget in dm_widgets
         ])
+
         for presence in presences:
             [widget, response] = presence
             if response['ok']:
                 widget.set_presence(response['presence'])
+
+    @asyncio.coroutine
+    def get_dms_unread(self, executor, dm_widgets):
+        """
+        Compute and return unread_count_display because updating UI from another thread is unsafe
+        :param executor:
+        :param dm_widgets:
+        :return:
+        """
+        def get_presence(dm_widget):
+            profile_response = self.store.get_channel_info(dm_widget.id)
+            return [dm_widget, profile_response]
+
+        responses = yield from asyncio.gather(*[
+            loop.run_in_executor(executor, get_presence, dm_widget)
+            for dm_widget in dm_widgets
+        ])
+
+        for profile_response in responses:
+            [widget, response] = profile_response
+            if response is not None:
+                widget.set_unread(response['unread_count_display'])
 
     @asyncio.coroutine
     def get_channels_info(self, executor, channels):
@@ -190,9 +218,19 @@ class App:
             loop.run_in_executor(executor, get_info, channel)
             for channel in channels
         ])
+
         for channel_info in channels_info:
             [widget, response] = channel_info
             widget.set_unread(response.get('unread_count_display', 0))
+
+    @asyncio.coroutine
+    def update_chat(self, event):
+        """
+        Update channel/DM message count badge
+        :param event:
+        :return:
+        """
+        self.sidebar.update_items(event)
 
     @asyncio.coroutine
     def mount_chatbox(self, executor, channel):
@@ -409,7 +447,7 @@ class App:
         if not self.config['features']['pictures']:
             return
 
-        allowed_file_types =  ('bmp', 'gif', 'jpeg', 'jpg', 'png')
+        allowed_file_types = ('bmp', 'gif', 'jpeg', 'jpg', 'png')
 
         for file in files:
             if file.get('filetype') in allowed_file_types:
@@ -419,7 +457,6 @@ class App:
                     widget,
                     not file.get('is_external', True)
                 ))
-
 
     def render_messages(self, messages):
         _messages = []
@@ -438,6 +475,7 @@ class App:
                     date_text = 'Today'
                 else:
                     date_text = message_date.strftime('%A, %B %d')
+
             # New messages badge
             if (message_datetime > last_read_datetime and not self.store.state.did_render_new_messages
                 and (self.store.state.channel.get('unread_count_display', 0) > 0)):
@@ -530,7 +568,10 @@ class App:
         self.store.slack.rtm_connect(auto_reconnect=True)
 
         def stop_typing(*args):
-            self.chatbox.message_box.typing = None
+            # Prevent error while switching workspace
+            if self.chatbox is not None:
+                self.chatbox.message_box.typing = None
+
         alarm = None
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
@@ -542,9 +583,12 @@ class App:
                     for channel in self.sidebar.channels:
                         if channel.id == event['channel']:
                             channel.set_unread(unread)
-                elif event.get('channel') == self.store.state.channel['id']:
-                    if event['type'] == 'message':
-                        # Delete message
+                elif event['type'] == 'message':
+                    loop.create_task(
+                        self.update_chat(event)
+                    )
+
+                    if event.get('channel') == self.store.state.channel['id']:
                         if event.get('subtype') == 'message_deleted':
                             for widget in self.chatbox.body.body:
                                 if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['deleted_ts']:

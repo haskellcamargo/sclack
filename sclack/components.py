@@ -11,8 +11,10 @@ from .emoji import emoji_codemap
 from .markdown import MarkdownText
 from .store import Store
 
+
 def get_icon(name):
     return Store.instance.config['icons'][name]
+
 
 class Box(urwid.AttrWrap):
     def __init__(self, widget, color):
@@ -79,17 +81,26 @@ class Channel(urwid.AttrMap):
         self.id = id
         self.name = name
         self.is_private = is_private
-        body = urwid.SelectableIcon(' {} {}'.format(
-            get_icon('private_channel' if is_private else 'channel'),
-            name
-        ))
         attr_map = 'inactive'
         if is_selected:
             attr_map = 'selected_channel'
         self.last_time_clicked = None
         self.unread = 0
         self.is_selected = is_selected
-        super(Channel, self).__init__(body, attr_map, 'active_channel')
+        self.body = urwid.SelectableIcon(self.get_markup(0))
+
+        super(Channel, self).__init__(self.body, attr_map, 'active_channel')
+
+    def get_markup(self, unread_count_display):
+        counter_message = ''
+        if unread_count_display != 0:
+            counter_message = ' ({})'.format(unread_count_display)
+
+        return ' {} {}{}'.format(
+            get_icon('private_channel' if self.is_private else 'channel'),
+            self.name,
+            counter_message
+        )
 
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse press':
@@ -105,6 +116,8 @@ class Channel(urwid.AttrMap):
                 self.attr_map = {None: 'unread_channel'}
             else:
                 self.attr_map = {None: 'inactive'}
+
+        self.body.set_text(self.get_markup(count))
 
     def select(self):
         self.is_selected = True
@@ -175,6 +188,7 @@ class ChannelHeader(urwid.Pile):
     def go_to_end_of_topic(self):
         self.topic_widget.set_edit_pos(len(self.original_topic))
 
+
 class ChannelTopic(urwid.Edit):
     __metaclass__ = urwid.MetaSignals
     signals = ['done']
@@ -188,6 +202,7 @@ class ChannelTopic(urwid.Edit):
             urwid.emit_signal(self, 'done', self.get_edit_text())
             return True
         return super(ChannelTopic, self).keypress(size, key)
+
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
@@ -223,6 +238,7 @@ class ChatBox(urwid.Frame):
         urwid.connect_signal(self.body, 'set_date', self._header.on_set_date)
         self.set_header(self._header)
 
+
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals
     signals = ['set_auto_scroll', 'set_date', 'set_insert_mode']
@@ -257,7 +273,6 @@ class ChatBoxMessages(urwid.ListBox):
             self.keypress(size, 'up')
         if key == keymap['cursor_down']:
             self.keypress(size,'down')
-
 
     def mouse_event(self, size, event, button, col, row, focus):
         self.handle_floating_date(size)
@@ -306,15 +321,18 @@ class ChatBoxMessages(urwid.ListBox):
                 break
         urwid.emit_signal(self, 'set_date', text_divider)
 
+
 class Dm(urwid.AttrMap):
-    def __init__(self, id, name, user, you=False):
+    def __init__(self, id, name, user, you=False, unread=0):
         self.id = id
         self.user = user
         self.name = name
         self.you = you
         self.presence = 'away'
-        body = urwid.SelectableIcon(self.get_markup())
-        super(Dm, self).__init__(body, 'inactive', 'active_channel')
+        self.unread = unread
+        self.body = urwid.SelectableIcon(self.get_markup())
+        self.is_selected = False
+        super(Dm, self).__init__(self.body, 'inactive', 'active_channel')
 
     def get_markup(self, presence='away'):
         if self.user == 'USLACKBOT':
@@ -323,13 +341,42 @@ class Dm(urwid.AttrMap):
             icon = ('presence_active', get_icon('online'))
         else:
             icon = ('presence_away', get_icon('offline'))
+
         sidebar_width = Store.instance.config['sidebar']['width']
         name = self.name
+
         if self.you:
             name = self.name + ' (you)'
-        if len(name) > sidebar_width - 4:
-            name = name[:(sidebar_width - 7)] + '...'
+
+        message_unread = ''
+        if not self.you and self.unread > 0:
+            message_unread = ' ({})'.format(self.unread)
+        padding_length = 4 + len(message_unread)
+
+        if len(name) > sidebar_width - padding_length:
+            padding_length += 3  # 3 for ...
+            name = '{}{}{}'.format(
+                name[:(sidebar_width - padding_length)],
+                message_unread,
+                '...'
+            )
+        else:
+            name = '{}{}'.format(
+                name,
+                message_unread,
+            )
+
         return [' ', icon, ' ', name]
+
+    def set_unread(self, count):
+        self.unread = count
+
+        if count > 0:
+            self.attr_map = {None: 'unread_channel'}
+        else:
+            self.attr_map = {None: 'inactive'}
+
+        self.body.set_text(self.get_markup(self.presence))
 
     def set_presence(self, presence):
         self.presence = presence
@@ -563,6 +610,7 @@ class MessagePrompt(urwid_readline.ReadlineEdit):
             return True
         return super(MessagePrompt, self).keypress(size, key)
 
+
 class Profile(urwid.Text):
     def __init__(self, name, is_online=False, is_snoozed=False):
         self.name = name
@@ -586,6 +634,7 @@ class Profile(urwid.Text):
     def set_snooze(self, is_snoozed):
         self.is_snoozed = is_snoozed
         self.set_text(self.body)
+
 
 class ProfileSideBar(urwid.AttrWrap):
     def format_row(self, icon, text):
@@ -626,21 +675,24 @@ class ProfileSideBar(urwid.AttrWrap):
     def avatar(self, avatar):
         self.pile.contents.insert(0, (avatar, ('pack', 1)))
 
+
 class Reaction(urwid.Text):
     def __init__(self, name, count=0):
         name = emoji_codemap.get(name, name)
         text = '[{} {}]'.format(name, count)
         super(Reaction, self).__init__(('reaction', text))
 
+
 class SideBar(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
     signals = ['go_to_channel']
 
-    def __init__(self, profile, channels=[], dms=[], title=''):
+    def __init__(self, profile, channels=(), dms=(), title=''):
         self.profile = profile
         self.channels = channels
         self.dms = dms
-        # Subcribe to receive message from channels to select them
+
+        # Subscribe to receive message from channels to select them
         for channel in self.channels:
             urwid.connect_signal(channel, 'go_to_channel', self.go_to_channel)
         header = TextDivider(title)
@@ -652,6 +704,7 @@ class SideBar(urwid.Frame):
         stack.extend(self.channels)
         stack.append(TextDivider('Direct Messages'))
         stack.extend(dms)
+
         self.walker = urwid.SimpleFocusListWalker(stack)
         self.listbox = urwid.ListBox(self.walker)
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)
@@ -667,6 +720,26 @@ class SideBar(urwid.Frame):
                 dm.select()
             else:
                 dm.deselect()
+
+    def update_items(self, event):
+        """
+        Update unread count for side bar items
+        :param event:
+        :return:
+        """
+        channel_id = event.get('channel')
+
+        if channel_id[0] == 'D':
+            target = self.dms
+        else:
+            target = self.channels
+
+        chat_detail = Store.instance.get_channel_info(event.get('channel'))
+        new_count = chat_detail.get('unread_count_display', 0)
+
+        for widget in target:
+            if widget.id == channel_id:
+                widget.set_unread(new_count)
 
     def go_to_channel(self, channel):
         urwid.emit_signal(self, 'go_to_channel', channel)
@@ -696,6 +769,7 @@ class SideBar(urwid.Frame):
                 return True
         return super(SideBar, self).mouse_event(size, event, button, col, row, focus)
 
+
 class NewMessagesDivider(urwid.AttrWrap):
     def __init__(self, text='', date=None, char='─'):
         text_size = len(text if isinstance(text, str) else text[1]) + 2
@@ -714,6 +788,7 @@ class NewMessagesDivider(urwid.AttrWrap):
             body.append(self.text_widget)
             body.append(('fixed', 1, urwid.Divider(char)))
         super(NewMessagesDivider, self).__init__(urwid.Columns(body), 'new_messages_line')
+
 
 class TextDivider(urwid.Columns):
     def __init__(self, text='', align='left', char='─'):
@@ -740,6 +815,7 @@ class TextDivider(urwid.Columns):
             ]
         super(TextDivider, self).__init__(body)
 
+
 class Time(urwid.Text):
     def __init__(self, timestamp):
         time = datetime.fromtimestamp(float(timestamp)).strftime('%H:%M')
@@ -755,6 +831,7 @@ def shorten_hex(color):
         hex(round(int(color[4:], 16) / 17))[-1]
     )
 
+
 class User(urwid.Text):
     def __init__(self, id, name, color=None, is_app=False):
         self.id = id
@@ -767,6 +844,7 @@ class User(urwid.Text):
         if is_app:
             markup.append(('app_badge', '[APP]'))
         super(User, self).__init__(markup)
+
 
 class Workspace(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
@@ -807,6 +885,7 @@ class Workspace(urwid.AttrMap):
             if self.last_time_clicked and (now - self.last_time_clicked < 0.5):
                 urwid.emit_signal(self, 'select_workspace', self.number)
             self.last_time_clicked = now
+
 
 class Workspaces(urwid.AttrWrap):
     __metaclass__ = urwid.MetaSignals

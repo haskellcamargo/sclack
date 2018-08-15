@@ -82,9 +82,10 @@ class Store:
         conversations = self.slack.api_call(
             'users.conversations',
             exclude_archived=True,
-            limit=1000, # 1k is max limit
+            limit=1000,  # 1k is max limit
             types='public_channel,private_channel,im'
         )['channels']
+
         for channel in conversations:
             # Public channel
             if channel.get('is_channel', False):
@@ -143,9 +144,11 @@ class Store:
 
     def get_presence(self, user_id):
         response = self.slack.api_call('users.getPresence', user=user_id)
+
         if response.get('ok', False):
             if response['presence'] == 'active':
                 self.state.online_users.add(user_id)
             else:
                 self.state.online_users.discard(user_id)
+
         return response

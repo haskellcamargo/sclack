@@ -32,6 +32,7 @@ class QuickSwitcherList(urwid.ListBox):
         self.body = urwid.SimpleFocusListWalker(items)
         super(QuickSwitcherList, self).__init__(self.body)
 
+
 class QuickSwitcher(urwid.AttrWrap):
     __metaclass__ = urwid.MetaSignals
     signals = ['close_quick_switcher', 'go_to_channel']
@@ -44,13 +45,16 @@ class QuickSwitcher(urwid.AttrWrap):
             if channel.get('is_channel', False):
                 lines.append({
                     'icon': get_icon('private_channel'),
-                    'title': channel['name'], 'type': 'channel',
+                    'title': channel['name'],
+                    'type': 'channel',
                     'id': channel['id']
                 })
             elif channel.get('is_group', False):
                 lines.append({
-                    'id': channel['id'], 'icon': get_icon('channel'),
-                    'title': channel['name'], 'type': 'channel'
+                    'id': channel['id'],
+                    'icon': get_icon('channel'),
+                    'title': channel['name'],
+                    'type': 'channel'
                 })
         for dm in Store.instance.state.dms:
             user = Store.instance.find_user_by_id(dm['user'])
