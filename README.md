@@ -29,7 +29,7 @@ Download, install and set as the default font of your terminal emulator.
 Sclack uses `caca-utils` to create ANSI/VT100 + ASCII versions of pictures and
 render them. Images will only be rendered if both `caca-utils` is installed
 and `features.pictures` is configured to `true`. To install `caca-utils`, just
-run `sudo apt-get install caca-utils` on Debian and `brew install libcaca` on
+run `sudo apt-get install caca-utils` on Debian and `brew install libcaca --with-imlib2` on
 OS X.
 
 ## Installation
