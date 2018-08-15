@@ -523,7 +523,8 @@ class App:
 
     @asyncio.coroutine
     def start_real_time(self):
-        self.store.slack.rtm_connect()
+        self.store.slack.rtm_connect(auto_reconnect=True)
+
         def stop_typing(*args):
             self.chatbox.message_box.typing = None
         alarm = None
@@ -663,6 +664,7 @@ class App:
         if hasattr(self, 'real_time_task'):
             self.real_time_task.cancel()
         sys.exit()
+
 
 def ask_for_token(json_config):
     if os.path.isfile(os.path.expanduser('~/.sclack')):
