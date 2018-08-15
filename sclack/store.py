@@ -16,6 +16,7 @@ class State:
         self.last_date = None
         self.did_render_new_messages = False
         self.online_users = set()
+        self.is_snoozed = False
 
 class Cache:
     def __init__(self):
@@ -111,6 +112,9 @@ class Store:
             if user.get('is_bot', False):
                 self._users_dict[user['profile']['bot_id']] = user
             self._users_dict[user['id']] = user
+
+    def load_user_dnd(self):
+        self.state.is_snoozed = self.slack.api_call('dnd.info').get('snooze_enabled')
 
     def set_topic(self, channel_id, topic):
         return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)

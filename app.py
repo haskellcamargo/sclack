@@ -132,9 +132,10 @@ class App:
             loop.run_in_executor(executor, self.store.load_auth),
             loop.run_in_executor(executor, self.store.load_channels),
             loop.run_in_executor(executor, self.store.load_groups),
-            loop.run_in_executor(executor, self.store.load_users)
+            loop.run_in_executor(executor, self.store.load_users),
+            loop.run_in_executor(executor, self.store.load_user_dnd),
         )
-        profile = Profile(name=self.store.state.auth['user'])
+        profile = Profile(name=self.store.state.auth['user'], is_snoozed=self.store.state.is_snoozed)
         channels = [
             Channel(
                 id=channel['id'],
@@ -564,6 +565,9 @@ class App:
                     else:
                         pass
                         # print(json.dumps(event, indent=2))
+                elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
+                    self.store.is_snoozed = event['dnd_status']['snooze_enabled']
+                    self.sidebar.profile.set_snooze(self.store.is_snoozed)
                 elif event.get('ok', False):
                     # Message was sent, Slack confirmed it.
                     self.chatbox.body.body.extend(self.render_messages([{

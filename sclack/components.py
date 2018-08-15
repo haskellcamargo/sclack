@@ -564,13 +564,28 @@ class MessagePrompt(urwid_readline.ReadlineEdit):
         return super(MessagePrompt, self).keypress(size, key)
 
 class Profile(urwid.Text):
-    def __init__(self, name, is_online=False):
-        if is_online:
+    def __init__(self, name, is_online=False, is_snoozed=False):
+        self.name = name
+        self.is_online = is_online
+        self.is_snoozed = is_snoozed
+        super(Profile, self).__init__(self.body)
+
+    @property
+    def body(self):
+        if self.is_snoozed:
+            presence_icon = ('presence_active', ' {} '.format(get_icon('snooze')))
+        elif self.is_online:
             presence_icon = ('presence_active', ' {} '.format(get_icon('online')))
         else:
             presence_icon = ('presence_away', ' {} '.format(get_icon('offline')))
-        body = [presence_icon, name]
-        super(Profile, self).__init__(body)
+
+        snooze_str = ' (snoozed) ' if self.is_snoozed else ''
+
+        return [presence_icon, self.name, snooze_str]
+
+    def set_snooze(self, is_snoozed):
+        self.is_snoozed = is_snoozed
+        self.set_text(self.body)
 
 class ProfileSideBar(urwid.AttrWrap):
     def format_row(self, icon, text):
@@ -622,6 +637,7 @@ class SideBar(urwid.Frame):
     signals = ['go_to_channel']
 
     def __init__(self, profile, channels=[], dms=[], title=''):
+        self.profile = profile
         self.channels = channels
         self.dms = dms
         # Subcribe to receive message from channels to select them
