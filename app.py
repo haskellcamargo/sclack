@@ -644,6 +644,8 @@ class App:
         elif key in ('1', '2', '3', '4', '5', '6', '7', '8', '9') and len(self.workspaces) >= int(key):
             if self.workspaces_line is not None:
                 self.workspaces_line.select(int(key))
+                # Stop rtm to switch workspace
+                self.real_time_task.cancel()
                 return self.switch_to_workspace(int(key))
 
     def open_quick_switcher(self):
