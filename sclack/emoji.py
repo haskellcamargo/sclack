@@ -1115,6 +1115,7 @@ emoji_codemap = {
     'rofl':                                '\U0001f923',
     'roll_eyes':                           '\U0001f644',
     'roller_coaster':                      '\U0001f3a2',
+    'rolling_on_the_floor_laughing':       '\U0001F923',
     'romania':                             '\U0001f1f7\U0001f1f4',
     'rooster':                             '\U0001f413',
     'rose':                                '\U0001f339',
