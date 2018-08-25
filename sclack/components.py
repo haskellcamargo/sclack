@@ -12,6 +12,9 @@ from .markdown import MarkdownText
 from .store import Store
 
 
+MARK_READ_ALARM_PERIOD = 3
+
+
 def get_icon(name):
     return Store.instance.config['icons'][name]
 
@@ -25,9 +28,18 @@ class Box(urwid.AttrWrap):
             tline='', trcorner='', rline='', bline='', brcorner='')
         super(Box, self).__init__(body, urwid.AttrSpec(color, 'h235'))
 
+
 class Attachment(Box):
-    def __init__(self, color=None, service_name=None, title=None, title_link=None,
-        author_name=None, pretext=None, text=None, fields=None, footer=None):
+    def __init__(self,
+                 color=None,
+                 service_name=None,
+                 title=None,
+                 title_link=None,
+                 author_name=None,
+                 pretext=None,
+                 text=None,
+                 fields=None,
+                 footer=None):
         body = []
         if not color:
             color = 'CCCCCC'
@@ -64,7 +76,7 @@ class Attachment(Box):
 
 
 class BreadCrumbs(urwid.Text):
-    def __init__(self, elements=[]):
+    def __init__(self, elements=()):
         separator = ('separator', ' {} '.format(get_icon('divider')))
         body = []
         for element in elements:
@@ -206,19 +218,23 @@ class ChannelTopic(urwid.Edit):
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
-    signals = ['go_to_sidebar', 'open_quick_switcher', 'set_insert_mode']
+    signals = ['go_to_sidebar', 'open_quick_switcher', 'set_insert_mode', 'mark_read']
 
-    def __init__(self, messages, header, message_box):
+    def __init__(self, messages, header, message_box, event_loop):
         self._header = header
         self.message_box = message_box
-        self.body = ChatBoxMessages(messages=messages)
+        self.body = ChatBoxMessages(messages=messages, event_loop=event_loop)
         self.body.scroll_to_bottom()
         urwid.connect_signal(self.body, 'set_date', self._header.on_set_date)
         urwid.connect_signal(self.body, 'set_insert_mode', self.set_insert_mode)
+        urwid.connect_signal(self.body, 'mark_read', self.mark_as_read)
         super(ChatBox, self).__init__(self.body, header=header, footer=self.message_box)
 
     def set_insert_mode(self):
         urwid.emit_signal(self, 'set_insert_mode')
+
+    def mark_as_read(self, data):
+        urwid.emit_signal(self, 'mark_read', data)
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
@@ -241,12 +257,14 @@ class ChatBox(urwid.Frame):
 
 class ChatBoxMessages(urwid.ListBox):
     __metaclass__ = urwid.MetaSignals
-    signals = ['set_auto_scroll', 'set_date', 'set_insert_mode']
+    signals = ['set_auto_scroll', 'set_date', 'set_insert_mode', 'mark_read']
 
-    def __init__(self, messages=[]):
+    def __init__(self, messages=(), event_loop=None):
         self.body = urwid.SimpleFocusListWalker(messages)
         super(ChatBoxMessages, self).__init__(self.body)
         self.auto_scroll = True
+        self.last_keypress = (0, None, 0)
+        self.event_loop = event_loop
 
     @property
     def auto_scroll(self):
@@ -256,23 +274,47 @@ class ChatBoxMessages(urwid.ListBox):
     def auto_scroll(self, switch):
         if type(switch) != bool:
             return
+
         self._auto_scroll = switch
         urwid.emit_signal(self, 'set_auto_scroll', switch)
+
+    def mark_read_emit(self, loop, data):
+        urwid.emit_signal(self, 'mark_read', data)
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
         self.handle_floating_date(size)
+
+        if key in (keymap['cursor_up'], keymap['cursor_down'], 'up', 'down', ):
+            now = time.time()
+            max_focus = self.get_focus()[1]
+
+            if now - self.last_keypress[0] < MARK_READ_ALARM_PERIOD and self.last_keypress[1] is not None:
+                if max_focus < self.last_keypress[2]:
+                    max_focus = self.last_keypress[2]
+
+                self.event_loop.remove_alarm(self.last_keypress[1])
+
+            self.last_keypress = (
+                now,
+                self.event_loop.set_alarm_in(MARK_READ_ALARM_PERIOD, self.mark_read_emit, max_focus),
+                max_focus
+            )
+
         # Go to insert mode
         if key == 'down' and self.get_focus()[1] == len(self.body) - 1:
             urwid.emit_signal(self, 'set_insert_mode')
             return True
+
         super(ChatBoxMessages, self).keypress(size, key)
+
         if key in ('page up', 'page down'):
             self.auto_scroll = self.get_focus()[1] == len(self.body) - 1
+
         if key == keymap['cursor_up']:
             self.keypress(size, 'up')
         if key == keymap['cursor_down']:
-            self.keypress(size,'down')
+            self.keypress(size, 'down')
 
     def mouse_event(self, size, event, button, col, row, focus):
         self.handle_floating_date(size)
@@ -290,6 +332,7 @@ class ChatBoxMessages(urwid.ListBox):
         for index, widget in enumerate(self.body):
             if isinstance(widget, NewMessagesDivider):
                 return self.set_focus(index)
+
         return self.scroll_to_bottom()
 
     def scroll_to_bottom(self):
@@ -440,10 +483,19 @@ class Indicators(urwid.Columns):
 
 class Message(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
-    signals = ['delete_message', 'edit_message', 'go_to_profile', 'go_to_sidebar', 'quit_application', 'set_insert_mode']
+    signals = [
+        'delete_message',
+        'edit_message',
+        'go_to_profile',
+        'go_to_sidebar',
+        'quit_application',
+        'set_insert_mode',
+        'mark_read',
+    ]
 
-    def __init__(self, ts, user, text, indicators, reactions=[], attachments=[]):
+    def __init__(self, ts, channel_id, user, text, indicators, reactions=(), attachments=()):
         self.ts = ts
+        self.channel_id = channel_id
         self.user_id = user.id
         self.markdown_text = text
         self.original_text = text.original_text
@@ -837,7 +889,7 @@ class User(urwid.Text):
         self.id = id
         if not color:
             color = '333333'
-        color='#{}'.format(shorten_hex(color))
+        color = '#{}'.format(shorten_hex(color))
         markup = [
             (urwid.AttrSpec(color, 'h235'), '{} '.format(name))
         ]
