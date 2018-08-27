@@ -43,6 +43,18 @@ class Store:
     def find_user_by_id(self, user_id):
         return self._users_dict.get(user_id)
 
+    def get_user_display_name(self, user_detail):
+        """
+        FIXME
+        Get real name of user to display
+        :param user_detail:
+        :return:
+        """
+        if user_detail is None:
+            return ''
+
+        return user_detail.get('display_name') or user_detail.get('real_name') or user_detail['name']
+
     def load_auth(self):
         self.state.auth = self.slack.api_call('auth.test')
 
@@ -65,6 +77,38 @@ class Store:
         self.state.pin_count = history['pin_count']
         self.state.messages.reverse()
 
+    def is_valid_channel_id(self, channel_id):
+        """
+        Check whether channel_id is valid
+        :param channel_id:
+        :return:
+        """
+        return channel_id[0] in ('C', 'G', 'D')
+
+    def is_channel(self, channel_id):
+        """
+        Is a channel
+        :param channel_id:
+        :return:
+        """
+        return channel_id[0] == 'C'
+
+    def is_dm(self, channel_id):
+        """
+        Is direct message
+        :param channel_id:
+        :return:
+        """
+        return channel_id[0] == 'D'
+
+    def is_group(self, channel_id):
+        """
+        Is a group
+        :param channel_id:
+        :return:
+        """
+        return channel_id[0] == 'G'
+
     def get_channel_info(self, channel_id):
         if channel_id[0] == 'G':
             return self.slack.api_call('groups.info', channel=channel_id)['group']
@@ -72,6 +116,14 @@ class Store:
             return self.slack.api_call('channels.info', channel=channel_id)['channel']
         elif channel_id[0] == 'D':
             return self.slack.api_call('im.info', channel=channel_id)['im']
+
+    def mark_read(self, channel_id, ts):
+        if self.is_group(channel_id):
+            return self.slack.api_call('groups.mark', channel=channel_id, ts=ts)
+        elif self.is_channel(channel_id):
+            return self.slack.api_call('channels.mark', channel=channel_id, ts=ts)
+        elif self.is_dm(channel_id):
+            return self.slack.api_call('im.mark', channel=channel_id, ts=ts)
 
     def load_channel(self, channel_id):
         if channel_id[0] in ('C', 'G', 'D'):

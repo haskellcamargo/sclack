@@ -6,6 +6,7 @@ import json
 import os
 import requests
 import sys
+import time
 import traceback
 import tempfile
 import urwid
@@ -24,6 +25,7 @@ from sclack.themes import themes
 loop = asyncio.get_event_loop()
 
 SCLACK_SUBTYPE = 'sclack_message'
+MARK_READ_ALARM_PERIOD = 3
 
 
 class SclackEventLoop(urwid.AsyncioEventLoop):
@@ -81,6 +83,7 @@ class App:
             unhandled_input=self.unhandled_input
         )
         self.configure_screen(self.urwid_loop.screen)
+        self.last_keypress = (0, None)
 
     def start(self):
         self._loading = True
@@ -246,11 +249,14 @@ class App:
             user=self.store.state.auth['user'],
             is_read_only=self.store.state.channel.get('is_read_only', False)
         )
-        self.chatbox = ChatBox(messages, header, self.message_box)
+        self.chatbox = ChatBox(messages, header, self.message_box, self.urwid_loop)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
+        urwid.connect_signal(self.chatbox, 'mark_read', self.handle_mark_read)
         urwid.connect_signal(self.chatbox, 'open_quick_switcher', self.open_quick_switcher)
+
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         urwid.connect_signal(self.message_box.prompt_widget, 'go_to_last_message', self.go_to_last_message)
+
         self.real_time_task = loop.create_task(self.start_real_time())
 
     def edit_message(self, widget, user_id, ts, original_text):
@@ -318,13 +324,14 @@ class App:
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
-    def render_message(self, message):
+    def render_message(self, message, channel_id=None):
         is_app = False
         subtype = message.get('subtype')
 
         if subtype == SCLACK_SUBTYPE:
             message = Message(
                 message['ts'],
+                '',
                 User('1', 'sclack'),
                 MarkdownText(message['text']),
                 Indicators(False, False)
@@ -332,6 +339,7 @@ class App:
             urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
             urwid.connect_signal(message, 'quit_application', self.quit_application)
             urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
+            urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
 
             return message
 
@@ -417,8 +425,11 @@ class App:
         if file:
             files.append(file)
 
+        message_channel = channel_id if channel_id is not None else message.get('channel')
+
         message = Message(
             message['ts'],
+            message_channel,
             user,
             text,
             indicators,
@@ -434,6 +445,7 @@ class App:
         urwid.connect_signal(message, 'delete_message', self.delete_message)
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
+        urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
 
         return message
 
@@ -458,7 +470,7 @@ class App:
                     not file.get('is_external', True)
                 ))
 
-    def render_messages(self, messages):
+    def render_messages(self, messages, channel_id=None):
         _messages = []
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
@@ -485,10 +497,58 @@ class App:
                 _messages.append(NewMessagesDivider(unread_text, date=date_text))
             elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
-            message = self.render_message(message)
+
+            message = self.render_message(message, channel_id)
+
             if message is not None:
                 _messages.append(message)
+
         return _messages
+
+    def handle_mark_read(self, data):
+        """
+        Mark as read to bottom
+        :return:
+        """
+        row_index = data if data is not None else -1
+
+        def read(*kwargs):
+            loop.create_task(
+                self.mark_read_slack(row_index)
+            )
+
+        now = time.time()
+        if now - self.last_keypress[0] < MARK_READ_ALARM_PERIOD and self.last_keypress[1] is not None:
+            self.urwid_loop.remove_alarm(self.last_keypress[1])
+
+        self.last_keypress = (now, self.urwid_loop.set_alarm_in(MARK_READ_ALARM_PERIOD, read))
+
+    def scroll_messages(self, *args):
+        index = self.chatbox.body.scroll_to_new_messages()
+        loop.create_task(
+            self.mark_read_slack(index)
+        )
+
+    @asyncio.coroutine
+    def mark_read_slack(self, index):
+        if not self.chatbox.body or not self.chatbox.body.body:
+            return
+
+        if index is None or index == -1:
+            index = len(self.chatbox.body.body) - 1
+
+        if self.chatbox.body.body and self.chatbox.body.body and len(self.chatbox.body.body) > index:
+            message = self.chatbox.body.body[index]
+
+            # Only apply for message
+            if not hasattr(message, 'channel_id'):
+                if len(self.chatbox.body.body) > index + 1:
+                    message = self.chatbox.body.body[index + 1]
+                else:
+                    message = self.chatbox.body.body[index - 1]
+
+            if message.channel_id:
+                self.store.mark_read(message.channel_id, message.ts)
 
     @asyncio.coroutine
     def _go_to_channel(self, channel_id):
@@ -506,14 +566,14 @@ class App:
                     'subtype': SCLACK_SUBTYPE,
                 }])
             else:
-                messages = self.render_messages(self.store.state.messages)
+                messages = self.render_messages(self.store.state.messages, channel_id=channel_id)
 
             header = self.render_chatbox_header()
             self.chatbox.body.body[:] = messages
             self.chatbox.header = header
             self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
             self.sidebar.select_channel(channel_id)
-            self.urwid_loop.set_alarm_in(0, lambda *args: self.chatbox.body.scroll_to_new_messages())
+            self.urwid_loop.set_alarm_in(0, self.scroll_messages)
 
             if len(self.store.state.messages) == 0:
                 self.go_to_sidebar()
@@ -602,7 +662,10 @@ class App:
                         else:
                             self.chatbox.body.body.extend(self.render_messages([event]))
                             self.chatbox.body.scroll_to_bottom()
-                    elif event['type'] == 'user_typing':
+                    else:
+                        pass
+                elif event['type'] == 'user_typing':
+                    if event.get('channel') == self.store.state.channel['id']:
                         user = self.store.find_user_by_id(event['user'])
                         name = user.get('display_name') or user.get('real_name') or user['name']
                         if alarm is not None:
@@ -623,6 +686,7 @@ class App:
                         'user': self.store.state.auth['user_id']
                     }]))
                     self.chatbox.body.scroll_to_bottom()
+                    self.handle_mark_read(-1)
                 else:
                     pass
                     # print(json.dumps(event, indent=2))
