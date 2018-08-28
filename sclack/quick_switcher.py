@@ -3,8 +3,10 @@ import time
 import unicodedata
 from .store import Store
 
+
 def get_icon(name):
     return Store.instance.config['icons'][name]
+
 
 def remove_diacritic(input):
     '''
@@ -12,6 +14,7 @@ def remove_diacritic(input):
     without any diacritical marks.
     '''
     return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore').decode()
+
 
 class QuickSwitcherItem(urwid.AttrMap):
     def __init__(self, icon, title, id):
@@ -26,6 +29,7 @@ class QuickSwitcherItem(urwid.AttrMap):
                 'quick_search_presence_away': 'active_quick_switcher_item'
             }
         )
+
 
 class QuickSwitcherList(urwid.ListBox):
     def __init__(self, items):
@@ -69,7 +73,7 @@ class QuickSwitcher(urwid.AttrWrap):
                     priority.append({'id': dm['id'], 'icon': icon, 'title': name, 'type': 'user'})
                 else:
                     icon = ('quick_search_presence_away', get_icon('offline'))
-                    lines.append({'id': dm['id'],'icon': icon, 'title': name, 'type': 'user'})
+                    lines.append({'id': dm['id'], 'icon': icon, 'title': name, 'type': 'user'})
         priority.sort(key=lambda item: item['title'])
         lines.sort(key=lambda item: item['title'])
         self.header = urwid.Edit('')
@@ -84,10 +88,10 @@ class QuickSwitcher(urwid.AttrWrap):
         overlay = urwid.Overlay(
             switcher,
             base,
-            align = 'center',
-            width = ('relative', 40),
-            valign = 'middle',
-            height = 15
+            align='center',
+            width=('relative', 40),
+            valign='middle',
+            height=15
         )
         self.last_keypress = (time.time() - 0.3, None)
         super(QuickSwitcher, self).__init__(overlay, 'quick_switcher_dialog')
@@ -139,4 +143,3 @@ class QuickSwitcher(urwid.AttrWrap):
         if now - self.last_keypress[0] < 0.3 and self.last_keypress[1] is not None:
             self.event_loop.remove_alarm(self.last_keypress[1])
         self.last_keypress = (now, self.event_loop.set_alarm_in(0.3, self.set_filter))
-

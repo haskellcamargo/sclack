@@ -218,7 +218,7 @@ class ChannelTopic(urwid.Edit):
 
 class ChatBox(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
-    signals = ['go_to_sidebar', 'open_quick_switcher', 'set_insert_mode', 'mark_read']
+    signals = ['go_to_sidebar', 'open_quick_switcher', 'set_insert_mode', 'mark_read', 'open_set_snooze']
 
     def __init__(self, messages, header, message_box, event_loop):
         self._header = header
@@ -241,6 +241,10 @@ class ChatBox(urwid.Frame):
         if key == keymap['open_quick_switcher']:
             urwid.emit_signal(self, 'open_quick_switcher')
             return True
+        if key == keymap['set_snooze']:
+            urwid.emit_signal(self, 'open_set_snooze')
+            return True
+
         return super(ChatBox, self).keypress(size, key)
 
     @property

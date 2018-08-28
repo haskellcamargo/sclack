@@ -125,6 +125,9 @@ class Store:
         elif self.is_dm(channel_id):
             return self.slack.api_call('im.mark', channel=channel_id, ts=ts)
 
+    def set_snooze(self, snoozed_time):
+        return self.slack.api_call('dnd.setSnooze', num_minutes=snoozed_time)
+
     def load_channel(self, channel_id):
         if channel_id[0] in ('C', 'G', 'D'):
             self.state.channel = self.get_channel_info(channel_id)

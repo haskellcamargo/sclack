@@ -22,6 +22,8 @@ from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
 
+from sclack.widgets.set_snooze import SetSnoozeWidget
+
 loop = asyncio.get_event_loop()
 
 SCLACK_SUBTYPE = 'sclack_message'
@@ -54,6 +56,8 @@ class App:
     def __init__(self, config):
         self._loading = False
         self.config = config
+        self.quick_switcher = None
+        self.set_snooze_widget = None
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
         Store.instance = self.store
@@ -75,7 +79,7 @@ class App:
             urwid.AttrWrap(chatbox, 'chatbox')
         ])
         self._body = urwid.Frame(self.columns, header=self.workspaces_line)
-        self.quick_switcher = None
+
         self.urwid_loop = urwid.MainLoop(
             self._body,
             palette=palette,
@@ -253,6 +257,7 @@ class App:
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(self.chatbox, 'mark_read', self.handle_mark_read)
         urwid.connect_signal(self.chatbox, 'open_quick_switcher', self.open_quick_switcher)
+        urwid.connect_signal(self.chatbox, 'open_set_snooze', self.open_set_snooze)
 
         urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         urwid.connect_signal(self.message_box.prompt_widget, 'go_to_last_message', self.go_to_last_message)
@@ -587,6 +592,24 @@ class App:
             self.quick_switcher = None
         loop.create_task(self._go_to_channel(channel_id))
 
+    def handle_set_snooze_time(self, snoozed_time):
+        loop.create_task(self.dispatch_snooze_time(snoozed_time))
+
+    def handle_close_set_snooze(self):
+        """
+        Close set_snooze
+        :return:
+        """
+        if self.set_snooze_widget:
+            urwid.disconnect_signal(self.set_snooze_widget, 'set_snooze_time', self.handle_set_snooze_time)
+            urwid.disconnect_signal(self.set_snooze_widget, 'close_set_snooze', self.handle_close_set_snooze)
+            self.urwid_loop.widget = self._body
+            self.set_snooze_widget = None
+
+    @asyncio.coroutine
+    def dispatch_snooze_time(self, snoozed_time):
+        self.store.set_snooze(snoozed_time)
+
     @asyncio.coroutine
     def load_picture_async(self, url, width, message_widget, auth=True):
         width = min(width, 800)
@@ -716,8 +739,10 @@ class App:
         if len(self.columns.contents) > 2:
             self.columns.contents.pop()
         self.columns.focus_position = 0
+
         if self.store.state.editing_widget:
             self.leave_edit_mode()
+
         if self.quick_switcher:
             urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self._body
@@ -743,6 +768,11 @@ class App:
         self.chatbox.body.go_to_last_message()
 
     def unhandled_input(self, key):
+        """
+        Handle shortcut key press
+        :param key:
+        :return:
+        """
         keymap = self.store.config['keymap']
 
         if key == keymap['go_to_chatbox'] or key == keymap['cursor_right'] and self.message_box:
@@ -763,12 +793,21 @@ class App:
                 # Stop rtm to switch workspace
                 self.real_time_task.cancel()
                 return self.switch_to_workspace(int(key))
+        elif key == keymap['set_snooze']:
+            return self.open_set_snooze()
 
     def open_quick_switcher(self):
         if not self.quick_switcher:
             self.quick_switcher = QuickSwitcher(self.urwid_loop.widget, self.urwid_loop)
             urwid.connect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self.quick_switcher
+
+    def open_set_snooze(self):
+        if not self.set_snooze_widget:
+            self.set_snooze_widget = SetSnoozeWidget(self.urwid_loop.widget, self.urwid_loop)
+            urwid.connect_signal(self.set_snooze_widget, 'set_snooze_time', self.handle_set_snooze_time)
+            urwid.connect_signal(self.set_snooze_widget, 'close_set_snooze', self.handle_close_set_snooze)
+            self.urwid_loop.widget = self.set_snooze_widget
 
     def configure_screen(self, screen):
         screen.set_terminal_properties(colors=self.store.config['colors'])
