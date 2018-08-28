@@ -136,34 +136,71 @@ class App:
         yield from asyncio.gather(
             loop.run_in_executor(executor, self.store.load_auth),
             loop.run_in_executor(executor, self.store.load_channels),
+            loop.run_in_executor(executor, self.store.load_stars),
             loop.run_in_executor(executor, self.store.load_groups),
             loop.run_in_executor(executor, self.store.load_users),
             loop.run_in_executor(executor, self.store.load_user_dnd),
         )
         profile = Profile(name=self.store.state.auth['user'], is_snoozed=self.store.state.is_snoozed)
-        channels = [
-            Channel(
+
+        channels = []
+        dms = []
+        stars = []
+        star_user_tmp = []  # To contain user, channel should be on top of list
+        stars_user_id = []  # To ignore item in DMs list
+        stars_channel_id = []  # To ignore item in channels list
+        max_users_sidebar = self.store.config['sidebar']['max_users']
+
+        # Prepare list of Star users and channels
+        for dm in self.store.state.stars:
+            # Group chat is not supported, prefer to https://github.com/haskellcamargo/sclack/issues/67
+            if self.store.is_dm(dm['channel']):
+                detail = self.store.get_channel_info(dm['channel'])
+                user = self.store.find_user_by_id(detail['user'])
+                if user:
+                    stars_user_id.append(user['id'])
+                    star_user_tmp.append(Dm(
+                        dm['channel'],
+                        name=self.store.get_user_display_name(user),
+                        user=dm['channel'],
+                        you=False
+                    ))
+            elif self.store.is_channel(dm['channel']):
+                channel = self.store.get_channel_info(dm['channel'])
+                if channel:
+                    stars_channel_id.append(channel['id'])
+                    stars.append(Channel(
+                        id=channel['id'],
+                        name=channel['name'],
+                        is_private=channel['is_private']
+                    ))
+        stars.extend(star_user_tmp)
+
+        # Prepare list of Channels
+        for channel in self.store.state.channels:
+            if channel['id'] in stars_channel_id:
+                continue
+            channels.append(Channel(
                 id=channel['id'],
                 name=channel['name'],
                 is_private=channel['is_private']
-            )
-            for channel in self.store.state.channels
-        ]
-        dms = []
-        max_users_sidebar = self.store.config['sidebar']['max_users']
-        dm_users = self.store.state.dms[:max_users_sidebar]
+            ))
 
+        # Prepare list of DM
+        dm_users = self.store.state.dms[:max_users_sidebar]
         for dm in dm_users:
+            if dm['user'] in stars_user_id:
+                continue
             user = self.store.find_user_by_id(dm['user'])
             if user:
                 dms.append(Dm(
                     dm['id'],
-                    name=user.get('display_name') or user.get('real_name') or user['name'],
+                    name=self.store.get_user_display_name(user),
                     user=dm['user'],
                     you=user['id'] == self.store.state.auth['user_id']
                 ))
 
-        self.sidebar = SideBar(profile, channels, dms, title=self.store.state.auth['team'])
+        self.sidebar = SideBar(profile, channels, dms, stars=stars, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
         loop.create_task(self.get_channels_info(executor, channels))
         loop.create_task(self.get_presences(executor, dms))
@@ -716,8 +753,10 @@ class App:
         if len(self.columns.contents) > 2:
             self.columns.contents.pop()
         self.columns.focus_position = 0
+
         if self.store.state.editing_widget:
             self.leave_edit_mode()
+
         if self.quick_switcher:
             urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self._body
@@ -743,6 +782,11 @@ class App:
         self.chatbox.body.go_to_last_message()
 
     def unhandled_input(self, key):
+        """
+        Handle shortcut key press
+        :param key:
+        :return:
+        """
         keymap = self.store.config['keymap']
 
         if key == keymap['go_to_chatbox'] or key == keymap['cursor_right'] and self.message_box:

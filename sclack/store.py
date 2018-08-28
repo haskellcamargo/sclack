@@ -1,10 +1,12 @@
 from slackclient import SlackClient
 
+
 class State:
     def __init__(self):
         self.channels = []
         self.dms = []
         self.groups = []
+        self.stars = []
         self.messages = []
         self.users = []
         self.pin_count = 0
@@ -153,6 +155,16 @@ class Store:
 
     def load_groups(self):
         self.state.groups = self.slack.api_call('mpim.list')['groups']
+
+    def load_stars(self):
+        """
+        Load stars
+        :return:
+        """
+        self.state.stars = list(filter(
+            lambda star: star.get('type', '') in ('channel', 'im', 'group', ),
+            self.slack.api_call('stars.list')['items']
+        ))
 
     def load_users(self):
         self.state.users = list(filter(
