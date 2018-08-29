@@ -88,16 +88,20 @@ at most 9 workspaces defined inside `workspaces`:
 }
 ```
 
+You can use the keys from 1 up to 9 to switch workspaces or event right-click the indicator:
+
+![Multiple workspaces](./resources/example_7.png)
+
+
 ### Quick Switcher
 
 You can use <kbd>ctrl k</kbd> (or your custom shortcut) to navigate in your DMs and channels.
 
 ![](./resources/example_8.png)
 
-You can use the keys from 1 up to 9 to switch workspaces or event right-click the indicator:
+### Set snooze
 
-![Multiple workspaces](./resources/example_7.png)
-
+You can use <kbd>ctrl d</kbd> (or your custom shortcut) to set snooze time.
 
 ### Default keybindings
 ```json

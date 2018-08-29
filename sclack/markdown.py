@@ -3,6 +3,7 @@ import urwid
 from .store import Store
 from .emoji import emoji_codemap
 
+
 class MarkdownText(urwid.SelectableIcon):
     _buffer = ''
     _state = 'message'

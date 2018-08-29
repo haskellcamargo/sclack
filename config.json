@@ -15,7 +15,8 @@
         "quit_application": "q",
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
-        "yank_message": "y"
+        "yank_message": "y",
+        "set_snooze": "ctrl d"
     },
     "sidebar": {
         "width": 25,
@@ -50,6 +51,7 @@
         "square": "\uF445",
         "snooze": "\uF9B1",
         "status": "\uF075",
-        "timezone": "\uF0AC"
+        "timezone": "\uF0AC",
+        "alarm_snooze": "\ufb8c"
     }
 }
