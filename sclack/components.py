@@ -743,9 +743,10 @@ class SideBar(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
     signals = ['go_to_channel']
 
-    def __init__(self, profile, channels=(), dms=(), title=''):
+    def __init__(self, profile, channels=(), dms=(), stars=(), title=''):
         self.profile = profile
         self.channels = channels
+        self.stars = stars
         self.dms = dms
 
         # Subscribe to receive message from channels to select them
@@ -755,8 +756,10 @@ class SideBar(urwid.Frame):
         footer = urwid.Divider('─')
         stack = [
             profile,
-            TextDivider('Channels')
+            TextDivider('Starred')
         ]
+        stack.extend(stars)
+        stack.append(TextDivider('Channels'))
         stack.extend(self.channels)
         stack.append(TextDivider('Direct Messages'))
         stack.extend(dms)
