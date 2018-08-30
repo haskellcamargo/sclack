@@ -11,6 +11,7 @@ from .emoji import emoji_codemap
 from .markdown import MarkdownText
 from .store import Store
 from sclack.utils.channel import is_group, is_channel, is_dm
+from sclack.utils.message import format_date_time
 
 
 MARK_READ_ALARM_PERIOD = 3
@@ -36,35 +37,57 @@ class Attachment(Box):
                  service_name=None,
                  title=None,
                  title_link=None,
+                 from_url=None,
                  author_name=None,
                  pretext=None,
                  text=None,
                  fields=None,
+                 attachment_text=None,
+                 ts=None,
                  footer=None):
         body = []
         if not color:
             color = 'CCCCCC'
         color = '#{}'.format(shorten_hex(color))
+
         self._image_index = 0
+        self.from_url = from_url
+
         if service_name:
             body.append(urwid.Text(('attachment_title', service_name)))
             self._image_index = self._image_index + 1
+
         if title:
-            body.append(urwid.Text(('attachment_title', title)))
+            body.append(urwid.Text(('attachment_title', title.strip())))
             self._image_index = self._image_index + 1
+
         if author_name:
             body.append(urwid.Text(('attachment_title', author_name)))
             self._image_index = self._image_index + 1
+
         if pretext:
             body.append(urwid.Text(MarkdownText(pretext).markup))
             self._image_index = self._image_index + 1
-        if text:
-            body.append(urwid.Text(MarkdownText(text).markup))
+
+        text_display = attachment_text if attachment_text is not None else text
+        if text_display:
+            body.append(urwid.Text(MarkdownText(text_display.strip()).markup))
+
         if fields:
             body.append(Fields(fields))
-        if footer:
-            body.append(urwid.Text(MarkdownText(footer).markup))
+
+        if footer or ts:
+            footer_parts = []
+            if footer:
+                footer_parts.append(footer)
+            if ts:
+                footer_parts.append(format_date_time(ts))
+
+            footer_text = ' | '.join(footer_parts)
+            body.append(urwid.Text(MarkdownText(footer_text).markup))
+
         self.pile = urwid.Pile(body)
+
         super(Attachment, self).__init__(self.pile, color)
 
     @property
