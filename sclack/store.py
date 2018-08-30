@@ -20,10 +20,12 @@ class State:
         self.online_users = set()
         self.is_snoozed = False
 
+
 class Cache:
     def __init__(self):
         self.avatar = {}
         self.picture = {}
+
 
 class Store:
     def __init__(self, workspaces, config):
@@ -165,7 +167,7 @@ class Store:
         :return:
         """
         self.state.stars = list(filter(
-            lambda star: star.get('type', '') in ('channel', 'im', 'group', ),
+            lambda star: star.get('type', '') in ('channel', 'im', 'group',),
             self.slack.api_call('stars.list')['items']
         ))
 

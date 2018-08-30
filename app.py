@@ -23,6 +23,7 @@ from sclack.store import Store
 from sclack.themes import themes
 
 from sclack.widgets.set_snooze import SetSnoozeWidget
+from sclack.utils.channel import is_dm, is_group, is_channel
 
 loop = asyncio.get_event_loop()
 
@@ -157,26 +158,27 @@ class App:
 
         # Prepare list of Star users and channels
         for dm in self.store.state.stars:
-            # Group chat is not supported, prefer to https://github.com/haskellcamargo/sclack/issues/67
-            if self.store.is_dm(dm['channel']):
+            if is_dm(dm['channel']):
                 detail = self.store.get_channel_info(dm['channel'])
                 user = self.store.find_user_by_id(detail['user'])
+
                 if user:
                     stars_user_id.append(user['id'])
                     star_user_tmp.append(Dm(
                         dm['channel'],
                         name=self.store.get_user_display_name(user),
-                        user=dm['channel'],
+                        user=user['id'],
                         you=False
                     ))
-            elif self.store.is_channel(dm['channel']):
+            elif is_channel(dm['channel']) or is_group(dm['channel']):
                 channel = self.store.get_channel_info(dm['channel'])
-                if channel:
+                # Group chat (is_mpim) is not supported, prefer to https://github.com/haskellcamargo/sclack/issues/67
+                if channel and not channel.get('is_archived', False) and not channel.get('is_mpim', False):
                     stars_channel_id.append(channel['id'])
                     stars.append(Channel(
                         id=channel['id'],
                         name=channel['name'],
-                        is_private=channel['is_private']
+                        is_private=channel.get('is_private', True)
                     ))
         stars.extend(star_user_tmp)
 
@@ -206,9 +208,9 @@ class App:
 
         self.sidebar = SideBar(profile, channels, dms, stars=stars, title=self.store.state.auth['team'])
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
-        loop.create_task(self.get_channels_info(executor, channels))
-        loop.create_task(self.get_presences(executor, dms))
-        loop.create_task(self.get_dms_unread(executor, dms))
+        loop.create_task(self.get_channels_info(executor, self.sidebar.get_all_channels()))
+        loop.create_task(self.get_presences(executor, self.sidebar.get_all_dms()))
+        loop.create_task(self.get_dms_unread(executor, self.sidebar.get_all_dms()))
 
     @asyncio.coroutine
     def get_presences(self, executor, dm_widgets):
@@ -693,16 +695,27 @@ class App:
                 self.chatbox.message_box.typing = None
 
         alarm = None
+
         while self.store.slack.server.connected is True:
             events = self.store.slack.rtm_read()
+
             for event in events:
                 if event.get('type') == 'hello':
                     pass
-                elif event.get('type') in ('channel_marked', 'group_marked'):
+                elif event.get('type') in ('channel_marked', 'group_marked', 'im_marked'):
                     unread = event.get('unread_count_display', 0)
-                    for channel in self.sidebar.channels:
-                        if channel.id == event['channel']:
-                            channel.set_unread(unread)
+
+                    if event.get('type') == 'channel_marked':
+                        targets = self.sidebar.get_all_channels()
+                    elif event.get('type') == 'group_marked':
+                        targets = self.sidebar.get_all_groups()
+                    else:
+                        targets = self.sidebar.get_all_dms()
+
+                    for target in targets:
+                        if target.id == event['channel']:
+                            target.set_unread(unread)
+
                 elif event['type'] == 'message':
                     loop.create_task(
                         self.update_chat(event)
