@@ -10,6 +10,7 @@ from datetime import datetime
 from .emoji import emoji_codemap
 from .markdown import MarkdownText
 from .store import Store
+from sclack.utils.channel import is_group, is_channel, is_dm
 
 
 MARK_READ_ALARM_PERIOD = 3
@@ -370,7 +371,7 @@ class ChatBoxMessages(urwid.ListBox):
 
 
 class Dm(urwid.AttrMap):
-    def __init__(self, id, name, user, you=False, unread=0):
+    def __init__(self, id, name, user, you=False, unread=0, is_selected=False):
         self.id = id
         self.user = user
         self.name = name
@@ -378,8 +379,13 @@ class Dm(urwid.AttrMap):
         self.presence = 'away'
         self.unread = unread
         self.body = urwid.SelectableIcon(self.get_markup())
-        self.is_selected = False
-        super(Dm, self).__init__(self.body, 'inactive', 'active_channel')
+        self.is_selected = is_selected
+
+        attr_map = 'inactive'
+        if is_selected:
+            attr_map = 'selected_channel'
+
+        super(Dm, self).__init__(self.body, attr_map, 'active_channel')
 
     def get_markup(self, presence='away'):
         if self.user == 'USLACKBOT':
@@ -417,11 +423,11 @@ class Dm(urwid.AttrMap):
 
     def set_unread(self, count):
         self.unread = count
-
-        if count > 0:
-            self.attr_map = {None: 'unread_channel'}
-        else:
-            self.attr_map = {None: 'inactive'}
+        if not self.is_selected:
+            if count > 0:
+                self.attr_map = {None: 'unread_channel'}
+            else:
+                self.attr_map = {None: 'inactive'}
 
         self.body.set_text(self.get_markup(self.presence))
 
@@ -440,11 +446,14 @@ class Dm(urwid.AttrMap):
             'presence_away': 'selected_channel'
         }
         self.set_presence(self.presence)
+        self.attr_map = {None: 'selected_channel'}
+        self.focus_map = {None: 'selected_channel'}
 
     def deselect(self):
         self.is_selected = False
         self.attr_map = {None: None}
         self.set_presence(self.presence)
+
 
 class Fields(urwid.Pile):
     def chunks(self, list, size):
@@ -650,6 +659,7 @@ class MessageBox(urwid.AttrMap):
         self.prompt_widget.set_edit_text(text)
         self.prompt_widget.set_edit_pos(len(text))
 
+
 class MessagePrompt(urwid_readline.ReadlineEdit):
     __metaclass__ = urwid.MetaSignals
     signals = ['submit_message', 'go_to_last_message']
@@ -748,6 +758,7 @@ class SideBar(urwid.Frame):
         self.channels = channels
         self.stars = stars
         self.dms = dms
+        self.groups = ()
 
         # Subscribe to receive message from channels to select them
         for channel in self.channels:
@@ -768,13 +779,72 @@ class SideBar(urwid.Frame):
         self.listbox = urwid.ListBox(self.walker)
         super(SideBar, self).__init__(self.listbox, header=header, footer=footer)
 
+    def get_all_channels(self):
+        """
+        List Channels including Starred items
+        :return:
+        """
+        channels_starred = list(filter(
+            lambda starred: is_channel(starred.id),
+            self.stars
+        ))
+        channels_starred.extend(self.channels)
+
+        return channels_starred
+
+    def get_all_dms(self):
+        """
+        List DM including Starred items
+        :return:
+        """
+        dms = list(filter(
+            lambda starred: is_dm(starred.id),
+            self.stars
+        ))
+        dms.extend(self.dms)
+
+        return dms
+
+    def get_all_groups(self):
+        """
+        List Groups including Starred items
+        :return:
+        """
+        groups = list(filter(
+            lambda starred: is_group(starred.id),
+            self.stars
+        ))
+        groups.extend(self.groups)
+
+        return groups
+
+    def get_targets_by_id(self, channel_id):
+        """
+        For different channel_id we get different data from: Groups, DMs, Channels
+        :param channel_id:
+        :return:
+        """
+        targets = None
+        if is_channel(channel_id):
+            targets = self.get_all_channels()
+        elif is_dm(channel_id):
+            targets = self.get_all_dms()
+        elif is_group(channel_id):
+            targets = self.get_all_groups()
+        return targets
+
     def select_channel(self, channel_id):
-        for channel in self.channels:
+        """
+        :param channel_id:
+        :return:
+        """
+        for channel in self.get_all_channels():
             if channel.id == channel_id:
                 channel.select()
             else:
                 channel.deselect()
-        for dm in self.dms:
+
+        for dm in self.get_all_dms():
             if dm.id == channel_id:
                 dm.select()
             else:
@@ -787,11 +857,7 @@ class SideBar(urwid.Frame):
         :return:
         """
         channel_id = event.get('channel')
-
-        if channel_id[0] == 'D':
-            target = self.dms
-        else:
-            target = self.channels
+        target = self.get_targets_by_id(channel_id)
 
         chat_detail = Store.instance.get_channel_info(event.get('channel'))
         new_count = chat_detail.get('unread_count_display', 0)
