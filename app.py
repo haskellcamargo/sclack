@@ -447,11 +447,14 @@ class App:
             attachment_widget = Attachment(
                 service_name=attachment.get('service_name'),
                 title=attachment.get('title'),
+                from_url=attachment.get('from_url'),
                 fields=attachment.get('fields'),
                 color=attachment.get('color'),
-                author_name=attachment.get('author_name'),
+                author_name=attachment.get('author_name') or attachment.get('author_subname'),
                 pretext=attachment.get('pretext'),
                 text=message_text,
+                attachment_text=attachment.get('text'),
+                ts=attachment.get('ts'),
                 footer=attachment.get('footer')
             )
             image_url = attachment.get('image_url')
