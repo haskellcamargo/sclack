@@ -782,6 +782,7 @@ class SideBar(urwid.Frame):
         self.stars = stars
         self.dms = dms
         self.groups = ()
+        self.last_time_clicked = None
 
         # Subscribe to receive message from channels to select them
         for channel in self.channels:
@@ -908,13 +909,20 @@ class SideBar(urwid.Frame):
         return super(SideBar, self).keypress(size, key)
 
     def mouse_event(self, size, event, button, col, row, focus):
-        if event == 'mouse press' and button in (4, 5):
-            if button == 4:
-                self.keypress(size, 'up')
-                return True
+        if event == 'mouse press':
+            if button in (4, 5):
+                if button == 4:
+                    self.keypress(size, 'up')
+                    return True
+                else:
+                    self.keypress(size, 'down')
+                    return True
             else:
-                self.keypress(size, 'down')
-                return True
+                now = time.time()
+                if self.last_time_clicked and (now - self.last_time_clicked < 0.5):
+                    self.keypress(size, 'enter')
+                self.last_time_clicked = now
+
         return super(SideBar, self).mouse_event(size, event, button, col, row, focus)
 
 
