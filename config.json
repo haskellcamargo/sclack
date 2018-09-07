@@ -16,6 +16,7 @@
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
         "yank_message": "y",
+        "get_permalink": "r",
         "set_snooze": "ctrl d"
     },
     "sidebar": {
