@@ -107,6 +107,10 @@ class App:
             loop.create_task(self.component_did_mount())
 
     @property
+    def is_chatbox_rendered(self):
+        return not self._loading and self.chatbox and type(self.chatbox) is ChatBox
+
+    @property
     def sidebar(self):
         return self.columns.contents[0][0].original_widget
 
@@ -578,13 +582,13 @@ class App:
 
     @asyncio.coroutine
     def mark_read_slack(self, index):
-        if not self.chatbox.body or not self.chatbox.body.body:
+        if not self.is_chatbox_rendered:
             return
 
         if index is None or index == -1:
             index = len(self.chatbox.body.body) - 1
 
-        if self.chatbox.body.body and self.chatbox.body.body and len(self.chatbox.body.body) > index:
+        if len(self.chatbox.body.body) > index:
             message = self.chatbox.body.body[index]
 
             # Only apply for message
@@ -616,11 +620,12 @@ class App:
                 messages = self.render_messages(self.store.state.messages, channel_id=channel_id)
 
             header = self.render_chatbox_header()
-            self.chatbox.body.body[:] = messages
-            self.chatbox.header = header
-            self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
-            self.sidebar.select_channel(channel_id)
-            self.urwid_loop.set_alarm_in(0, self.scroll_messages)
+            if self.is_chatbox_rendered:
+                self.chatbox.body.body[:] = messages
+                self.chatbox.header = header
+                self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
+                self.sidebar.select_channel(channel_id)
+                self.urwid_loop.set_alarm_in(0, self.scroll_messages)
 
             if len(self.store.state.messages) == 0:
                 self.go_to_sidebar()
@@ -694,7 +699,7 @@ class App:
 
         def stop_typing(*args):
             # Prevent error while switching workspace
-            if self.chatbox is not None:
+            if self.is_chatbox_rendered:
                 self.chatbox.message_box.typing = None
 
         alarm = None
@@ -725,6 +730,9 @@ class App:
                     )
 
                     if event.get('channel') == self.store.state.channel['id']:
+                        if not self.is_chatbox_rendered:
+                            return
+
                         if event.get('subtype') == 'message_deleted':
                             for widget in self.chatbox.body.body:
                                 if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['deleted_ts']:
@@ -741,6 +749,9 @@ class App:
                     else:
                         pass
                 elif event['type'] == 'user_typing':
+                    if not self.is_chatbox_rendered:
+                        return
+
                     if event.get('channel') == self.store.state.channel['id']:
                         user = self.store.find_user_by_id(event['user'])
                         name = user.get('display_name') or user.get('real_name') or user['name']
@@ -755,6 +766,9 @@ class App:
                     self.store.is_snoozed = event['dnd_status']['snooze_enabled']
                     self.sidebar.profile.set_snooze(self.store.is_snoozed)
                 elif event.get('ok', False):
+                    if not self.is_chatbox_rendered:
+                        return
+
                     # Message was sent, Slack confirmed it.
                     self.chatbox.body.body.extend(self.render_messages([{
                         'text': event['text'],
@@ -841,11 +855,18 @@ class App:
         elif key == keymap['open_quick_switcher']:
             return self.open_quick_switcher()
         elif key in ('1', '2', '3', '4', '5', '6', '7', '8', '9') and len(self.workspaces) >= int(key):
-            if self.workspaces_line is not None:
-                self.workspaces_line.select(int(key))
-                # Stop rtm to switch workspace
-                self.real_time_task.cancel()
-                return self.switch_to_workspace(int(key))
+            # Loading or only 1 workspace
+            if self._loading or self.workspaces_line is None:
+                return
+
+            # Workspace is selected
+            if selected_workspace - 1 == self.workspaces_line.selected:
+                return
+
+            self.workspaces_line.select(selected_workspace)
+            # Stop rtm to switch workspace
+            self.real_time_task.cancel()
+            return self.switch_to_workspace(selected_workspace)
         elif key == keymap['set_snooze']:
             return self.open_set_snooze()
 
