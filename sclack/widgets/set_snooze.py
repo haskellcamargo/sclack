@@ -1,9 +1,5 @@
 import urwid
-from sclack.store import Store
-
-
-def get_icon(name):
-    return Store.instance.config['icons'][name]
+from sclack.components import get_icon
 
 
 class SetSnoozeWidgetItem(urwid.AttrMap):

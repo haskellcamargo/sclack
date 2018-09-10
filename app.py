@@ -12,7 +12,8 @@ import tempfile
 import urwid
 from datetime import datetime
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
-from sclack.components import Indicators, MarkdownText, Message, MessageBox
+from sclack.components import Indicators, MarkdownText, MessageBox
+from sclack.component.message import Message
 from sclack.components import NewMessagesDivider, Profile, ProfileSideBar
 from sclack.components import Reaction, SideBar, TextDivider
 from sclack.components import User, Workspaces
@@ -314,6 +315,16 @@ class App:
             self.chatbox.message_box.text = original_text
             widget.set_edit_mode()
 
+    def get_permalink(self, widget, channel_id, ts):
+        try:
+            permalink = self.store.get_permalink(channel_id, ts)
+            if permalink and permalink.get('permalink'):
+                text = permalink.get('permalink')
+                self.set_insert_mode()
+                self.chatbox.message_box.text = text
+        except:
+            pass
+
     def delete_message(self, widget, user_id, ts):
         if self.store.state.auth['user_id'] == user_id:
             if self.store.delete_message(self.store.state.channel['id'], ts)['ok']:
@@ -487,6 +498,7 @@ class App:
         self.lazy_load_images(files, message)
 
         urwid.connect_signal(message, 'edit_message', self.edit_message)
+        urwid.connect_signal(message, 'get_permalink', self.get_permalink)
         urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
         urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
         urwid.connect_signal(message, 'delete_message', self.delete_message)

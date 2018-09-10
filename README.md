@@ -103,24 +103,30 @@ You can use <kbd>ctrl k</kbd> (or your custom shortcut) to navigate in your DMs 
 
 You can use <kbd>ctrl d</kbd> (or your custom shortcut) to set snooze time.
 
+### Get permalink
+
+Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permalink (Quote message) and it will be put into your chat box.
+
 ### Default keybindings
 ```json
 {
-    "keymap": {
-        "cursor_down": "j",
-        "cursor_left": "h",
-        "cursor_right":"l",
-        "cursor_up": "k",
-        "delete_message": "d",
-        "edit_message": "e",
-        "go_to_chatbox": "c",
-        "go_to_profile": "p",
-        "go_to_sidebar": "esc",
-        "open_quick_switcher": "ctrl k",
-        "quit_application": "q",
-        "set_edit_topic_mode": "t",
-        "set_insert_mode": "i",
-        "yank_message": "y"
+  "keymap": {
+    "cursor_down": "j",
+    "cursor_left": "h",
+    "cursor_right": "l",
+    "cursor_up": "k",
+    "delete_message": "d",
+    "edit_message": "e",
+    "go_to_chatbox": "c",
+    "go_to_profile": "p",
+    "go_to_sidebar": "esc",
+    "open_quick_switcher": "ctrl k",
+    "quit_application": "q",
+    "set_edit_topic_mode": "t",
+    "set_insert_mode": "i",
+    "yank_message": "y",
+    "get_permalink": "r",
+    "set_snooze": "ctrl d"
   }
 }
 ```

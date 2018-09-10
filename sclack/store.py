@@ -129,6 +129,10 @@ class Store:
         elif self.is_dm(channel_id):
             return self.slack.api_call('im.mark', channel=channel_id, ts=ts)
 
+    def get_permalink(self, channel_id, ts):
+        # https://api.slack.com/methods/chat.getPermalink
+        return self.slack.api_call('chat.getPermalink', channel=channel_id, message_ts=ts)
+
     def set_snooze(self, snoozed_time):
         return self.slack.api_call('dnd.setSnooze', num_minutes=snoozed_time)
 

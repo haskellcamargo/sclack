@@ -2,10 +2,7 @@ import urwid
 import time
 import unicodedata
 from .store import Store
-
-
-def get_icon(name):
-    return Store.instance.config['icons'][name]
+from sclack.components import get_icon
 
 
 def remove_diacritic(input):
