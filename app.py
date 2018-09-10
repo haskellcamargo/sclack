@@ -871,6 +871,7 @@ class App:
             if self._loading or self.workspaces_line is None:
                 return
 
+            selected_workspace = int(key)
             # Workspace is selected
             if selected_workspace - 1 == self.workspaces_line.selected:
                 return
@@ -923,6 +924,7 @@ def ask_for_token(json_config):
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
+
 
 if __name__ == '__main__':
     json_config = {}
