@@ -872,13 +872,14 @@ class App:
                 return
 
             # Workspace is selected
-            if int(key) - 1 == self.workspaces_line.selected:
+            selected_workspace = int(key)
+            if selected_workspace - 1 == self.workspaces_line.selected:
                 return
-            self.workspaces_line.select(int(key))
+            self.workspaces_line.select(selected_workspace)
 
             # Stop rtm to switch workspace
             self.real_time_task.cancel()
-            return self.switch_to_workspace(int(key))
+            return self.switch_to_workspace(selected_workspace)
         elif key == keymap['set_snooze']:
             return self.open_set_snooze()
 
