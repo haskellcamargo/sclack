@@ -872,10 +872,11 @@ class App:
                 return
 
             # Workspace is selected
+            selected_workspace = int(key)
             if selected_workspace - 1 == self.workspaces_line.selected:
                 return
-
             self.workspaces_line.select(selected_workspace)
+
             # Stop rtm to switch workspace
             self.real_time_task.cancel()
             return self.switch_to_workspace(selected_workspace)
