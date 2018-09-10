@@ -943,6 +943,7 @@ class Workspaces(urwid.AttrWrap):
             workspace = Workspace(index + 1, name)
             urwid.connect_signal(workspace, 'select_workspace', self.switch_workspace)
             body.append(('pack', workspace))
+        self.selected = 0
         self.body = body
         self.body[0][1].select()
         super(Workspaces, self).__init__(urwid.Columns(body), 'workspace_line')
@@ -950,10 +951,16 @@ class Workspaces(urwid.AttrWrap):
     def select(self, number):
         for workspace in self.body:
             workspace[1].deselect()
+
         if number > 1:
             self.body[number - 2][1].select_as_previous()
+
         self.body[number - 1][1].select()
+        new_selected = number - 1
+
+        self.selected = new_selected
 
     def switch_workspace(self, number):
-        self.select(number)
-        urwid.emit_signal(self, 'switch_workspace', number)
+        if number - 1 != self.selected:
+            self.select(number)
+            urwid.emit_signal(self, 'switch_workspace', number)

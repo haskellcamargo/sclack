@@ -60,6 +60,7 @@ class LoadingChatBox(urwid.Frame):
     def status_message(self, value):
         self._status_message.set_text(value)
 
+
 class LoadingSideBar(urwid.Frame):
     def __init__(self):
         header = TextDivider(placeholder(size=12))
@@ -70,6 +71,19 @@ class LoadingSideBar(urwid.Frame):
         ] + [urwid.Text(placeholder(size=size, left=2))
             for size in [5, 7, 19, 8, 0, 3, 22, 14, 11, 13]])
         super(LoadingSideBar, self).__init__(body, header=header, footer=divider)
+
+    def update_items(self, event):
+        pass
+
+    def get_all_channels(self):
+        return []
+
+    def get_all_groups(self):
+        return []
+
+    def get_all_dms(self):
+        return []
+
 
 class SlackBot(urwid.Pile):
     _matrix = [
