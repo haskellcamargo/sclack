@@ -29,6 +29,7 @@ from sclack.notification import TerminalNotifier
 
 from sclack.widgets.set_snooze import SetSnoozeWidget
 from sclack.utils.channel import is_dm, is_group, is_channel
+from sclack.utils.message import get_mentioned_patterns
 
 loop = asyncio.get_event_loop()
 
@@ -97,21 +98,7 @@ class App:
         self.mentioned_patterns = None
 
     def get_mentioned_patterns(self):
-        slack_mentions = [
-            '<!everyone>',
-            '<!here>',
-            '<!channel>',
-            '<@{}>'.format(self.store.state.auth['user_id']),
-        ]
-
-        patterns = []
-
-        for mention in slack_mentions:
-            patterns.append('^{}[ ]+'.format(mention))
-            patterns.append('^{}$'.format(mention))
-            patterns.append('[ ]+{}'.format(mention))
-
-        return re.compile('|'.join(patterns))
+        return get_mentioned_patterns(self.store.state.auth['user_id'])
 
     def should_notify_me(self, message_obj):
         """
@@ -119,8 +106,12 @@ class App:
         :param message_obj:
         :return:
         """
+        # Snoozzzzzed or disabled
+        if self.store.state.is_snoozed or self.config['features']['notification'] in ['', 'none']:
+            return False
+
         # You send message, don't need notification
-        if self.config['features']['notification'] in ['', 'none'] or message_obj.get('user') == self.store.state.auth['user_id']:
+        if message_obj.get('user') == self.store.state.auth['user_id']:
             return False
 
         if self.config['features']['notification'] == 'all':
@@ -879,8 +870,8 @@ class App:
                         pass
                         # print(json.dumps(event, indent=2))
                 elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
-                    self.store.is_snoozed = event['dnd_status']['snooze_enabled']
-                    self.sidebar.profile.set_snooze(self.store.is_snoozed)
+                    self.store.state.is_snoozed = event['dnd_status']['snooze_enabled']
+                    self.sidebar.profile.set_snooze(self.store.state.is_snoozed)
                 elif event.get('ok', False):
                     if not self.is_chatbox_rendered:
                         return

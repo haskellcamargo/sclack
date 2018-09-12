@@ -106,26 +106,6 @@ You can use <kbd>ctrl d</kbd> (or your custom shortcut) to set snooze time.
 
 Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permalink (Quote message) and it will be put into your chat box.
 
-
-### Enable features
-
-There are some features available, you can adjust them by change the config file
-
-
-```json
-{
-    "features": {
-        "emoji": true,
-        "markdown": true,
-        "pictures": true,
-        "notification": ""
-    },
-}
-```
-
-* notification: How we send notification for you (*MacOS* supported now): `none` Disable notification / `mentioned` Direct message or mentioned in channel / `all` Receive all notifications
-
-
 ### Default keybindings
 ```json
 {
