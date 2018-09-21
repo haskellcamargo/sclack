@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open('README.md', 'r') as readme:
     long_description = readme.read()
@@ -12,7 +12,8 @@ setup(
     author='Marcelo Camargo',
     author_email='marcelocamargo@linuxmail.org',
     url='https://github.com/haskellcamargo/sclack',
-    packages=['sclack'],
+    scripts=["app.py"],
+    packages=find_packages(),
     install_requires=[
         'asyncio',
         'urwid>2',
