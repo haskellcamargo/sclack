@@ -10,10 +10,32 @@ The project is still under alpha, there are lots of things already done, but the
 
 ## Setup
 
-The first thing you need to do is to get a [Slack token here](https://api.slack.com/custom-integrations/legacy-tokens).
+### Using legacy token
+
+First of all get a [Slack token here](https://api.slack.com/custom-integrations/legacy-tokens).
 Use, create or request a token for each workspace that you'll use on Sclack.
-Not all workspaces allow you to generate a token, so sometimes you'll need to
+Not all workspaces allow you to generate a legacy token, so sometimes you'll need to
 ask for the administrator to enable the feature.
+
+### Without a legacy token
+
+Unfortunately some serious hoops need to be jumped through to use a non-legacy token.
+
+1. Go to <https://api.slack.com/apps>
+2. Click "Create new app"
+3. Give the app a name (maybe "Sclack") and select the server you'd like to use
+4. Go to "Permissions" and add a new redirect URL: `http://localhost:8080`
+5. Go back to the previous page, you'll be able to see "Client ID" (you will also need the "Client Secret" later). Use this to fill in this url:
+```
+    https://slack.com/oauth/authorize?client_id=[Client ID here]&scope=client
+```    
+6. Go to that URL in your browser, and authorize the app
+7. The page will redirect to a blank page. Look at the URL and copy the `code=` parameter (http://localhost:8080?code=[code-will-be-here]&state=)
+8. Now using the copied code, as well as the "Client ID" and "Client Secret" from the app page, fill in and execute this command:
+```
+    curl -s "https://slack.com/api/oauth.access?client_id=[client id here]&client_secret=[client secret here]&code=[code here]"
+```
+9. Finally, copy the `access_token` from the response (should start with `xoxs-`). This is your new auth token for Sclack
 
 ## Optional Dependencies
 
