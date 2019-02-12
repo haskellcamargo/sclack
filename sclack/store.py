@@ -117,7 +117,7 @@ class Store:
         if channel_id[0] == 'G':
             return self.slack.api_call('groups.info', channel=channel_id)['group']
         elif channel_id[0] == 'C':
-            return self.slack.api_call('channels.info', channel=channel_id)['channel']
+            return self.slack.api_call('conversations.info', channel=channel_id)['channel']
         elif channel_id[0] == 'D':
             return self.slack.api_call('im.info', channel=channel_id)['im']
 
