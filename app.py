@@ -370,7 +370,7 @@ class App:
             header = ChannelHeader(
                 name=self.store.state.channel['name'],
                 topic=self.store.state.channel['topic']['value'],
-                num_members=len(self.store.state.channel['members']),
+                num_members=len(self.store.state.members['members']),
                 pin_count=self.store.state.pin_count,
                 is_private=self.store.state.channel.get('is_group', False),
                 is_starred=self.store.state.channel.get('is_starred', False)

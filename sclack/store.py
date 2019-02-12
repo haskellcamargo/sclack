@@ -121,6 +121,9 @@ class Store:
         elif channel_id[0] == 'D':
             return self.slack.api_call('im.info', channel=channel_id)['im']
 
+    def get_channel_members(self, channel_id):
+        return self.slack.api_call('conversations.members', channel=channel_id)
+
     def mark_read(self, channel_id, ts):
         if self.is_group(channel_id):
             return self.slack.api_call('groups.mark', channel=channel_id, ts=ts)
@@ -139,6 +142,7 @@ class Store:
     def load_channel(self, channel_id):
         if channel_id[0] in ('C', 'G', 'D'):
             self.state.channel = self.get_channel_info(channel_id)
+            self.state.members = self.get_channel_members(channel_id)
             self.state.did_render_new_messages = self.state.channel.get('unread_count_display', 0) == 0
 
     def load_channels(self):
