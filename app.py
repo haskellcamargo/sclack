@@ -368,8 +368,8 @@ class App:
             )
         else:
             are_more_members = False
-            if self.store.state.members['response_metadata']:
-                if self.store.state.members['response_metadata']['next_cursor']:
+            if self.store.state.members.get('response_metadata', None):
+                if self.store.state.members['response_metadata'].get('next_cursor', None):
                     are_more_members = True
             header = ChannelHeader(
                 name=self.store.state.channel['name'],
