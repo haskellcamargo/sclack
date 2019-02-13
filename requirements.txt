@@ -4,3 +4,4 @@ pyperclip==1.6.2
 requests
 slackclient==1.2.1
 urwid_readline
+git+git://github.com/duynguyenhoang/pync@994fbf77360a273fac1225558de01c8d0040dc6c#egg=pync

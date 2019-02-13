@@ -3,14 +3,17 @@ import asyncio
 import concurrent.futures
 import functools
 import json
+import re
 import os
 import requests
 import sys
+import platform
 import time
 import traceback
 import tempfile
 import urwid
 from datetime import datetime
+
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from sclack.components import Indicators, MarkdownText, MessageBox
 from sclack.component.message import Message
@@ -22,9 +25,11 @@ from sclack.loading import LoadingChatBox, LoadingSideBar
 from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
+from sclack.notification import TerminalNotifier
 
 from sclack.widgets.set_snooze import SetSnoozeWidget
 from sclack.utils.channel import is_dm, is_group, is_channel
+from sclack.utils.message import get_mentioned_patterns
 
 loop = asyncio.get_event_loop()
 
@@ -90,6 +95,38 @@ class App:
         )
         self.configure_screen(self.urwid_loop.screen)
         self.last_keypress = (0, None)
+        self.mentioned_patterns = None
+
+    def get_mentioned_patterns(self):
+        return get_mentioned_patterns(self.store.state.auth['user_id'])
+
+    def should_notify_me(self, message_obj):
+        """
+        Checking whether notify to user
+        :param message_obj:
+        :return:
+        """
+        # Snoozzzzzed or disabled
+        if self.store.state.is_snoozed or self.config['features']['notification'] in ['', 'none']:
+            return False
+
+        # You send message, don't need notification
+        if message_obj.get('user') == self.store.state.auth['user_id']:
+            return False
+
+        if self.config['features']['notification'] == 'all':
+            return True
+
+        # Private message
+        if message_obj.get('channel') is not None and message_obj.get('channel')[0] == 'D':
+            return True
+
+        regex = self.mentioned_patterns
+        if regex is None:
+            regex = self.get_mentioned_patterns()
+            self.mentioned_patterns = regex
+
+        return len(re.findall(regex, message_obj['text'])) > 0
 
     def start(self):
         self._loading = True
@@ -151,6 +188,8 @@ class App:
             loop.run_in_executor(executor, self.store.load_users),
             loop.run_in_executor(executor, self.store.load_user_dnd),
         )
+        self.mentioned_patterns = self.get_mentioned_patterns()
+
         profile = Profile(name=self.store.state.auth['user'], is_snoozed=self.store.state.is_snoozed)
 
         channels = []
@@ -345,7 +384,7 @@ class App:
                 return
             self.store.state.profile_user_id = user_id
             profile = ProfileSideBar(
-                user.get('display_name') or user.get('real_name') or user['name'],
+                self.store.get_user_display_name(user),
                 user['profile'].get('status_text', None),
                 user['profile'].get('tz_label', None),
                 user['profile'].get('phone', None),
@@ -361,7 +400,7 @@ class App:
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
-                name=user.get('display_name') or user.get('real_name') or user['name'],
+                name=self.store.get_user_display_name(user),
                 topic=user['profile']['status_text'],
                 is_starred=self.store.state.channel.get('is_starred', False),
                 is_dm_workaround_please_remove_me=True
@@ -387,6 +426,18 @@ class App:
         self.chatbox.header.original_topic = text
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
+
+    def notification_messages(self, messages):
+        """
+        Check and send notifications
+        :param messages:
+        :return:
+        """
+        for message in messages:
+            if self.should_notify_me(message):
+                loop.create_task(
+                    self.send_notification(message, MarkdownText(message['text']))
+                )
 
     def render_message(self, message, channel_id=None):
         is_app = False
@@ -463,6 +514,7 @@ class App:
         ]
 
         attachments = []
+
         for attachment in message.get('attachments', []):
             attachment_widget = Attachment(
                 service_name=attachment.get('service_name'),
@@ -543,8 +595,9 @@ class App:
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
         today = datetime.today().date()
-        for message in messages:
-            message_datetime = datetime.fromtimestamp(float(message['ts']))
+
+        for raw_message in messages:
+            message_datetime = datetime.fromtimestamp(float(raw_message['ts']))
             message_date = message_datetime.date()
             date_text = None
             unread_text = None
@@ -566,12 +619,49 @@ class App:
             elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
-            message = self.render_message(message, channel_id)
+            message = self.render_message(raw_message, channel_id)
 
             if message is not None:
                 _messages.append(message)
 
         return _messages
+
+    @asyncio.coroutine
+    def send_notification(self, raw_message, markdown_text):
+        """
+        Only MacOS and Linux
+        @TODO Windows
+        :param raw_message:
+        :param markdown_text:
+        :return:
+        """
+        user = self.store.find_user_by_id(raw_message.get('user'))
+        sender_name = self.store.get_user_display_name(user)
+
+        if raw_message.get('channel')[0] == 'D':
+            notification_title = 'New message in {}'.format(
+                self.store.state.auth['team']
+            )
+        else:
+            notification_title = 'New message in {} #{}'.format(
+                self.store.state.auth['team'],
+                self.store.get_channel_name(raw_message.get('channel')),
+            )
+
+
+        icon_path = os.path.realpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                'resources/slack_icon.png'
+            )
+        )
+        TerminalNotifier().notify(
+            str(markdown_text),
+            title=notification_title,
+            subtitle=sender_name,
+            appIcon=icon_path,
+            sound='default'
+        )
 
     def handle_mark_read(self, data):
         """
@@ -765,13 +855,18 @@ class App:
                             self.chatbox.body.scroll_to_bottom()
                     else:
                         pass
+
+                    if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
+                        # Notification
+                        self.notification_messages([event])
                 elif event['type'] == 'user_typing':
                     if not self.is_chatbox_rendered:
                         return
 
                     if event.get('channel') == self.store.state.channel['id']:
                         user = self.store.find_user_by_id(event['user'])
-                        name = user.get('display_name') or user.get('real_name') or user['name']
+                        name = self.store.get_user_display_name(user)
+
                         if alarm is not None:
                             self.urwid_loop.remove_alarm(alarm)
                         self.chatbox.message_box.typing = name
@@ -780,8 +875,8 @@ class App:
                         pass
                         # print(json.dumps(event, indent=2))
                 elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
-                    self.store.is_snoozed = event['dnd_status']['snooze_enabled']
-                    self.sidebar.profile.set_snooze(self.store.is_snoozed)
+                    self.store.state.is_snoozed = event['dnd_status']['snooze_enabled']
+                    self.sidebar.profile.set_snooze(self.store.state.is_snoozed)
                 elif event.get('ok', False):
                     if not self.is_chatbox_rendered:
                         return
@@ -929,6 +1024,7 @@ def ask_for_token(json_config):
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
+
 
 if __name__ == '__main__':
     json_config = {}

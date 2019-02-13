@@ -41,6 +41,7 @@ class MarkdownText(urwid.SelectableIcon):
         self._state = 'message'
         self._previous_state = 'message'
         self._result = []
+
         def render_emoji(result):
             return emoji_codemap.get(result.group(1), result.group(0))
 
@@ -72,3 +73,6 @@ class MarkdownText(urwid.SelectableIcon):
 
         self._result.append(('message', self.decode_buffer()))
         return self._result
+
+    def __str__(self):
+        return urwid.Text(self.markup).text

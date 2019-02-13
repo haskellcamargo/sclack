@@ -166,6 +166,19 @@ class Store:
         self.state.channels.sort(key=lambda channel: channel['name'])
         self.state.dms.sort(key=lambda dm: dm['created'])
 
+    def get_channel_name(self, channel_id):
+        matched_channel = None
+
+        for channel in self.state.channels:
+            if channel['id'] == channel_id:
+                matched_channel = channel
+                break
+
+        if matched_channel:
+            return matched_channel['name']
+
+        return channel_id
+
     def load_groups(self):
         self.state.groups = self.slack.api_call('mpim.list')['groups']
 
