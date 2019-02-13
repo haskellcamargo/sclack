@@ -367,10 +367,15 @@ class App:
                 is_dm_workaround_please_remove_me=True
             )
         else:
+            are_more_members = False
+            if self.store.state.members.get('response_metadata', None):
+                if self.store.state.members['response_metadata'].get('next_cursor', None):
+                    are_more_members = True
             header = ChannelHeader(
                 name=self.store.state.channel['name'],
                 topic=self.store.state.channel['topic']['value'],
-                num_members=len(self.store.state.channel['members']),
+                num_members=len(self.store.state.members['members']),
+                more_members=are_more_members,
                 pin_count=self.store.state.pin_count,
                 is_private=self.store.state.channel.get('is_group', False),
                 is_starred=self.store.state.channel.get('is_starred', False)

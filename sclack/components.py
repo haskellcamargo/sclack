@@ -177,8 +177,9 @@ class ChannelHeader(urwid.Pile):
             self.contents.pop()
             self.contents.append((divider, ('pack', 1)))
 
-    def __init__(self, name, topic, date=None, num_members=0, is_private=False,
-        pin_count=0, is_starred=False, is_dm_workaround_please_remove_me=False):
+    def __init__(self, name, topic, date=None, num_members=0, more_members=False, 
+        is_private=False, pin_count=0, is_starred=False, 
+        is_dm_workaround_please_remove_me=False):
         if is_starred:
             star_icon = ('starred', get_icon('full_star'))
         else:
@@ -198,7 +199,8 @@ class ChannelHeader(urwid.Pile):
         body = urwid.Columns([
             ('pack', BreadCrumbs([
                 star_icon,
-                '{} {}'.format(get_icon('person'), num_members),
+                '{} {}{}'.format(get_icon('person'), num_members, 
+                    "+" if more_members else ""),
                 '{} {}'.format(get_icon('pin'), pin_count)
             ])),
             urwid.AttrMap(self.topic_widget, None, 'edit_topic_focus')
