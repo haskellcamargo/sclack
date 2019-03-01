@@ -10,6 +10,7 @@ pyperclip = "==1.6.2"
 requests = "*"
 slackclient = "==1.2.1"
 urwid-readline = "*"
+websocket-client = "==0.47.0"
 
 [dev-packages]
 
