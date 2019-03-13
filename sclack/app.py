@@ -10,6 +10,7 @@ import time
 import traceback
 import tempfile
 import urwid
+import signal
 from datetime import datetime
 from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
 from sclack.components import Indicators, MarkdownText, MessageBox
@@ -62,6 +63,7 @@ class App:
         self.set_snooze_widget = None
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
+        signal.signal(signal.SIGINT, self.quit_application)
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -907,7 +909,7 @@ class App:
         if self.workspaces_line is not None:
             urwid.connect_signal(self.workspaces_line, 'switch_workspace', self.switch_to_workspace)
 
-    def quit_application(self):
+    def quit_application(self, *args):
         self.urwid_loop.stop()
         if hasattr(self, 'real_time_task'):
             self.real_time_task.cancel()
