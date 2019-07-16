@@ -15,6 +15,7 @@
         "quit_application": "q",
         "set_edit_topic_mode": "t",
         "set_insert_mode": "i",
+        "toggle_sidebar": "s",
         "yank_message": "y",
         "get_permalink": "r",
         "set_snooze": "ctrl d"

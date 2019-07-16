@@ -91,6 +91,11 @@ class App:
         self.configure_screen(self.urwid_loop.screen)
         self.last_keypress = (0, None)
 
+    @property
+    def sidebar_column(self):
+        return self.columns.contents[0]
+
+
     def start(self):
         self._loading = True
         loop.create_task(self.animate_loading())
@@ -851,6 +856,27 @@ class App:
         self.go_to_chatbox()
         self.chatbox.body.go_to_last_message()
 
+    @property
+    def sidebar_width(self):
+        return self.sidebar_column[1][1]
+
+    def set_sidebar_width(self, newwidth):
+        column, options = self.sidebar_column
+        new_options = (options[0], newwidth, options[2])
+        self.columns.contents[0] = (column, new_options)
+
+    def hide_sidebar(self):
+        self.set_sidebar_width(0)
+
+    def show_sidebar(self):
+        self.set_sidebar_width(self.config['sidebar']['width'])
+
+    def toggle_sidebar(self):
+        if self.sidebar_width > 0:
+            self.hide_sidebar()
+        else:
+            self.show_sidebar()
+
     def unhandled_input(self, key):
         """
         Handle shortcut key press
@@ -887,6 +913,8 @@ class App:
             return self.switch_to_workspace(selected_workspace)
         elif key == keymap['set_snooze']:
             return self.open_set_snooze()
+        elif key == keymap['toggle_sidebar']:
+            return self.toggle_sidebar()
 
     def open_quick_switcher(self):
         if not self.quick_switcher:
