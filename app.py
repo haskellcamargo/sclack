@@ -31,6 +31,8 @@ loop = asyncio.get_event_loop()
 SCLACK_SUBTYPE = 'sclack_message'
 MARK_READ_ALARM_PERIOD = 3
 
+def mpim_normalized_name(channel_name):
+    return f'[{channel_name[5:-2].replace("--",", ")}]'
 
 class SclackEventLoop(urwid.AsyncioEventLoop):
     def run(self):
@@ -194,6 +196,8 @@ class App:
 
         # Prepare list of Channels
         for channel in self.store.state.channels:
+            if channel['is_mpim']: #Handle the names of multiple dms
+                channel['name'] = mpim_normalized_name(channel['name'])
             if channel['id'] in stars_channel_id:
                 continue
             channels.append(Channel(
@@ -361,8 +365,8 @@ class App:
                 loop.create_task(self.load_profile_avatar(user['profile'].get('image_512'), profile))
             self.columns.contents.append((profile, ('given', 35, False)))
 
-    def render_chatbox_header(self):
 
+    def render_chatbox_header(self):
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
@@ -372,12 +376,16 @@ class App:
                 is_dm_workaround_please_remove_me=True
             )
         else:
+            if self.store.state.channel['is_mpim']:
+                channel_name = mpim_normalized_name(self.store.state.channel['name'])
+            else:
+                channel_name = self.store.state.channel['name']
             are_more_members = False
             if self.store.state.members.get('response_metadata', None):
                 if self.store.state.members['response_metadata'].get('next_cursor', None):
                     are_more_members = True
             header = ChannelHeader(
-                name=self.store.state.channel['name'],
+                name=channel_name,
                 topic=self.store.state.channel['topic']['value'],
                 num_members=len(self.store.state.members['members']),
                 more_members=are_more_members,

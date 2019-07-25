@@ -150,7 +150,7 @@ class Store:
             'users.conversations',
             exclude_archived=True,
             limit=1000,  # 1k is max limit
-            types='public_channel,private_channel,im'
+            types='public_channel,private_channel,im,mpim'
         )['channels']
 
         for channel in conversations:
@@ -160,10 +160,18 @@ class Store:
             # Private channel
             elif channel.get('is_group', False):
                 self.state.channels.append(channel)
+            #Multiple conversations
+            elif channel.get('is_mpim', False):
+                c_name = f'[{channel["name"][5:-2].replace("--",", ")}]'
+                channel['name_normalized'] = c_name
+                self.state.channels.append(channel)
             # Direct message
             elif channel.get('is_im', False) and not channel.get('is_user_deleted', False):
                 self.state.dms.append(channel)
-        self.state.channels.sort(key=lambda channel: channel['name'])
+        self.state.channels.sort(key=lambda channel: (not channel['is_general'],
+                                                      channel['is_mpim'],
+                                                      channel['name'])
+                                                      )
         self.state.dms.sort(key=lambda dm: dm['created'])
 
     def load_groups(self):
