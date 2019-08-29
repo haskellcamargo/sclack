@@ -3,33 +3,32 @@ import asyncio
 import concurrent.futures
 import functools
 import json
-import re
 import os
-import requests
-import sys
 import platform
+import re
+import sys
+import tempfile
 import time
 import traceback
-import tempfile
-import urwid
 from datetime import datetime
 
-from sclack.components import Attachment, Channel, ChannelHeader, ChatBox, Dm
-from sclack.components import Indicators, MarkdownText, MessageBox
+import requests
+import urwid
+
 from sclack.component.message import Message
-from sclack.components import NewMessagesDivider, Profile, ProfileSideBar
-from sclack.components import Reaction, SideBar, TextDivider
-from sclack.components import User, Workspaces
+from sclack.components import (
+    Attachment, Channel, ChannelHeader, ChatBox, Dm, Indicators, MarkdownText,
+    MessageBox, NewMessagesDivider, Profile, ProfileSideBar, Reaction, SideBar,
+    TextDivider, User, Workspaces)
 from sclack.image import Image
 from sclack.loading import LoadingChatBox, LoadingSideBar
+from sclack.notification import TerminalNotifier
 from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
-from sclack.notification import TerminalNotifier
-
-from sclack.widgets.set_snooze import SetSnoozeWidget
-from sclack.utils.channel import is_dm, is_group, is_channel
+from sclack.utils.channel import is_channel, is_dm, is_group
 from sclack.utils.message import get_mentioned_patterns
+from sclack.widgets.set_snooze import SetSnoozeWidget
 
 loop = asyncio.get_event_loop()
 
@@ -394,7 +393,6 @@ class App:
             self.columns.contents.append((profile, ('given', 35, False)))
 
     def render_chatbox_header(self):
-
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
@@ -451,7 +449,6 @@ class App:
             urwid.connect_signal(message, 'quit_application', self.quit_application)
             urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
             urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
-            urwid.connect_signal(message, 'toggle_thread', self.toggle_thread)
 
             return message
 
@@ -596,6 +593,15 @@ class App:
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
         today = datetime.today().date()
+
+        # If we are viewing a thread, add a dummy 'message' to indicate this
+        # to the user.
+        if self.showing_thread:
+            _messages.append(self.render_message({
+                    'text': "VIEWING THREAD",
+                    'ts': '0',
+                    'subtype': SCLACK_SUBTYPE,
+                }))
 
         for raw_message in messages:
             message_datetime = datetime.fromtimestamp(float(raw_message['ts']))
@@ -742,6 +748,12 @@ class App:
             urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self._body
             self.quick_switcher = None
+
+        # We are not showing a thread - this needs to be reset as this method might be
+        # triggered from the sidebar while a thread is being shown.
+        self.showing_thread = False
+
+        # Show the channel in the chatbox
         loop.create_task(self._go_to_channel(channel_id))
 
     @asyncio.coroutine
@@ -979,11 +991,17 @@ class App:
             if message.strip() != '':
                 self.store.post_thread_message(channel, self.store.state.thread_parent, message)
                 self.leave_edit_mode()
+
+            # Refresh the thread to make sure the new message immediately shows up
+            loop.create_task(self._show_thread(channel, self.store.state.thread_parent))
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
                 self.store.post_message(channel, message)
                 self.leave_edit_mode()
+
+            # Refresh the channel to make sure the new message shows up
+            loop.create_task(self._go_to_channel(channel))
 
     def go_to_last_message(self):
         self.go_to_chatbox()
