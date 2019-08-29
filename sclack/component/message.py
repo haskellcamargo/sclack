@@ -83,7 +83,7 @@ class Message(urwid.AttrMap):
         elif key == keymap['get_permalink']:
             # FIXME
             urwid.emit_signal(self, 'get_permalink', self, self.channel_id, self.ts)
-        elif key == keymap['toggle_thread']:
+        elif key == keymap['toggle_thread'] or key == keymap['cursor_right']:
             urwid.emit_signal(self, 'toggle_thread', self.channel_id, self.ts)
             return True
         elif key == 'enter':
