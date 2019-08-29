@@ -95,7 +95,6 @@ class App:
     def sidebar_column(self):
         return self.columns.contents[0]
 
-
     def start(self):
         self._loading = True
         loop.create_task(self.animate_loading())
@@ -467,6 +466,8 @@ class App:
             for reaction in message.get('reactions', [])
         ]
 
+        responses = ['1' for response in message.get('replies', [])]
+
         attachments = []
         for attachment in message.get('attachments', []):
             attachment_widget = Attachment(
@@ -506,7 +507,8 @@ class App:
             text,
             indicators,
             attachments=attachments,
-            reactions=reactions
+            reactions=reactions,
+            responses=responses
         )
 
         self.lazy_load_images(files, message)
