@@ -86,16 +86,14 @@ class Store:
         """
         Load all of the messages sent in reply to the message with the given timestamp.
         """
-        original = self.slack.api_call(
-            "conversations.history",
+        replies = self.slack.api_call(
+            "conversations.replies",
             channel=channel_id,
-            latest=parent_ts,
-            inclusive=True,
-            limit=1
+            ts=parent_ts,
         )
 
-        if len(original['messages']) > 0:
-            self.state.thread_messages = original['messages']
+        self.state.thread_messages = replies['messages']
+        self.state.has_more = replies.get('has_more', False)
 
     def is_valid_channel_id(self, channel_id):
         """
