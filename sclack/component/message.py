@@ -19,6 +19,7 @@ class Message(urwid.AttrMap):
         'quit_application',
         'set_insert_mode',
         'mark_read',
+        'toggle_thread',
     ]
 
     def __init__(self, ts, channel_id, user, text, indicators, reactions=(), attachments=(), responses=()):
@@ -82,6 +83,9 @@ class Message(urwid.AttrMap):
         elif key == keymap['get_permalink']:
             # FIXME
             urwid.emit_signal(self, 'get_permalink', self, self.channel_id, self.ts)
+        elif key == keymap['toggle_thread']:
+            urwid.emit_signal(self, 'toggle_thread', self.channel_id, self.ts)
+            return True
         elif key == 'enter':
             browser_name = Store.instance.config['features']['browser']
 

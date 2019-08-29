@@ -901,7 +901,7 @@ class ThreadText(urwid.Text):
     def __init__(self, num_replies):
         color = "#" + shorten_hex('146BF7')
         markup = [
-            (urwid.AttrSpec(color, 'h235'), '[Thread ({})]'.format(num_replies))
+            (urwid.AttrSpec(color, 'h235'), 'Thread ({})'.format(num_replies))
         ]
         super(ThreadText, self).__init__(markup)
 

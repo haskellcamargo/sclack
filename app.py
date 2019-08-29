@@ -62,6 +62,7 @@ class App:
         self.set_snooze_widget = None
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
+        self.showing_thread = False
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -408,6 +409,7 @@ class App:
             urwid.connect_signal(message, 'quit_application', self.quit_application)
             urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
             urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
+            urwid.connect_signal(message, 'toggle_thread', self.toggle_thread)
 
             return message
 
@@ -521,6 +523,7 @@ class App:
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
+        urwid.connect_signal(message, 'toggle_thread', self.toggle_thread)
 
         return message
 
@@ -662,6 +665,49 @@ class App:
             self.urwid_loop.widget = self._body
             self.quick_switcher = None
         loop.create_task(self._go_to_channel(channel_id))
+
+    @asyncio.coroutine
+    def _show_thread(self, channel_id, parent_ts):
+        """
+        Display the requested thread in the chatbox
+        """
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            yield from asyncio.gather(
+                loop.run_in_executor(executor, self.store.load_thread_messages, channel_id, parent_ts)
+            )
+            self.store.state.last_date = None
+
+            if len(self.store.state.thread_messages) == 0:
+                messages = self.render_messages([{
+                    'text': "There was an error showing this thread :(",
+                    'ts': '0',
+                    'subtype': SCLACK_SUBTYPE,
+                }])
+            else:
+                messages = self.render_messages(self.store.state.thread_messages, channel_id=channel_id)
+
+            header = self.render_chatbox_header()
+            if self.is_chatbox_rendered:
+                self.chatbox.body.body[:] = messages
+                self.chatbox.header = header
+                self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
+                self.sidebar.select_channel(channel_id)
+                self.urwid_loop.set_alarm_in(0, self.scroll_messages)
+
+            if len(self.store.state.messages) == 0:
+                self.go_to_sidebar()
+            else:
+                self.go_to_chatbox()
+
+    def toggle_thread(self, channel_id, parent_ts):
+        if self.showing_thread:
+            # Currently showing a thread, return to the main channel
+            self.showing_thread = False
+            loop.create_task(self._go_to_channel(channel_id))
+        else:
+            # Show the chosen thread
+            self.showing_thread = True
+            loop.create_task(self._show_thread(channel_id, parent_ts))
 
     def handle_set_snooze_time(self, snoozed_time):
         loop.create_task(self.dispatch_snooze_time(snoozed_time))
