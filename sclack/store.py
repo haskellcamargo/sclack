@@ -9,6 +9,7 @@ class State:
         self.stars = []
         self.messages = []
         self.thread_messages = []
+        self.thread_parent = None
         self.users = []
         self.pin_count = 0
         self.has_more = False
@@ -231,6 +232,16 @@ class Store:
             as_user=True,
             link_names=True,
             text=message
+        )
+
+    def post_thread_message(self, channel_id, parent_ts, message):
+        return self.slack.api_call(
+            'chat.postMessage',
+            channel=channel_id,
+            as_user=True,
+            link_name=True,
+            text=message,
+            thread_ts=parent_ts
         )
 
     def get_presence(self, user_id):
