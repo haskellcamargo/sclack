@@ -785,6 +785,7 @@ class App:
         else:
             # Show the chosen thread
             self.showing_thread = True
+            self.store.state.thread_parent = parent_ts
             loop.create_task(self._show_thread(channel_id, parent_ts))
 
     def handle_set_snooze_time(self, snoozed_time):
@@ -973,6 +974,11 @@ class App:
                 self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
             self.leave_edit_mode()
+        if self.showing_thread:
+            channel = self.store.state.channel['id']
+            if message.strip() != '':
+                self.store.post_thread_message(channel, self.store.state.thread_parent, message)
+                self.leave_edit_mode()
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
