@@ -325,7 +325,7 @@ class App:
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
-        messages = self.render_messages(self.store.state.messages)
+        messages = self.render_messages(self.store.state.messages, channel_id=channel)
         header = self.render_chatbox_header()
         self._loading = False
         self.sidebar.select_channel(channel)
