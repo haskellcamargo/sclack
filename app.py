@@ -132,7 +132,6 @@ class App:
     def sidebar_column(self):
         return self.columns.contents[0]
 
-
     def start(self):
         self._loading = True
         loop.create_task(self.animate_loading())
@@ -169,23 +168,21 @@ class App:
     def chatbox(self, chatbox):
         self.columns.contents[1][0].original_widget = chatbox
 
-    @asyncio.coroutine
-    def animate_loading(self):
+    async def animate_loading(self):
         def update(*args):
             if self._loading:
                 self.chatbox.circular_loading.next_frame()
                 self.urwid_loop.set_alarm_in(0.2, update)
+
         update()
 
-    @asyncio.coroutine
-    def component_did_mount(self):
+    async def component_did_mount(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            yield from self.mount_sidebar(executor)
-            yield from self.mount_chatbox(executor, self.store.state.channels[0]['id'])
+            await self.mount_sidebar(executor)
+            await self.mount_chatbox(executor, self.store.state.channels[0]['id'])
 
-    @asyncio.coroutine
-    def mount_sidebar(self, executor):
-        yield from asyncio.gather(
+    async def mount_sidebar(self, executor):
+        await asyncio.gather(
             loop.run_in_executor(executor, self.store.load_auth),
             loop.run_in_executor(executor, self.store.load_channels),
             loop.run_in_executor(executor, self.store.load_stars),
@@ -261,8 +258,7 @@ class App:
         loop.create_task(self.get_presences(executor, self.sidebar.get_all_dms()))
         loop.create_task(self.get_dms_unread(executor, self.sidebar.get_all_dms()))
 
-    @asyncio.coroutine
-    def get_presences(self, executor, dm_widgets):
+    async def get_presences(self, executor, dm_widgets):
         """
         Compute and return presence because updating UI from another thread is unsafe
         :param executor:
@@ -272,7 +268,7 @@ class App:
         def get_presence(dm_widget):
             presence = self.store.get_presence(dm_widget.user)
             return [dm_widget, presence]
-        presences = yield from asyncio.gather(*[
+        presences = await asyncio.gather(*[
             loop.run_in_executor(executor, get_presence, dm_widget)
             for dm_widget in dm_widgets
         ])
@@ -282,8 +278,7 @@ class App:
             if response['ok']:
                 widget.set_presence(response['presence'])
 
-    @asyncio.coroutine
-    def get_dms_unread(self, executor, dm_widgets):
+    async def get_dms_unread(self, executor, dm_widgets):
         """
         Compute and return unread_count_display because updating UI from another thread is unsafe
         :param executor:
@@ -294,7 +289,7 @@ class App:
             profile_response = self.store.get_channel_info(dm_widget.id)
             return [dm_widget, profile_response]
 
-        responses = yield from asyncio.gather(*[
+        responses = await asyncio.gather(*[
             loop.run_in_executor(executor, get_presence, dm_widget)
             for dm_widget in dm_widgets
         ])
@@ -304,12 +299,11 @@ class App:
             if response is not None:
                 widget.set_unread(response['unread_count_display'])
 
-    @asyncio.coroutine
-    def get_channels_info(self, executor, channels):
+    async def get_channels_info(self, executor, channels):
         def get_info(channel):
             info = self.store.get_channel_info(channel.id)
             return [channel, info]
-        channels_info = yield from asyncio.gather(*[
+        channels_info = await asyncio.gather(*[
             loop.run_in_executor(executor, get_info, channel)
             for channel in channels
         ])
@@ -318,8 +312,7 @@ class App:
             [widget, response] = channel_info
             widget.set_unread(response.get('unread_count_display', 0))
 
-    @asyncio.coroutine
-    def update_chat(self, event):
+    async def update_chat(self, event):
         """
         Update channel/DM message count badge
         :param event:
@@ -327,9 +320,8 @@ class App:
         """
         self.sidebar.update_items(event)
 
-    @asyncio.coroutine
-    def mount_chatbox(self, executor, channel):
-        yield from asyncio.gather(
+    async def mount_chatbox(self, executor, channel):
+        await asyncio.gather(
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
@@ -692,8 +684,7 @@ class App:
             self.mark_read_slack(index)
         )
 
-    @asyncio.coroutine
-    def mark_read_slack(self, index):
+    async def mark_read_slack(self, index):
         if not self.is_chatbox_rendered:
             return
 
@@ -713,10 +704,9 @@ class App:
             if message.channel_id:
                 self.store.mark_read(message.channel_id, message.ts)
 
-    @asyncio.coroutine
-    def _go_to_channel(self, channel_id):
+    async def _go_to_channel(self, channel_id):
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            yield from asyncio.gather(
+            await asyncio.gather(
                 loop.run_in_executor(executor, self.store.load_channel, channel_id),
                 loop.run_in_executor(executor, self.store.load_messages, channel_id)
             )
@@ -765,12 +755,10 @@ class App:
             self.urwid_loop.widget = self._body
             self.set_snooze_widget = None
 
-    @asyncio.coroutine
-    def dispatch_snooze_time(self, snoozed_time):
+    async def dispatch_snooze_time(self, snoozed_time):
         self.store.set_snooze(snoozed_time)
 
-    @asyncio.coroutine
-    def load_picture_async(self, url, width, message_widget, auth=True):
+    async def load_picture_async(self, url, width, message_widget, auth=True):
         width = min(width, 800)
         bytes_in_cache = self.store.cache.picture.get(url)
         if bytes_in_cache:
@@ -780,7 +768,7 @@ class App:
             headers = {}
             if auth:
                 headers = {'Authorization': 'Bearer {}'.format(self.store.slack_token)}
-            bytes = yield from loop.run_in_executor(
+            bytes = await loop.run_in_executor(
                 executor,
                 functools.partial(requests.get, url, headers=headers)
             )
@@ -790,14 +778,13 @@ class App:
             picture = Image(file.name, width=(width / 10))
             message_widget.file = picture
 
-    @asyncio.coroutine
-    def load_profile_avatar(self, url, profile):
+    async def load_profile_avatar(self, url, profile):
         bytes_in_cache = self.store.cache.avatar.get(url)
         if bytes_in_cache:
             profile.avatar = bytes_in_cache
             return
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            bytes = yield from loop.run_in_executor(executor, requests.get, url)
+            bytes = await loop.run_in_executor(executor, requests.get, url)
             file = tempfile.NamedTemporaryFile(delete=False)
             file.write(bytes.content)
             file.close()
@@ -805,8 +792,7 @@ class App:
             self.store.cache.avatar[url] = avatar
             profile.avatar = avatar
 
-    @asyncio.coroutine
-    def start_real_time(self):
+    async def start_real_time(self):
         self.store.slack.rtm_connect(auto_reconnect=True)
 
         def stop_typing(*args):
@@ -897,7 +883,7 @@ class App:
                 else:
                     pass
                     # print(json.dumps(event, indent=2))
-            yield from asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)
 
     def set_insert_mode(self):
         self.columns.focus_position = 1
