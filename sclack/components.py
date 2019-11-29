@@ -670,6 +670,14 @@ class Reaction(urwid.Text):
         super(Reaction, self).__init__(('reaction', text))
 
 
+class ReplyCount(urwid.Text):
+    def __init__(self, count):
+        if count == 1:
+            text = '1 reply'
+        else:
+            text = '{count} replies'.format(count=count)
+        super(ReplyCount, self).__init__(('reply_count', text))
+
 class SideBar(urwid.Frame):
     __metaclass__ = urwid.MetaSignals
     signals = ['go_to_channel']
