@@ -1106,7 +1106,7 @@ def ask_for_token(json_config):
         with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
             # Compatible with legacy configuration file
             new_config = json.load(user_file)
-            if not 'workspaces' in new_config:
+            if 'workspaces' not in new_config:
                 new_config['workspaces'] = {'default': new_config['token']}
             json_config.update(new_config)
     else:
