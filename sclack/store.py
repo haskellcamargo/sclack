@@ -59,7 +59,9 @@ class Store:
         if user_detail is None:
             return ''
 
-        return user_detail.get('display_name') or user_detail.get('real_name') or user_detail['name']
+        return (
+            user_detail.get('display_name') or user_detail.get('real_name') or user_detail['name']
+        )
 
     def load_auth(self):
         self.state.auth = self.slack.api_call('auth.test')
@@ -73,10 +75,7 @@ class Store:
             return self.state.bots[bot_id]
 
     def load_messages(self, channel_id):
-        history = self.slack.api_call(
-            'conversations.history',
-            channel=channel_id
-        )
+        history = self.slack.api_call('conversations.history', channel=channel_id)
         self.state.messages = history['messages']
         self.state.has_more = history.get('has_more', False)
         self.state.is_limited = history.get('is_limited', False)
@@ -87,11 +86,7 @@ class Store:
         """
         Load all of the messages sent in reply to the message with the given timestamp.
         """
-        replies = self.slack.api_call(
-            "conversations.replies",
-            channel=channel_id,
-            ts=parent_ts,
-        )
+        replies = self.slack.api_call("conversations.replies", channel=channel_id, ts=parent_ts,)
 
         self.state.thread_messages = replies['messages']
         self.state.has_more = replies.get('has_more', False)
@@ -158,14 +153,16 @@ class Store:
         if channel_id[0] in ('C', 'G', 'D'):
             self.state.channel = self.get_channel_info(channel_id)
             self.state.members = self.get_channel_members(channel_id)
-            self.state.did_render_new_messages = self.state.channel.get('unread_count_display', 0) == 0
+            self.state.did_render_new_messages = (
+                self.state.channel.get('unread_count_display', 0) == 0
+            )
 
     def load_channels(self):
         conversations = self.slack.api_call(
             'users.conversations',
             exclude_archived=True,
             limit=1000,  # 1k is max limit
-            types='public_channel,private_channel,im,mpim'
+            types='public_channel,private_channel,im,mpim',
         )['channels']
 
         for channel in conversations:
@@ -175,7 +172,7 @@ class Store:
             # Private channel
             elif channel.get('is_group', False):
                 self.state.channels.append(channel)
-            #Multiple conversations
+            # Multiple conversations
             elif channel.get('is_mpim', False):
                 c_name = f'[{channel["name"][5:-2].replace("--",", ")}]'
                 channel['name_normalized'] = c_name
@@ -183,10 +180,9 @@ class Store:
             # Direct message
             elif channel.get('is_im', False) and not channel.get('is_user_deleted', False):
                 self.state.dms.append(channel)
-        self.state.channels.sort(key=lambda channel: (not channel['is_general'],
-                                                      channel['is_mpim'],
-                                                      channel['name'])
-                                                      )
+        self.state.channels.sort(
+            key=lambda channel: (not channel['is_general'], channel['is_mpim'], channel['name'])
+        )
         self.state.dms.sort(key=lambda dm: dm['created'])
 
     def get_channel_name(self, channel_id):
@@ -210,16 +206,20 @@ class Store:
         Load stars
         :return:
         """
-        self.state.stars = list(filter(
-            lambda star: star.get('type', '') in ('channel', 'im', 'group',),
-            self.slack.api_call('stars.list')['items']
-        ))
+        self.state.stars = list(
+            filter(
+                lambda star: star.get('type', '') in ('channel', 'im', 'group',),
+                self.slack.api_call('stars.list')['items'],
+            )
+        )
 
     def load_users(self):
-        self.state.users = list(filter(
-            lambda user: not user.get('deleted', False),
-            self.slack.api_call('users.list')['members']
-        ))
+        self.state.users = list(
+            filter(
+                lambda user: not user.get('deleted', False),
+                self.slack.api_call('users.list')['members'],
+            )
+        )
         self._users_dict = {}
         self._bots_dict = {}
         for user in self.state.users:
@@ -238,21 +238,12 @@ class Store:
 
     def edit_message(self, channel_id, ts, text):
         return self.slack.api_call(
-            'chat.update',
-            channel=channel_id,
-            ts=ts,
-            as_user=True,
-            link_names=True,
-            text=text
+            'chat.update', channel=channel_id, ts=ts, as_user=True, link_names=True, text=text
         )
 
     def post_message(self, channel_id, message):
         return self.slack.api_call(
-            'chat.postMessage',
-            channel=channel_id,
-            as_user=True,
-            link_names=True,
-            text=message
+            'chat.postMessage', channel=channel_id, as_user=True, link_names=True, text=message
         )
 
     def post_thread_message(self, channel_id, parent_ts, message):
@@ -262,7 +253,7 @@ class Store:
             as_user=True,
             link_name=True,
             text=message,
-            thread_ts=parent_ts
+            thread_ts=parent_ts,
         )
 
     def get_presence(self, user_id):

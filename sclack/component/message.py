@@ -1,11 +1,12 @@
 import re
+import webbrowser
 
 import urwid
+
 import pyperclip
-import webbrowser
-from sclack.store import Store
-from sclack.components import ThreadText
 from sclack.component.time import Time
+from sclack.components import ThreadText
+from sclack.store import Store
 
 
 class Message(urwid.AttrMap):
@@ -22,7 +23,9 @@ class Message(urwid.AttrMap):
         'toggle_thread',
     ]
 
-    def __init__(self, ts, channel_id, user, text, indicators, reactions=(), attachments=(), responses=()):
+    def __init__(
+        self, ts, channel_id, user, text, indicators, reactions=(), attachments=(), responses=()
+    ):
         self.ts = ts
         self.channel_id = channel_id
         self.user_id = user.id
@@ -34,24 +37,17 @@ class Message(urwid.AttrMap):
         self._file_index = len(main_column)
 
         if reactions:
-            main_column.append(urwid.Columns([
-                ('pack', reaction) for reaction in reactions
-            ]))
+            main_column.append(urwid.Columns([('pack', reaction) for reaction in reactions]))
 
         if responses:
             main_column.append(ThreadText(len(responses)))
 
         self.main_column = urwid.Pile(main_column)
-        columns = [
-            ('fixed', 7, Time(ts)),
-            self.main_column,
-            ('fixed', indicators.size, indicators)
-        ]
+        columns = [('fixed', 7, Time(ts)), self.main_column, ('fixed', indicators.size, indicators)]
         self.contents = urwid.Columns(columns)
-        super(Message, self).__init__(self.contents, None, {
-            None: 'active_message',
-            'message': 'active_message'
-        })
+        super(Message, self).__init__(
+            self.contents, None, {None: 'active_message', 'message': 'active_message'}
+        )
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
@@ -93,7 +89,9 @@ class Message(urwid.AttrMap):
                 type, value = item
 
                 if type == 'link' and re.compile(r'^https?://').search(value):
-                    browser_instance = webbrowser if browser_name == '' else webbrowser.get(browser_name)
+                    browser_instance = (
+                        webbrowser if browser_name == '' else webbrowser.get(browser_name)
+                    )
                     browser_instance.open(value, new=2)
                     break
 
@@ -103,16 +101,10 @@ class Message(urwid.AttrMap):
         self.text_widget.original_widget = text
 
     def set_edit_mode(self):
-        self.set_attr_map({
-            None: 'editing_message',
-            'message': 'editing_message'
-        })
+        self.set_attr_map({None: 'editing_message', 'message': 'editing_message'})
 
     def unset_edit_mode(self):
-        self.set_attr_map({
-            None: None,
-            'message': None
-        })
+        self.set_attr_map({None: None, 'message': None})
 
     def selectable(self):
         return True

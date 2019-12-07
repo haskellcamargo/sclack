@@ -1,7 +1,9 @@
 import re
+
 import urwid
-from .store import Store
+
 from .emoji import emoji_codemap
+from .store import Store
 
 
 class MarkdownText(urwid.SelectableIcon):
@@ -19,10 +21,7 @@ class MarkdownText(urwid.SelectableIcon):
         super(MarkdownText, self).__init__(self.markup)
 
     def decode_buffer(self):
-        return (self._buffer
-            .replace('&lt;', '<')
-            .replace('&gt;', '>')
-            .replace('&amp;', '&'))
+        return self._buffer.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
 
     def change_state(self, buffer_state, next_state):
         self._result.append((buffer_state, self.decode_buffer()))

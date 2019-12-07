@@ -1,4 +1,5 @@
 import urwid
+
 from sclack.components import get_icon
 
 
@@ -12,7 +13,7 @@ class SetSnoozeWidgetItem(urwid.AttrMap):
             {
                 None: 'active_set_snooze_item',
                 'quick_search_presence_active': 'quick_search_active_focus',
-            }
+            },
         )
 
 
@@ -31,54 +32,38 @@ class SetSnoozeWidget(urwid.AttrWrap):
         self.event_loop = event_loop
 
         snooze_times = [
-            {
-                'label': 'Off',
-                'time': 0,
-            },
-            {
-                'label': '20 minutes',
-                'time': 20,
-            },
-            {
-                'label': '1 hour',
-                'time': 60,
-            },
-            {
-                'label': '2 hours',
-                'time': 120,
-            },
-            {
-                'label': '4 hours',
-                'time': 240,
-            },
-            {
-                'label': '8 hours',
-                'time': 480,
-            },
-            {
-                'label': '24 hours',
-                'time': 1400,
-            },
+            {'label': 'Off', 'time': 0,},
+            {'label': '20 minutes', 'time': 20,},
+            {'label': '1 hour', 'time': 60,},
+            {'label': '2 hours', 'time': 120,},
+            {'label': '4 hours', 'time': 240,},
+            {'label': '8 hours', 'time': 480,},
+            {'label': '24 hours', 'time': 1400,},
         ]
 
         for snooze_time in snooze_times:
-            lines.append({
-                'icon': get_icon('alarm_snooze'),
-                'title': snooze_time['label'],
-                'time': snooze_time['time']
-            })
+            lines.append(
+                {
+                    'icon': get_icon('alarm_snooze'),
+                    'title': snooze_time['label'],
+                    'time': snooze_time['time'],
+                }
+            )
 
         self.header = urwid.Edit('')
 
         self.original_items = lines
-        widgets = [SetSnoozeWidgetItem(item['icon'], item['title'], item['time']) for item in self.original_items]
+        widgets = [
+            SetSnoozeWidgetItem(item['icon'], item['title'], item['time'])
+            for item in self.original_items
+        ]
 
         self.snooze_time_list = SetSnoozeWidgetList(widgets)
 
         snooze_list = urwid.LineBox(
             urwid.Frame(self.snooze_time_list, header=self.header),
             title='Snooze notifications',
-            title_align='left'
+            title_align='left',
         )
         overlay = urwid.Overlay(
             snooze_list,
@@ -87,7 +72,7 @@ class SetSnoozeWidget(urwid.AttrWrap):
             width=('relative', 15),
             valign='middle',
             height=10,
-            right=5
+            right=5,
         )
         super(SetSnoozeWidget, self).__init__(overlay, 'set_snooze_dialog')
 

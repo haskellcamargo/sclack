@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest
+black==19.10b0
+isort

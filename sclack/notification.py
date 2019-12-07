@@ -13,6 +13,7 @@ class TerminalNotifier(object):
     def notify(self, message, **kwargs):
         if platform.system() == 'Darwin':
             import pync
+
             pync.notify(message, **kwargs)
         elif platform.system() == 'Linux':
             new_kwargs = {}
@@ -78,7 +79,9 @@ class LinuxTerminalNotifier(object):
     def execute(self, args):
         args = [str(arg) for arg in args]
 
-        output = subprocess.Popen([self.bin_path, ] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = subprocess.Popen(
+            [self.bin_path,] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
 
         if self._wait:
             output.wait()
@@ -97,10 +100,6 @@ if __name__ == '__main__':
         'Your notification message is here',
         title='Sclack notification',
         appIcon=os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..',
-                'resources/slack_icon.png'
-            )
-        )
+            os.path.join(os.path.dirname(__file__), '..', 'resources/slack_icon.png')
+        ),
     )

@@ -47,7 +47,7 @@ themes = {
         ('active_set_snooze_item', '', '', '', 'white', 'h32'),
         ('quick_search_presence_active', '', '', '', 'h40', 'h239'),
         ('quick_search_active_focus', '', '', '', 'h40', 'h32'),
-        ('quick_search_presence_away', '', '', '', 'white', 'h239')
+        ('quick_search_presence_away', '', '', '', 'white', 'h239'),
     ],
     'light': [
         ('sidebar', '', '', '', 'white', 'h53'),
@@ -84,6 +84,6 @@ themes = {
         ('loading_message', '', '', '', 'black', 'h254'),
         ('loading_active_block', '', '', '', 'h99', 'h254'),
         ('edit_topic_focus', '', '', '', 'h27', 'h254'),
-        ('editing_message', '', '', '', 'black', 'h178')
-    ]
+        ('editing_message', '', '', '', 'black', 'h178'),
+    ],
 }

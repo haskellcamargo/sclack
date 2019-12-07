@@ -1,4 +1,5 @@
 import subprocess
+
 import urwid
 
 color_list = [
@@ -17,8 +18,9 @@ color_list = [
     'light blue',
     'light magenta',
     'light cyan',
-    'white'
+    'white',
 ]
+
 
 def ansi_to_urwid(ansi_text):
     result = []
@@ -49,6 +51,7 @@ def ansi_to_urwid(ansi_text):
         result.append((urwid.AttrSpec(foreground, background), text))
     return result
 
+
 def img_to_ansi(path, width, height):
     command = ['img2txt', path, '-f', 'utf8']
     if width:
@@ -61,6 +64,7 @@ def img_to_ansi(path, width, height):
         ansi_text = None
     return ansi_text
 
+
 class Image(urwid.Text):
     def __init__(self, path, width=None, height=None):
         ansi_text = img_to_ansi(path, width, height)
@@ -69,4 +73,3 @@ class Image(urwid.Text):
         else:
             self.markup = ['']
         super(Image, self).__init__(self.markup)
-

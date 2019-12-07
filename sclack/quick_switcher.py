@@ -1,8 +1,11 @@
-import urwid
 import time
 import unicodedata
-from .store import Store
+
+import urwid
+
 from sclack.components import get_icon
+
+from .store import Store
 
 
 def remove_diacritic(input):
@@ -23,8 +26,8 @@ class QuickSwitcherItem(urwid.AttrMap):
             {
                 None: 'active_quick_switcher_item',
                 'quick_search_presence_active': 'quick_search_active_focus',
-                'quick_search_presence_away': 'active_quick_switcher_item'
-            }
+                'quick_search_presence_away': 'active_quick_switcher_item',
+            },
         )
 
 
@@ -44,19 +47,23 @@ class QuickSwitcher(urwid.AttrWrap):
         self.event_loop = event_loop
         for channel in Store.instance.state.channels:
             if channel.get('is_channel', False):
-                lines.append({
-                    'icon': get_icon('private_channel'),
-                    'title': channel['name'],
-                    'type': 'channel',
-                    'id': channel['id']
-                })
+                lines.append(
+                    {
+                        'icon': get_icon('private_channel'),
+                        'title': channel['name'],
+                        'type': 'channel',
+                        'id': channel['id'],
+                    }
+                )
             elif channel.get('is_group', False):
-                lines.append({
-                    'id': channel['id'],
-                    'icon': get_icon('channel'),
-                    'title': channel['name'],
-                    'type': 'channel'
-                })
+                lines.append(
+                    {
+                        'id': channel['id'],
+                        'icon': get_icon('channel'),
+                        'title': channel['name'],
+                        'type': 'channel',
+                    }
+                )
         for dm in Store.instance.state.dms:
             user = Store.instance.find_user_by_id(dm['user'])
             if user:
@@ -75,20 +82,18 @@ class QuickSwitcher(urwid.AttrWrap):
         lines.sort(key=lambda item: item['title'])
         self.header = urwid.Edit('')
         self.original_items = priority + lines
-        widgets = [QuickSwitcherItem(item['icon'], item['title'], item['id']) for item in self.original_items]
+        widgets = [
+            QuickSwitcherItem(item['icon'], item['title'], item['id'])
+            for item in self.original_items
+        ]
         self.quick_switcher_list = QuickSwitcherList(widgets)
         switcher = urwid.LineBox(
             urwid.Frame(self.quick_switcher_list, header=self.header),
             title='Jump to...',
-            title_align='left'
+            title_align='left',
         )
         overlay = urwid.Overlay(
-            switcher,
-            base,
-            align='center',
-            width=('relative', 40),
-            valign='middle',
-            height=15
+            switcher, base, align='center', width=('relative', 40), valign='middle', height=15
         )
         self.last_keypress = (time.time() - 0.3, None)
         super(QuickSwitcher, self).__init__(overlay, 'quick_switcher_dialog')
@@ -100,8 +105,7 @@ class QuickSwitcher(urwid.AttrWrap):
     @filtered_items.setter
     def filtered_items(self, items):
         self.quick_switcher_list.body[:] = [
-            QuickSwitcherItem(item['icon'], item['title'], item['id'])
-            for item in items
+            QuickSwitcherItem(item['icon'], item['title'], item['id']) for item in items
         ]
 
     def set_filter(self, loop, data):
@@ -110,17 +114,32 @@ class QuickSwitcher(urwid.AttrWrap):
             text = remove_diacritic(text)
             if text[0] == '@':
                 self.filtered_items = [
-                    item for item in self.original_items
-                    if (item['type'] == 'user' and (text[1:].lower() in remove_diacritic(item['title'].lower()) or text[1:].strip() == ''))
+                    item
+                    for item in self.original_items
+                    if (
+                        item['type'] == 'user'
+                        and (
+                            text[1:].lower() in remove_diacritic(item['title'].lower())
+                            or text[1:].strip() == ''
+                        )
+                    )
                 ]
             elif text[0] == '#':
                 self.filtered_items = [
-                    item for item in self.original_items
-                    if (item['type'] == 'channel' and (text[1:].lower() in remove_diacritic(item['title'].lower()) or text[1:].strip() == ''))
+                    item
+                    for item in self.original_items
+                    if (
+                        item['type'] == 'channel'
+                        and (
+                            text[1:].lower() in remove_diacritic(item['title'].lower())
+                            or text[1:].strip() == ''
+                        )
+                    )
                 ]
             else:
                 self.filtered_items = [
-                    item for item in self.original_items
+                    item
+                    for item in self.original_items
                     if text.lower() in remove_diacritic(item['title'].lower())
                 ]
         else:
