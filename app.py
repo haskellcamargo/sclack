@@ -432,9 +432,7 @@ class App:
         """
         for message in messages:
             if self.should_notify_me(message):
-                loop.create_task(
-                    self.send_notification(message, MarkdownText(message['text']))
-                )
+                self.send_notification(message, MarkdownText(message['text']))
 
     def render_message(self, message, channel_id=None):
         is_app = False
@@ -623,7 +621,6 @@ class App:
 
         return _messages
 
-    @asyncio.coroutine
     def send_notification(self, raw_message, markdown_text):
         """
         Only MacOS and Linux
