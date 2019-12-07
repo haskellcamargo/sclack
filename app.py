@@ -765,13 +765,12 @@ class App:
         # Show the channel in the chatbox
         loop.create_task(self._go_to_channel(channel_id))
 
-    @asyncio.coroutine
-    def _show_thread(self, channel_id, parent_ts):
+    async def _show_thread(self, channel_id, parent_ts):
         """
         Display the requested thread in the chatbox
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            yield from asyncio.gather(
+            await asyncio.gather(
                 loop.run_in_executor(executor, self.store.load_thread_messages, channel_id, parent_ts)
             )
             self.store.state.last_date = None
