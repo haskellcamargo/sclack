@@ -512,9 +512,9 @@ class Fields(urwid.Pile):
         text.append(('field_value', MarkdownText(field['value']).markup))
         return urwid.Text(text)
 
-    def __init__(self, fields=[], columns=2, width=30):
+    def __init__(self, fields=None, columns=2, width=30):
         pile = []
-        for chunk in self.chunks(fields, columns):
+        for chunk in self.chunks(fields or [], columns):
             pile.append(
                 urwid.Columns([('fixed', width, self.render_field(field)) for field in chunk])
             )
