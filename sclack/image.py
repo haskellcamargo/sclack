@@ -26,9 +26,10 @@ def ansi_to_urwid(ansi_text):
     result = []
     ansi_text = ansi_text.decode('utf-8')
     for instruction in ansi_text.split('\x1B['):
+        attrtext = instruction.split('m', 1)
         try:
-            attr, text = instruction.split('m', 1)
-        except:
+            attr, text = attrtext
+        except ValueError:
             attr = '0'
             text = instruction.split('m', 1)
         attr_list = [int(code) for code in attr.split(';')]
@@ -60,7 +61,7 @@ def img_to_ansi(path, width, height):
         command.extend(['-H', str(height)])
     try:
         ansi_text = subprocess.check_output(command)
-    except:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         ansi_text = None
     return ansi_text
 
