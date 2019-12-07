@@ -1,11 +1,7 @@
-import re
 import time
-import webbrowser
-from datetime import datetime
 
 import urwid
 
-import pyperclip
 import urwid_readline
 from sclack.utils.channel import is_channel, is_dm, is_group
 from sclack.utils.message import format_date_time
