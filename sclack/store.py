@@ -3,10 +3,13 @@ from slackclient import SlackClient
 
 class State:
     def __init__(self):
+        self.auth = None
+        self.channel = None
         self.channels = []
         self.dms = []
         self.groups = []
         self.stars = []
+        self.members = None
         self.messages = []
         self.thread_messages = []
         self.thread_parent = None
@@ -38,6 +41,8 @@ class Store:
         self.state = State()
         self.cache = Cache()
         self.config = config
+        self._users_dict = {}
+        self._bots_dict = {}
 
     def switch_to_workspace(self, workspace_number):
         self.slack_token = self.workspaces[workspace_number - 1][1]
@@ -220,8 +225,8 @@ class Store:
                 self.slack.api_call('users.list')['members'],
             )
         )
-        self._users_dict = {}
-        self._bots_dict = {}
+        self._users_dict.clear()
+        self._bots_dict.clear()
         for user in self.state.users:
             if user.get('is_bot', False):
                 self._users_dict[user['profile']['bot_id']] = user
