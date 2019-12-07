@@ -8,6 +8,7 @@
         "cursor_up": "k",
         "delete_message": "d",
         "edit_message": "e",
+        "compose_in_editor": "meta i",
         "go_to_chatbox": "c",
         "go_to_profile": "p",
         "go_to_sidebar": "esc",
@@ -30,7 +31,8 @@
         "markdown": true,
         "pictures": true,
         "browser": "",
-        "notification": ""
+        "notification": "",
+        "editor": ""
     },
     "icons": {
         "block": "\u258C",

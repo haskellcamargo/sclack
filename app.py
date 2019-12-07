@@ -89,7 +89,7 @@ class App:
         ])
         self._body = urwid.Frame(self.columns, header=self.workspaces_line)
 
-        self.urwid_loop = urwid.MainLoop(
+        self.urwid_loop = self.store.make_urwid_mainloop(
             self._body,
             palette=palette,
             event_loop=custom_loop,

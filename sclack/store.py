@@ -1,3 +1,6 @@
+import contextlib
+
+import urwid
 from slackclient import SlackClient
 
 
@@ -38,6 +41,7 @@ class Store:
         slack_token = workspaces[0][1]
         self.slack_token = slack_token
         self.slack = SlackClient(slack_token)
+        self.urwid_mainloop = None
         self.state = State()
         self.cache = Cache()
         self.config = config
@@ -271,3 +275,19 @@ class Store:
                 self.state.online_users.discard(user_id)
 
         return response
+
+    def make_urwid_mainloop(self, body, palette, event_loop, unhandled_input):
+        self.urwid_mainloop = urwid.MainLoop(
+            body, palette=palette, event_loop=event_loop, unhandled_input=unhandled_input
+        )
+        return self.urwid_mainloop
+
+    @contextlib.contextmanager
+    def interrupt_urwid_mainloop(self):
+        self.urwid_mainloop.stop()
+        self.urwid_mainloop.screen.stop()
+        try:
+            yield
+        finally:
+            self.urwid_mainloop.screen.start()
+            self.urwid_mainloop.start()

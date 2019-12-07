@@ -9,6 +9,7 @@ from sclack.utils.message import format_date_time
 from .emoji import emoji_codemap
 from .markdown import MarkdownText
 from .store import Store
+from .utils.message import edit_text_in_editor
 
 MARK_READ_ALARM_PERIOD = 3
 
@@ -598,7 +599,11 @@ class MessagePrompt(urwid_readline.ReadlineEdit):
         super(MessagePrompt, self).__init__([('prompt', ' {}'.format(user)), ' '])
 
     def keypress(self, size, key):
-        if key == 'enter':
+        keymap = Store.instance.config['keymap']
+        if key == keymap['compose_in_editor']:
+            self.set_edit_text(edit_text_in_editor(self.get_edit_text()))
+            return True
+        elif key == 'enter':
             urwid.emit_signal(self, 'submit_message', self.get_edit_text())
             return True
         elif key == 'up':

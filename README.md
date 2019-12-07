@@ -177,12 +177,14 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
         "markdown": true,
         "pictures": true,
         "browser": "",
-        "notification": ""
+        "notification": "",
+        "editor": ""
     }
 }
 ```
 * `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"` 
 * `notification`: How do you want to receive notification. `all` receive all; `none` disable notification, `mentioned` Only mentioned and direct message
+* `editor`: Your preferable editor to open when ever you edit message wihtin external editor. Default to environment variable `EDITOR` then the system editor.
 
 #### Notification
 
