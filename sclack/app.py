@@ -1182,7 +1182,7 @@ def ask_for_token(json_config):
 
 
 def run():
-    filepath = Path(__file__).parent / 'config.json'
+    filepath = Path(__file__).parent / 'resources' / 'config.json'
     with filepath.open() as config_file:
         json_config = json.load(config_file)
     ask_for_token(json_config)

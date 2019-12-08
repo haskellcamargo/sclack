@@ -5,7 +5,7 @@ import platform
 from functools import partial
 from pathlib import Path
 
-APP_ICON = str((Path(__file__).parent.parent / 'resources' / 'slack_icon.png').resolve())
+APP_ICON = str((Path(__file__).parent / 'resources' / 'slack_icon.png').resolve())
 
 
 async def noop(*args, **kargs):
