@@ -6,17 +6,12 @@ import subprocess
 import sys
 
 
-def notify(message, **kwargs):
+def get_notifier():
     if platform.system() == 'Darwin':
         import pync
-
-        pync.notify(message, **kwargs)
+        pync.notify
     elif platform.system() == 'Linux':
-        pync = LinuxTerminalNotifier()
-        pync.notify(message, **kwargs)
-    else:
-        # M$ Windows
-        pass
+        return LinuxTerminalNotifier().notify
 
 
 class LinuxTerminalNotifier(object):
@@ -56,7 +51,7 @@ if __name__ == '__main__':
     """
     Test your notification availability
     """
-    notify(
+    get_notifier()(
         'Your notification message is here',
         title='Sclack notification',
         subtitle='test',

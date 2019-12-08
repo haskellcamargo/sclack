@@ -22,7 +22,7 @@ from sclack.components import (
     TextDivider, User, Workspaces)
 from sclack.image import Image
 from sclack.loading import LoadingChatBox, LoadingSideBar
-from sclack.notification import notify
+from sclack.notification import get_notifier
 from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
@@ -69,6 +69,9 @@ class App:
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
         self.showing_thread = False
+        self._notify = None
+        if self.config['features']['notification'] not in ('', 'none'):
+            self._notify = get_notifier()
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -109,7 +112,7 @@ class App:
         :return:
         """
         # Snoozzzzzed or disabled
-        if self.store.state.is_snoozed or self.config['features']['notification'] in ['', 'none']:
+        if self.store.state.is_snoozed or not self._notify:
             return False
 
         # You send message, don't need notification
@@ -650,6 +653,8 @@ class App:
         :param markdown_text:
         :return:
         """
+        if not self._notify:
+            return
         user = self.store.find_user_by_id(raw_message.get('user'))
         sender_name = self.store.get_user_display_name(user)
 
@@ -670,7 +675,7 @@ class App:
                 'resources/slack_icon.png'
             )
         )
-        notify(
+        self._notify(
             str(markdown_text),
             title=notification_title,
             subtitle=sender_name,
