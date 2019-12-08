@@ -7,9 +7,6 @@ import sys
 
 
 class TerminalNotifier(object):
-    def __init__(self, wait=False):
-        self.wait = wait
-
     def notify(self, message, **kwargs):
         if platform.system() == 'Darwin':
             import pync
@@ -36,7 +33,7 @@ class TerminalNotifier(object):
 
                 new_kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
 
-            pync = LinuxTerminalNotifier(wait=self.wait)
+            pync = LinuxTerminalNotifier()
             pync.notify(message, **new_kwargs)
         else:
             # M$ Windows
@@ -44,12 +41,11 @@ class TerminalNotifier(object):
 
 
 class LinuxTerminalNotifier(object):
-    def __init__(self, wait=False):
+    def __init__(self):
         """
         Raises an exception if not supported on the current platform or
         if terminal-notifier was not found.
         """
-        self._wait = wait
         proc = subprocess.Popen(["which", "notify-send"], stdout=subprocess.PIPE)
         env_bin_path = proc.communicate()[0].strip()
 
@@ -63,7 +59,6 @@ class LinuxTerminalNotifier(object):
         if sys.version_info < (3,):
             message = message.encode('utf-8')
 
-        self._wait = kwargs.pop('wait', False)
         args = []
 
         if kwargs.get('icon'):
@@ -82,9 +77,6 @@ class LinuxTerminalNotifier(object):
         output = subprocess.Popen(
             [self.bin_path,] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-
-        if self._wait:
-            output.wait()
 
         if output.returncode:
             raise Exception("Some error during subprocess call.")
