@@ -64,7 +64,7 @@ pip
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
-pip3 install -r requirements.txt
+pip3 install
 chmod +x ./app.py
 ./app.py
 ```
@@ -211,7 +211,7 @@ Sclack has been tested with the following terminal emulators:
 
 To run the tests first install the development dependencies via:
 ```
-pip3 install -r requirements-dev.txt
+pip3 install --dev
 ```
 
 and then run `pytest`.

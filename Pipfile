@@ -14,5 +14,7 @@ websocket-client = "==0.47.0"
 
 [dev-packages]
 
-[requires]
-python_version = "3.6"
+pytest = "*"
+black = "==19.10b0"
+isort = "*"
+pylint = "*"
