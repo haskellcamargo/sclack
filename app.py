@@ -1181,10 +1181,14 @@ def ask_for_token(json_config):
             config_file.write(json.dumps(json_config, indent=2))
 
 
-if __name__ == '__main__':
+def run():
     filepath = Path(__file__).parent / 'config.json'
     with filepath.open() as config_file:
         json_config = json.load(config_file)
     ask_for_token(json_config)
     app = App(json_config)
     app.start()
+
+
+if __name__ == '__main__':
+    run()
