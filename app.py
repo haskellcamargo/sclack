@@ -714,7 +714,8 @@ class App:
     def open_in_browser(self, link):
         browser_name = self.store.config['features']['browser']
         browser_instance = webbrowser if browser_name == '' else webbrowser.get(browser_name)
-        browser_instance.open(link, new=2)
+        with self.store.interrupt_urwid_mainloop():
+            browser_instance.open(link, new=2)
 
     def scroll_messages(self, *args):
         index = self.chatbox.body.scroll_to_new_messages()
