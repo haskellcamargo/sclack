@@ -22,7 +22,7 @@ from sclack.components import (
     TextDivider, User, Workspaces)
 from sclack.image import Image
 from sclack.loading import LoadingChatBox, LoadingSideBar
-from sclack.notification import TerminalNotifier
+from sclack.notification import notify
 from sclack.quick_switcher import QuickSwitcher
 from sclack.store import Store
 from sclack.themes import themes
@@ -670,7 +670,7 @@ class App:
                 'resources/slack_icon.png'
             )
         )
-        TerminalNotifier().notify(
+        notify(
             str(markdown_text),
             title=notification_title,
             subtitle=sender_name,

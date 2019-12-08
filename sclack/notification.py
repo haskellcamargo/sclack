@@ -6,38 +6,37 @@ import subprocess
 import sys
 
 
-class TerminalNotifier(object):
-    def notify(self, message, **kwargs):
-        if platform.system() == 'Darwin':
-            import pync
+def notify(message, **kwargs):
+    if platform.system() == 'Darwin':
+        import pync
 
-            pync.notify(message, **kwargs)
-        elif platform.system() == 'Linux':
-            new_kwargs = {}
-            mappings = {
-                'group': 'category',
-                'appIcon': 'icon',
-                'title': 'title',
-                'subtitle': 'subtitle',
-            }
+        pync.notify(message, **kwargs)
+    elif platform.system() == 'Linux':
+        new_kwargs = {}
+        mappings = {
+            'group': 'category',
+            'appIcon': 'icon',
+            'title': 'title',
+            'subtitle': 'subtitle',
+        }
 
-            for origin_attr, new_attr in mappings.items():
-                if kwargs.get(origin_attr):
-                    new_kwargs[new_attr] = kwargs.get(origin_attr)
+        for origin_attr, new_attr in mappings.items():
+            if kwargs.get(origin_attr):
+                new_kwargs[new_attr] = kwargs.get(origin_attr)
 
-            if kwargs.get('subtitle'):
-                if new_kwargs.get('title'):
-                    title = '{} by '.format(new_kwargs['title'])
-                else:
-                    title = ''
+        if kwargs.get('subtitle'):
+            if new_kwargs.get('title'):
+                title = '{} by '.format(new_kwargs['title'])
+            else:
+                title = ''
 
-                new_kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
+            new_kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
 
-            pync = LinuxTerminalNotifier()
-            pync.notify(message, **new_kwargs)
-        else:
-            # M$ Windows
-            pass
+        pync = LinuxTerminalNotifier()
+        pync.notify(message, **new_kwargs)
+    else:
+        # M$ Windows
+        pass
 
 
 class LinuxTerminalNotifier(object):
@@ -88,7 +87,7 @@ if __name__ == '__main__':
     """
     Test your notification availability
     """
-    TerminalNotifier().notify(
+    notify(
         'Your notification message is here',
         title='Sclack notification',
         appIcon=os.path.realpath(
