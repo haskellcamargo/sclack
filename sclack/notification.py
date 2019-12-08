@@ -37,7 +37,7 @@ class LinuxTerminalNotifier(object):
     def notify(self, message, title=None, subtitle=None, appIcon=None, **kwargs):
         if subtitle:
             if title:
-                title = '{} by '.format(title)
+                title = f'{title} by {subtitle}'
             else:
                 title = ''
             title = '{}{}'.format(title, subtitle)
