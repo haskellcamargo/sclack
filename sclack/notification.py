@@ -5,37 +5,43 @@ import platform
 import subprocess
 
 
-def get_notifier():
-    if platform.system() == 'Darwin':
-        import pync
-        pync.notify
-    elif platform.system() == 'Linux':
-        return linux_notify
+def notify(*args, **kargs):
+    # Noop by default
+    pass
 
 
-def linux_notify(message, title=None, subtitle=None, appIcon=None, **kwargs):
-    if subtitle:
-        if title:
-            title = f'{title} by {subtitle}'
-        else:
-            title = subtitle
-    args = ['notify-send']
-    if appIcon:
-        args += ['--icon', appIcon]
-    if title:
-        args += [title]
-    args += [message]
+if platform.system() == 'Darwin':
     try:
-        subprocess.check_output(args, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError:
-        pass  # Do not fail if notify-send is not available.
+        import pync
+    except ImportError:
+        pass
+    else:
+        notify = pync.notify
+elif platform.system() == 'Linux':
+
+    def notify(message, title=None, subtitle=None, appIcon=None, **kwargs):
+        if subtitle:
+            if title:
+                title = f'{title} by {subtitle}'
+            else:
+                title = subtitle
+        args = ['notify-send']
+        if appIcon:
+            args += ['--icon', appIcon]
+        if title:
+            args += [title]
+        args += [message]
+        try:
+            subprocess.check_output(args, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            pass  # Do not fail if notify-send is not available.
 
 
 if __name__ == '__main__':
     """
     Test your notification availability
     """
-    get_notifier()(
+    notify(
         'Your notification message is here',
         title='Sclack notification',
         subtitle='test',
