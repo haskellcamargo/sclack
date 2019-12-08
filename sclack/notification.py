@@ -44,16 +44,15 @@ class LinuxTerminalNotifier(object):
         if appIcon:
             args += ['--icon', appIcon]
         if title:
-            args += [title, message]
-        else:
-            args += [message]
+            args += [title]
+        args += [message]
         return self.execute(args)
 
     def execute(self, args):
         args = [str(arg) for arg in args]
 
         output = subprocess.Popen(
-            [self.bin_path,] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            [self.bin_path] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
         if output.returncode:
