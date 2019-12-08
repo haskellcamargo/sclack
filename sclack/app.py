@@ -1188,7 +1188,3 @@ def run():
     ask_for_token(json_config)
     app = App(json_config)
     app.start()
-
-
-if __name__ == '__main__':
-    run()

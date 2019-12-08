@@ -58,7 +58,7 @@ OS X.
 
 ### From Source
 
-Ensure you have Python 3.4 or superior version.
+Ensure you have Python 3.6 or superior version.
 
 pip
 ```bash
@@ -74,8 +74,7 @@ git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
 export PIPENV_VENV_IN_PROJECT=1
 pipenv install # install deps
-pipenv shell # enter virtualenv
-python app.py # run app
+pipenv run python -m sclack
 ```
 
 ### From Binary
@@ -84,12 +83,73 @@ If you don't have Python installed, you can get the compiled binary for Sclack
 on [releases](https://github.com/haskellcamargo/sclack/releases) page. Versions **will be** available for Linux x86/x64 and OS X.
 
 ## Running
-Run `./app.py` after giving the correct permissions. If you don't have a `~/.sclack` file, you can generate one here by providing your workspace token. You can change the theme, enable or disable images, emojis, markdown, configure keyboards and everything else on `config.json`. Important: use `q` to quit!
+Run `./app.py` after giving the correct permissions. If you don't have a `~/.sclack` file, you can generate one here by providing your workspace token. You can change the theme, enable or disable images, emojis, markdown, configure keyboards and everything else from this file. Important: use `q` to quit!
 
 Your `~/.sclack` file will look like:
 
 ```json
 {
+    "colors": 256,
+    "theme": "default",
+    "keymap": {
+        "cursor_down": "j",
+        "cursor_left": "h",
+        "cursor_right":"l",
+        "cursor_up": "k",
+        "delete_message": "d",
+        "edit_message": "e",
+        "compose_in_editor": "meta i",
+        "go_to_chatbox": "c",
+        "go_to_profile": "p",
+        "go_to_sidebar": "esc",
+        "open_quick_switcher": "ctrl k",
+        "quit_application": "q",
+        "set_edit_topic_mode": "ctrl t",
+        "set_insert_mode": "i",
+        "toggle_sidebar": "s",
+        "yank_message": "y",
+        "get_permalink": "r",
+        "set_snooze": "ctrl d",
+        "toggle_thread": "t"
+    },
+    "sidebar": {
+        "width": 25,
+        "max_users": 20
+    },
+    "features": {
+        "emoji": true,
+        "markdown": true,
+        "pictures": true,
+        "browser": "",
+        "notification": "",
+        "editor": ""
+    },
+    "icons": {
+        "block": "\u258C",
+        "block_bottom": "\u2598",
+        "block_top": "\u2596",
+        "channel": "\uF198",
+        "divider": "\uE0B1",
+        "full_divider": "\uE0B0",
+        "edit": "\uF040",
+        "email": "\uF42F",
+        "full_star": "\uF005",
+        "heart": "\uF004",
+        "keyboard": "\uF11C",
+        "line_star": "\uF006",
+        "offline": "\uF10C",
+        "online": "\uF111",
+        "person": "\uF415",
+        "phone": "\uF095",
+        "pin": "\uF435",
+        "private_channel": "\uF023",
+        "skype": "\uF17E",
+        "square": "\uF445",
+        "snooze": "\uF9B1",
+        "status": "\uF075",
+        "timezone": "\uF0AC",
+        "alarm_snooze": "\ufb8c"
+    },
     "workspaces": {
         "default": "wow-such-secret"
     }
@@ -101,12 +161,12 @@ Your `~/.sclack` file will look like:
 If you want to, you can use Sclack in multiple workspaces. You can have at most 9 workspaces defined inside `workspaces`:
 
 ```json
-{
+...
     "workspaces": {
         "default": "wow-such-secret",
         "another": "wow-another-secret"
     }
-}
+...
 ```
 
 You can use the keys from 1 up to 9 to switch workspaces or event right-click the indicator:
@@ -130,7 +190,7 @@ Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permali
 
 ### Default keybindings
 ```json
-{
+...
   "keymap": {
     "cursor_down": "j",
     "cursor_left": "h",
@@ -150,7 +210,7 @@ Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permali
     "set_snooze": "ctrl d",
     "toggle_thread": "t"
   }
-}
+...
 ```
 
 The mouse support also has been programmed. You can scroll the chatbox and the sidebar and double click the channels to select.
@@ -158,12 +218,12 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
 ### Sidebar
 
 ```json
-{
+...
     "sidebar": {
         "width": 25,
         "max_users": 20
     }
-}
+...
 ```
 
 * `max_users`: Max users who are shown in the sidebar
@@ -171,7 +231,7 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
 ### Features
 
 ```json
-{
+...
     "features": {
         "emoji": true,
         "markdown": true,
@@ -180,7 +240,7 @@ The mouse support also has been programmed. You can scroll the chatbox and the s
         "notification": "",
         "editor": ""
     }
-}
+...
 ```
 * `browser`: Config your preferable browser to open the link, when ever you focus on chat box text which contains external link (http/https), press enter key, the link will be opened. Valid [value](https://docs.python.org/2/library/webbrowser.html#webbrowser.get). Example you can config `"browser": "chrome"` 
 * `notification`: How do you want to receive notification. `all` receive all; `none` disable notification, `mentioned` Only mentioned and direct message
@@ -213,10 +273,10 @@ Sclack has been tested with the following terminal emulators:
 
 To run the tests first install the development dependencies via:
 ```
-pip3 install --dev
+pipenv install --dev
 ```
 
-and then run `pytest`.
+and then run `pipenv run pytest`.
 
 ## Contributing
 
