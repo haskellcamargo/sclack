@@ -55,9 +55,6 @@ class LinuxTerminalNotifier(object):
             raise Exception("Notifier is not defined")
 
     def notify(self, message, **kwargs):
-        if sys.version_info < (3,):
-            message = message.encode('utf-8')
-
         args = []
 
         if kwargs.get('icon'):
