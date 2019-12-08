@@ -1,8 +1,8 @@
 import re
 
-import pyperclip
 import urwid
 
+import pyperclip
 from sclack.component.time import Time
 from sclack.components import ThreadText
 from sclack.store import Store

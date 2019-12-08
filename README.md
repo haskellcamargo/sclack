@@ -64,9 +64,8 @@ pip
 ```bash
 git clone https://github.com/haskellcamargo/sclack.git
 cd sclack
-pip3 install
-chmod +x ./app.py
-./app.py
+python setup.py --user install
+sclack
 ```
 pipenv
 ```bash
