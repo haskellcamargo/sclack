@@ -1,8 +1,10 @@
 # Notification wrapper
 
-import os
 import platform
 import subprocess
+from pathlib import Path
+
+APP_ICON = str((Path(__file__).parent.parent / 'resources' / 'slack_icon.png').resolve())
 
 
 def notify(*args, **kargs):
@@ -16,21 +18,17 @@ if platform.system() == 'Darwin':
     except ImportError:
         pass
     else:
-        notify = pync.notify
+
+        def notify(message, title, sender_name):
+            pync.notify(
+                message, title=title, subtitle=sender_name, appIcon=APP_ICON, sound='default'
+            )
+
+
 elif platform.system() == 'Linux':
 
-    def notify(message, title=None, subtitle=None, appIcon=None, **kwargs):
-        if subtitle:
-            if title:
-                title = f'{title} by {subtitle}'
-            else:
-                title = subtitle
-        args = ['notify-send']
-        if appIcon:
-            args += ['--icon', appIcon]
-        if title:
-            args += [title]
-        args += [message]
+    def notify(message, title, sender_name):
+        args = ['notify-send', '--icon', APP_ICON, f'{title} by {sender_name}', message]
         try:
             subprocess.check_output(args, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError:
@@ -41,12 +39,4 @@ if __name__ == '__main__':
     """
     Test your notification availability
     """
-    notify(
-        'Your notification message is here',
-        title='Sclack notification',
-        subtitle='test',
-        appIcon=os.path.realpath(
-            os.path.join(os.path.dirname(__file__), '..', 'resources/slack_icon.png')
-        ),
-        sound='default',
-    )
+    notify('Your notification message is here', 'Sclack notification', 'test')

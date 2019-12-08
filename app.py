@@ -662,20 +662,10 @@ class App:
                 self.store.state.auth['team'],
                 self.store.get_channel_name(raw_message.get('channel')),
             )
-
-
-        icon_path = os.path.realpath(
-            os.path.join(
-                os.path.dirname(__file__),
-                'resources/slack_icon.png'
-            )
-        )
         notify(
             str(markdown_text),
-            title=notification_title,
-            subtitle=sender_name,
-            appIcon=icon_path,
-            sound='default'
+            notification_title,
+            sender_name,
         )
 
     def handle_mark_read(self, data):
