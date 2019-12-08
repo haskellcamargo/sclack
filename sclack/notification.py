@@ -12,20 +12,8 @@ def notify(message, **kwargs):
 
         pync.notify(message, **kwargs)
     elif platform.system() == 'Linux':
-        new_kwargs = {}
-        mappings = {
-            'group': 'category',
-            'appIcon': 'icon',
-            'title': 'title',
-            'subtitle': 'subtitle',
-        }
-
-        for origin_attr, new_attr in mappings.items():
-            if kwargs.get(origin_attr):
-                new_kwargs[new_attr] = kwargs.get(origin_attr)
-
         pync = LinuxTerminalNotifier()
-        pync.notify(message, **new_kwargs)
+        pync.notify(message, **kwargs)
     else:
         # M$ Windows
         pass
@@ -57,8 +45,8 @@ class LinuxTerminalNotifier(object):
 
         args = []
 
-        if kwargs.get('icon'):
-            args += ['--icon', kwargs['icon']]
+        if kwargs.get('appIcon'):
+            args += ['--icon', kwargs['appIcon']]
 
         if kwargs.get('title'):
             args += [kwargs['title'], message]
