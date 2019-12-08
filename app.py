@@ -4,13 +4,13 @@ import concurrent.futures
 import functools
 import json
 import os
-import platform
 import re
 import sys
 import tempfile
 import time
 import traceback
 from datetime import datetime
+from pathlib import Path
 
 import requests
 import urwid
@@ -1158,8 +1158,9 @@ class App:
 
 
 def ask_for_token(json_config):
-    if os.path.isfile(os.path.expanduser('~/.sclack')):
-        with open(os.path.expanduser('~/.sclack'), 'r') as user_file:
+    filepath = Path('~/.sclack').expanduser()
+    if filepath.exists():
+        with filepath.open() as user_file:
             # Compatible with legacy configuration file
             new_config = json.load(user_file)
             if 'workspaces' not in new_config:
@@ -1168,16 +1169,16 @@ def ask_for_token(json_config):
     else:
         print('There is no ~/.sclack file. Let\'s create one!')
         token = input('What is your Slack workspace token? ')  # pylint: disable = input-builtin
-        with open(os.path.expanduser('~/.sclack'), 'w') as config_file:
+        with filepath.open('w') as config_file:
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
             json_config.update(token_config)
 
 
 if __name__ == '__main__':
-    json_config = {}
-    with open('./config.json', 'r') as config_file:
-        json_config.update(json.load(config_file))
+    filepath = Path(__file__).parent / 'config.json'
+    with filepath.open() as config_file:
+        json_config = json.load(config_file)
     ask_for_token(json_config)
     app = App(json_config)
     app.start()
