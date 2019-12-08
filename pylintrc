@@ -1,0 +1,3 @@
+[MESSAGES CONTROL]
+disable=redefined-builtin,no-absolute-import,round-builtin,old-division
+
