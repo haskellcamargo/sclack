@@ -46,19 +46,10 @@ class LinuxTerminalNotifier(object):
         if title:
             args += [title]
         args += [message]
-        return self.execute(args)
+        self.execute(args)
 
     def execute(self, args):
-        args = [str(arg) for arg in args]
-
-        output = subprocess.Popen(
-            [self.bin_path] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-
-        if output.returncode:
-            raise Exception("Some error during subprocess call.")
-
-        return output
+        subprocess.check_output([self.bin_path] + args, stderr=subprocess.PIPE)
 
 
 if __name__ == '__main__':
