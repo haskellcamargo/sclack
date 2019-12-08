@@ -15,8 +15,8 @@ from pathlib import Path
 import requests
 import urwid
 
-from sclack.component.message import Message
-from sclack.components import (
+from .component.message import Message
+from .components import (
     Attachment,
     Channel,
     ChannelHeader,
@@ -34,15 +34,15 @@ from sclack.components import (
     User,
     Workspaces,
 )
-from sclack.image import Image
-from sclack.loading import LoadingChatBox, LoadingSideBar
-from sclack.notification import notify
-from sclack.quick_switcher import QuickSwitcher
-from sclack.store import Store
-from sclack.themes import themes
-from sclack.utils.channel import is_channel, is_dm, is_group
-from sclack.utils.message import get_mentioned_patterns
-from sclack.widgets.set_snooze import SetSnoozeWidget
+from .image import Image
+from .loading import LoadingChatBox, LoadingSideBar
+from .notification import notify
+from .quick_switcher import QuickSwitcher
+from .store import Store
+from .themes import themes
+from .utils.channel import is_channel, is_dm, is_group
+from .utils.message import get_mentioned_patterns
+from .widgets.set_snooze import SetSnoozeWidget
 
 loop = asyncio.get_event_loop()
 

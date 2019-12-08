@@ -1,7 +1,7 @@
+from sclack.app import ask_for_token
 from sclack.quick_switcher import remove_diacritic
-from app import ask_for_token
-
 from slackclient import SlackClient
+
 
 def get_config():
     json_config = {}
