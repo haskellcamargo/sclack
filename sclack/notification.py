@@ -1,13 +1,14 @@
 # Notification wrapper
 
+import asyncio
 import platform
-import subprocess
+from functools import partial
 from pathlib import Path
 
 APP_ICON = str((Path(__file__).parent.parent / 'resources' / 'slack_icon.png').resolve())
 
 
-def notify(*args, **kargs):
+async def noop(*args, **kargs):
     # Noop by default
     pass
 
@@ -16,23 +17,40 @@ if platform.system() == 'Darwin':
     try:
         import pync
     except ImportError:
-        pass
+        notiy = noop
     else:
 
-        def notify(message, title, sender_name):
-            pync.notify(
-                message, title=title, subtitle=sender_name, appIcon=APP_ICON, sound='default'
+        async def notify(message, title, sender_name):
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                partial(
+                    pync.notify,
+                    message,
+                    title=title,
+                    subtitle=sender_name,
+                    appIcon=APP_ICON,
+                    sound='default',
+                ),
             )
 
 
 elif platform.system() == 'Linux':
 
-    def notify(message, title, sender_name):
-        args = ['notify-send', '--icon', APP_ICON, f'{title} by {sender_name}', message]
-        try:
-            subprocess.check_output(args, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            pass  # Do not fail if notify-send is not available.
+    async def notify(message, title, sender_name):
+        await asyncio.create_subprocess_exec(
+            'notify-send',
+            '--icon',
+            APP_ICON,
+            f'{title} by {sender_name}',
+            message,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+
+else:
+    notify = noop
 
 
 if __name__ == '__main__':

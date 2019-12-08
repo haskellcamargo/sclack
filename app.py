@@ -471,16 +471,6 @@ class App:
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
-    def notification_messages(self, messages):
-        """
-        Check and send notifications
-        :param messages:
-        :return:
-        """
-        for message in messages:
-            if self.should_notify_me(message):
-                self.send_notification(message, MarkdownText(message['text']))
-
     def render_message(self, message, channel_id=None):
         is_app = False
         subtype = message.get('subtype')
@@ -691,21 +681,15 @@ class App:
 
         return _messages
 
-    def send_notification(self, raw_message, markdown_text):
-        """
-        Only MacOS and Linux
-        @TODO Windows
-        :param raw_message:
-        :param markdown_text:
-        :return:
-        """
-        user = self.store.find_user_by_id(raw_message.get('user'))
+    async def notify_message(self, message):
+        markdown_text = str(MarkdownText(message['text']))
+        user = self.store.find_user_by_id(message.get('user'))
         sender_name = self.store.get_user_display_name(user)
         team = self.store.state.auth['team']
         notification_title = f'New message in {team}'
-        if raw_message.get('channel')[0] != 'D':
-            notification_title += ' #%s' % self.store.get_channel_name(raw_message.get('channel'))
-        notify(str(markdown_text), notification_title, sender_name)
+        if message.get('channel')[0] != 'D':
+            notification_title += ' #%s' % self.store.get_channel_name(message.get('channel'))
+        await notify(markdown_text, notification_title, sender_name)
 
     def handle_mark_read(self, data):
         """
@@ -971,8 +955,8 @@ class App:
                         event.get('subtype') != 'message_deleted'
                         and event.get('subtype') != 'message_changed'
                     ):
-                        # Notification
-                        self.notification_messages([event])
+                        # Continue while notifications are displayed asynchronuously.
+                        loop.create_task(self.notify_message(event))
                 elif event['type'] == 'user_typing':
                     if not self.is_chatbox_rendered:
                         return
