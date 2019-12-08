@@ -24,14 +24,6 @@ def notify(message, **kwargs):
             if kwargs.get(origin_attr):
                 new_kwargs[new_attr] = kwargs.get(origin_attr)
 
-        if kwargs.get('subtitle'):
-            if new_kwargs.get('title'):
-                title = '{} by '.format(new_kwargs['title'])
-            else:
-                title = ''
-
-            new_kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
-
         pync = LinuxTerminalNotifier()
         pync.notify(message, **new_kwargs)
     else:
@@ -55,6 +47,14 @@ class LinuxTerminalNotifier(object):
             raise Exception("Notifier is not defined")
 
     def notify(self, message, **kwargs):
+        if kwargs.get('subtitle'):
+            if kwargs.get('title'):
+                title = '{} by '.format(kwargs['title'])
+            else:
+                title = ''
+
+            kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
+
         args = []
 
         if kwargs.get('icon'):
@@ -87,6 +87,7 @@ if __name__ == '__main__':
     notify(
         'Your notification message is here',
         title='Sclack notification',
+        subtitle='test',
         appIcon=os.path.realpath(
             os.path.join(os.path.dirname(__file__), '..', 'resources/slack_icon.png')
         ),
