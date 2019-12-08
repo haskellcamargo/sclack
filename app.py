@@ -652,21 +652,11 @@ class App:
         """
         user = self.store.find_user_by_id(raw_message.get('user'))
         sender_name = self.store.get_user_display_name(user)
-
-        if raw_message.get('channel')[0] == 'D':
-            notification_title = 'New message in {}'.format(
-                self.store.state.auth['team']
-            )
-        else:
-            notification_title = 'New message in {} #{}'.format(
-                self.store.state.auth['team'],
-                self.store.get_channel_name(raw_message.get('channel')),
-            )
-        notify(
-            str(markdown_text),
-            notification_title,
-            sender_name,
-        )
+        team = self.store.state.auth['team']
+        notification_title = f'New message in {team}'
+        if raw_message.get('channel')[0] != 'D':
+            notification_title += ' #%s' % self.store.get_channel_name(raw_message.get('channel'))
+        notify(str(markdown_text), notification_title, sender_name)
 
     def handle_mark_read(self, data):
         """
