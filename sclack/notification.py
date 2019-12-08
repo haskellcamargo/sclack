@@ -34,25 +34,20 @@ class LinuxTerminalNotifier(object):
         if not os.path.exists(self.bin_path):
             raise Exception("Notifier is not defined")
 
-    def notify(self, message, **kwargs):
-        if kwargs.get('subtitle'):
-            if kwargs.get('title'):
-                title = '{} by '.format(kwargs['title'])
+    def notify(self, message, title=None, subtitle=None, appIcon=None, **kwargs):
+        if subtitle:
+            if title:
+                title = '{} by '.format(title)
             else:
                 title = ''
-
-            kwargs['title'] = '{}{}'.format(title, kwargs.get('subtitle'))
-
+            title = '{}{}'.format(title, subtitle)
         args = []
-
-        if kwargs.get('appIcon'):
-            args += ['--icon', kwargs['appIcon']]
-
-        if kwargs.get('title'):
-            args += [kwargs['title'], message]
+        if appIcon:
+            args += ['--icon', appIcon]
+        if title:
+            args += [title, message]
         else:
             args += [message]
-
         return self.execute(args)
 
     def execute(self, args):
@@ -79,4 +74,5 @@ if __name__ == '__main__':
         appIcon=os.path.realpath(
             os.path.join(os.path.dirname(__file__), '..', 'resources/slack_icon.png')
         ),
+        sound='default',
     )
