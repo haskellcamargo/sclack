@@ -24,7 +24,6 @@ class SetSnoozeWidgetList(urwid.ListBox):
 
 
 class SetSnoozeWidget(urwid.AttrWrap):
-    __metaclass__ = urwid.MetaSignals
     signals = ['close_set_snooze', 'set_snooze_time']
 
     def __init__(self, base, event_loop):

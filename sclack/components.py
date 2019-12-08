@@ -114,7 +114,6 @@ class BreadCrumbs(urwid.Text):
 
 
 class Channel(urwid.AttrMap):
-    __metaclass__ = urwid.MetaSignals
     signals = ['go_to_channel']
 
     def __init__(self, id, name, is_private=False, is_selected=False):
@@ -245,7 +244,6 @@ class ChannelHeader(urwid.Pile):
 
 
 class ChannelTopic(urwid.Edit):
-    __metaclass__ = urwid.MetaSignals
     signals = ['done']
 
     def __init__(self, topic):
@@ -260,7 +258,6 @@ class ChannelTopic(urwid.Edit):
 
 
 class ChatBox(urwid.Frame):
-    __metaclass__ = urwid.MetaSignals
     signals = [
         'go_to_sidebar',
         'open_quick_switcher',
@@ -309,7 +306,6 @@ class ChatBox(urwid.Frame):
 
 
 class ChatBoxMessages(urwid.ListBox):
-    __metaclass__ = urwid.MetaSignals
     signals = ['set_auto_scroll', 'set_date', 'set_insert_mode', 'mark_read']
 
     def __init__(self, messages=(), event_loop=None):
@@ -596,7 +592,6 @@ class MessageBox(urwid.AttrMap):
 
 
 class MessagePrompt(urwid_readline.ReadlineEdit):
-    __metaclass__ = urwid.MetaSignals
     signals = ['submit_message', 'go_to_last_message']
 
     def __init__(self, user):
@@ -676,7 +671,6 @@ class Reaction(urwid.Text):
 
 
 class SideBar(urwid.Frame):
-    __metaclass__ = urwid.MetaSignals
     signals = ['go_to_channel']
 
     def __init__(self, profile, channels=(), dms=(), stars=(), title=''):
@@ -888,7 +882,6 @@ class ThreadText(urwid.Text):
 
 
 class Workspace(urwid.AttrMap):
-    __metaclass__ = urwid.MetaSignals
     signals = ['select_workspace']
 
     def __init__(self, number, name):
@@ -924,7 +917,6 @@ class Workspace(urwid.AttrMap):
 
 
 class Workspaces(urwid.AttrWrap):
-    __metaclass__ = urwid.MetaSignals
     signals = ['switch_workspace']
 
     def __init__(self, workspaces):

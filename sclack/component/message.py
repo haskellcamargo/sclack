@@ -10,7 +10,6 @@ from sclack.store import Store
 
 
 class Message(urwid.AttrMap):
-    __metaclass__ = urwid.MetaSignals
     signals = [
         'delete_message',
         'edit_message',

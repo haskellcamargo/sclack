@@ -38,7 +38,6 @@ class QuickSwitcherList(urwid.ListBox):
 
 
 class QuickSwitcher(urwid.AttrWrap):
-    __metaclass__ = urwid.MetaSignals
     signals = ['close_quick_switcher', 'go_to_channel']
 
     def __init__(self, base, event_loop):
