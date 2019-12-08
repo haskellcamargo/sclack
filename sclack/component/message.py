@@ -1,5 +1,4 @@
 import re
-import webbrowser
 
 import pyperclip
 import urwid
@@ -19,6 +18,7 @@ class Message(urwid.AttrMap):
         'quit_application',
         'set_insert_mode',
         'mark_read',
+        'open_in_browser',
         'toggle_thread',
     ]
 
@@ -82,16 +82,11 @@ class Message(urwid.AttrMap):
             urwid.emit_signal(self, 'toggle_thread', self.channel_id, self.ts)
             return True
         elif key == 'enter':
-            browser_name = Store.instance.config['features']['browser']
 
             for item in self.markdown_text.markup:
                 type, value = item
-
                 if type == 'link' and re.compile(r'^https?://').search(value):
-                    browser_instance = (
-                        webbrowser if browser_name == '' else webbrowser.get(browser_name)
-                    )
-                    browser_instance.open(value, new=2)
+                    urwid.emit_signal(self, 'open_in_browser', value)
                     break
 
         return super(Message, self).keypress(size, key)

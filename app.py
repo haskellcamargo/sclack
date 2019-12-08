@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import traceback
+import webbrowser
 from datetime import datetime
 from pathlib import Path
 
@@ -602,6 +603,7 @@ class App:
         urwid.connect_signal(message, 'delete_message', self.delete_message)
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
+        urwid.connect_signal(message, 'open_in_browser', self.open_in_browser)
         urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
         urwid.connect_signal(message, 'toggle_thread', self.toggle_thread)
 
@@ -708,6 +710,11 @@ class App:
             self.urwid_loop.remove_alarm(self.last_keypress[1])
 
         self.last_keypress = (now, self.urwid_loop.set_alarm_in(MARK_READ_ALARM_PERIOD, read))
+
+    def open_in_browser(self, link):
+        browser_name = self.store.config['features']['browser']
+        browser_instance = webbrowser if browser_name == '' else webbrowser.get(browser_name)
+        browser_instance.open(link, new=2)
 
     def scroll_messages(self, *args):
         index = self.chatbox.body.scroll_to_new_messages()
