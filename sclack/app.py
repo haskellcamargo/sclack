@@ -1164,6 +1164,14 @@ class App:
         sys.exit()
 
 
+def load_configuration():
+    filepath = Path(__file__).parent / 'resources' / 'config.json'
+    with filepath.open() as config_file:
+        json_config = json.load(config_file)
+    ask_for_token(json_config)
+    return json_config
+
+
 def ask_for_token(json_config):
     filepath = Path('~/.sclack').expanduser()
     if filepath.exists():
@@ -1182,9 +1190,5 @@ def ask_for_token(json_config):
 
 
 def run():
-    filepath = Path(__file__).parent / 'resources' / 'config.json'
-    with filepath.open() as config_file:
-        json_config = json.load(config_file)
-    ask_for_token(json_config)
-    app = App(json_config)
+    app = App(load_configuration())
     app.start()
