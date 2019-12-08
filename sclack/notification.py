@@ -39,8 +39,7 @@ class LinuxTerminalNotifier(object):
             if title:
                 title = f'{title} by {subtitle}'
             else:
-                title = ''
-            title = '{}{}'.format(title, subtitle)
+                title = subtitle
         args = []
         if appIcon:
             args += ['--icon', appIcon]
