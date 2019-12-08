@@ -1,8 +1,8 @@
 import time
 
 import urwid
-
 import urwid_readline
+
 from sclack.utils.channel import is_channel, is_dm, is_group
 from sclack.utils.message import format_date_time
 
