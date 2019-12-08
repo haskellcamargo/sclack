@@ -1183,7 +1183,7 @@ def ask_for_token(json_config):
             json_config.update(new_config)
     else:
         print('There is no ~/.sclack file. Let\'s create one!')
-        token = input('What is your Slack workspace token? ')
+        token = input('What is your Slack workspace token? ')  # pylint: disable = input-builtin
         with open(os.path.expanduser('~/.sclack'), 'w') as config_file:
             token_config = {'workspaces': {'default': token}}
             config_file.write(json.dumps(token_config, indent=False))
