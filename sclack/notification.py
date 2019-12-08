@@ -3,7 +3,6 @@
 import os
 import platform
 import subprocess
-import sys
 
 
 def get_notifier():
@@ -11,40 +10,25 @@ def get_notifier():
         import pync
         pync.notify
     elif platform.system() == 'Linux':
-        return LinuxTerminalNotifier().notify
+        return linux_notify
 
 
-class LinuxTerminalNotifier(object):
-    def __init__(self):
-        """
-        Raises an exception if not supported on the current platform or
-        if terminal-notifier was not found.
-        """
-        proc = subprocess.Popen(["which", "notify-send"], stdout=subprocess.PIPE)
-        env_bin_path = proc.communicate()[0].strip()
-
-        if env_bin_path and os.path.exists(env_bin_path):
-            self.bin_path = os.path.realpath(env_bin_path)
-
-        if not os.path.exists(self.bin_path):
-            raise Exception("Notifier is not defined")
-
-    def notify(self, message, title=None, subtitle=None, appIcon=None, **kwargs):
-        if subtitle:
-            if title:
-                title = f'{title} by {subtitle}'
-            else:
-                title = subtitle
-        args = []
-        if appIcon:
-            args += ['--icon', appIcon]
+def linux_notify(message, title=None, subtitle=None, appIcon=None, **kwargs):
+    if subtitle:
         if title:
-            args += [title]
-        args += [message]
-        self.execute(args)
-
-    def execute(self, args):
-        subprocess.check_output([self.bin_path] + args, stderr=subprocess.PIPE)
+            title = f'{title} by {subtitle}'
+        else:
+            title = subtitle
+    args = ['notify-send']
+    if appIcon:
+        args += ['--icon', appIcon]
+    if title:
+        args += [title]
+    args += [message]
+    try:
+        subprocess.check_output(args, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError:
+        pass  # Do not fail if notify-send is not available.
 
 
 if __name__ == '__main__':
