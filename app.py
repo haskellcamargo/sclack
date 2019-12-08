@@ -3,7 +3,6 @@ import asyncio
 import concurrent.futures
 import functools
 import json
-import os
 import re
 import sys
 import tempfile
@@ -1170,9 +1169,8 @@ def ask_for_token(json_config):
         print('There is no ~/.sclack file. Let\'s create one!')
         token = input('What is your Slack workspace token? ')  # pylint: disable = input-builtin
         with filepath.open('w') as config_file:
-            token_config = {'workspaces': {'default': token}}
-            config_file.write(json.dumps(token_config, indent=False))
-            json_config.update(token_config)
+            json_config['workspaces'] = {'default': token}
+            config_file.write(json.dumps(json_config, indent=2))
 
 
 if __name__ == '__main__':
