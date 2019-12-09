@@ -3,6 +3,7 @@ import asyncio
 import concurrent.futures
 import functools
 import json
+import os
 import re
 import sys
 import tempfile
@@ -1168,25 +1169,25 @@ def load_configuration():
     filepath = Path(__file__).parent / 'resources' / 'config.json'
     with filepath.open() as config_file:
         json_config = json.load(config_file)
-    ask_for_token(json_config)
+    filepath = Path('~/.sclack').expanduser()
+    if not filepath.exists():
+        config_home = Path(os.environ.get('XDG_CONFIG_HOME') or '~/.config').expanduser()
+        filepath = config_home / 'sclack' / 'config.json'
+    if not filepath.exists():
+        ask_for_token(json_config)
+        filepath.parent.mkdir(parents=True)
+        with filepath.open('w') as config_file:
+            json.dump(json_config, config_file, indent=2)
+    else:
+        with filepath.open() as config_file:
+            json_config.update(json.load(config_file))
     return json_config
 
 
 def ask_for_token(json_config):
-    filepath = Path('~/.sclack').expanduser()
-    if filepath.exists():
-        with filepath.open() as user_file:
-            # Compatible with legacy configuration file
-            new_config = json.load(user_file)
-            if 'workspaces' not in new_config:
-                new_config['workspaces'] = {'default': new_config['token']}
-            json_config.update(new_config)
-    else:
-        print('There is no ~/.sclack file. Let\'s create one!')
-        token = input('What is your Slack workspace token? ')  # pylint: disable = input-builtin
-        with filepath.open('w') as config_file:
-            json_config['workspaces'] = {'default': token}
-            config_file.write(json.dumps(json_config, indent=2))
+    print('There is no ~/.sclack file. Let\'s create one!')
+    token = input('What is your Slack workspace token? ')  # pylint: disable = input-builtin
+    json_config['workspaces'] = {'default': token}
 
 
 def run():

@@ -1,7 +1,6 @@
 import contextlib
 
 import urwid
-
 from slackclient import SlackClient
 
 
