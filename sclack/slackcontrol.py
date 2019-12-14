@@ -53,7 +53,14 @@ def mark_unread_targets(channel_id, targets, unread):
 
 def message(app, loop, event):
     loop.create_task(app.update_chat(event))
+    update_message(app, event)
 
+    if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
+        # Continue while notifications are displayed asynchronuously.
+        loop.create_task(app.notify_message(event))
+
+
+def update_message(app, event):
     if event.get('channel') == app.store.state.channel['id']:
         if not app.is_chatbox_rendered:
             return
@@ -71,9 +78,6 @@ def message(app, loop, event):
         else:
             app.chatbox.body.body.extend(app.render_messages([event]))
             app.chatbox.body.scroll_to_bottom()
-    if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
-        # Continue while notifications are displayed asynchronuously.
-        loop.create_task(app.notify_message(event))
 
 
 def user_typing(app, stop_typing, event):
