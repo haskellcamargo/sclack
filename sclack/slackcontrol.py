@@ -18,7 +18,7 @@ async def start(app, loop):
                 message(app, loop, **event)
             elif event['type'] == 'user_typing':
                 user_typing(app, **event)
-            elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
+            elif event.get('type') == 'dnd_updated':
                 dnd_updated(app, **event)
             elif event.get('ok', False):
                 other(app, **event)
@@ -97,7 +97,9 @@ def user_typing(app, channel=None, user=None, **kwargs):
         app.urwid_loop.set_alarm_in(3, app.stop_typing)
 
 
-def dnd_updated(app, dnd_status, **kwargs):
+def dnd_updated(app, dnd_status=None, **kwargs):
+    if not dnd_status:
+        return
     app.store.state.is_snoozed = dnd_status['snooze_enabled']
     app.sidebar.profile.set_snooze(app.store.state.is_snoozed)
 
