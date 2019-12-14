@@ -13,13 +13,14 @@ async def start(app, loop):
         events = app.store.slack.rtm_read()
 
         for event in events:
-            if event.get('type') in ('channel_marked', 'group_marked', 'im_marked'):
-                if event.get('type') == 'channel_marked':
-                    targets = app.sidebar.get_all_channels()
-                elif event.get('type') == 'group_marked':
-                    targets = app.sidebar.get_all_groups()
-                else:
-                    targets = app.sidebar.get_all_dms()
+            if event.get('type') == 'channel_marked':
+                targets = app.sidebar.get_all_channels()
+                mark_unread_targets(event['channel'], targets, event.get('unread_count_display', 0))
+            elif event.get('type') == 'group_marked':
+                targets = app.sidebar.get_all_groups()
+                mark_unread_targets(event['channel'], targets, event.get('unread_count_display', 0))
+            elif event.get('type') == 'im_marked':
+                targets = app.sidebar.get_all_dms()
                 mark_unread_targets(event['channel'], targets, event.get('unread_count_display', 0))
             elif event['type'] == 'message':
                 loop.create_task(app.update_chat(event))
