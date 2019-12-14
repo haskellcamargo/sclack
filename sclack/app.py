@@ -903,6 +903,11 @@ class App:
     async def start_real_time(self):
         await slackcontrol.start(self, loop)
 
+    def stop_typing(self, *args):
+        # Prevent error while switching workspace
+        if self.is_chatbox_rendered:
+            self.chatbox.message_box.typing = None
+
     def set_insert_mode(self):
         self.columns.focus_position = 1
         self.chatbox.focus_position = 'footer'

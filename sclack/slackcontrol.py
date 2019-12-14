@@ -4,11 +4,6 @@ import asyncio
 async def start(app, loop):
     app.store.slack.rtm_connect(auto_reconnect=True)
 
-    def stop_typing(*args):
-        # Prevent error while switching workspace
-        if app.is_chatbox_rendered:
-            app.chatbox.message_box.typing = None
-
     while app.store.slack.server.connected is True:
         events = app.store.slack.rtm_read()
 
@@ -22,7 +17,7 @@ async def start(app, loop):
             elif event['type'] == 'message':
                 message(app, loop, **event)
             elif event['type'] == 'user_typing':
-                user_typing(app, stop_typing, **event)
+                user_typing(app, **event)
             elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
                 dnd_updated(app, **event)
             elif event.get('ok', False):
@@ -90,7 +85,7 @@ def change_message(app, message, **kwargs):
             break
 
 
-def user_typing(app, stop_typing, channel=None, user=None, **kwargs):
+def user_typing(app, channel=None, user=None, **kwargs):
     if not app.is_chatbox_rendered:
         return
 
@@ -99,7 +94,7 @@ def user_typing(app, stop_typing, channel=None, user=None, **kwargs):
         name = app.store.get_user_display_name(user)
 
         app.chatbox.message_box.typing = name
-        app.urwid_loop.set_alarm_in(3, stop_typing)
+        app.urwid_loop.set_alarm_in(3, app.stop_typing)
 
 
 def dnd_updated(app, dnd_status, **kwargs):
