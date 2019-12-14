@@ -66,18 +66,26 @@ def update_message(app, event):
             return
 
         if event.get('subtype') == 'message_deleted':
-            for widget in app.chatbox.body.body:
-                if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['deleted_ts']:
-                    app.chatbox.body.body.remove(widget)
-                    break
+            delete_message(app, event)
         elif event.get('subtype') == 'message_changed':
-            for index, widget in enumerate(app.chatbox.body.body):
-                if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['message']['ts']:
-                    app.chatbox.body.body[index] = app.render_message(event['message'])
-                    break
+            change_message(app, event)
         else:
             app.chatbox.body.body.extend(app.render_messages([event]))
             app.chatbox.body.scroll_to_bottom()
+
+
+def delete_message(app, event):
+    for widget in app.chatbox.body.body:
+        if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['deleted_ts']:
+            app.chatbox.body.body.remove(widget)
+            break
+
+
+def change_message(app, event):
+    for index, widget in enumerate(app.chatbox.body.body):
+        if hasattr(widget, 'ts') and getattr(widget, 'ts') == event['message']['ts']:
+            app.chatbox.body.body[index] = app.render_message(event['message'])
+            break
 
 
 def user_typing(app, stop_typing, event):
