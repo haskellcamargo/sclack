@@ -355,13 +355,13 @@ class App:
             [widget, response] = channel_info
             widget.set_unread(response.get('unread_count_display', 0))
 
-    async def update_chat(self, event):
+    async def update_chat(self, channel_id):
         """
         Update channel/DM message count badge
         :param event:
         :return:
         """
-        self.sidebar.update_items(event)
+        self.sidebar.update_items(channel_id)
 
     async def mount_chatbox(self, executor, channel):
         await asyncio.gather(

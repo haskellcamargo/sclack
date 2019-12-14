@@ -764,16 +764,15 @@ class SideBar(urwid.Frame):
             else:
                 dm.deselect()
 
-    def update_items(self, event):
+    def update_items(self, channel_id):
         """
         Update unread count for side bar items
         :param event:
         :return:
         """
-        channel_id = event.get('channel')
         target = self.get_targets_by_id(channel_id)
 
-        chat_detail = Store.instance.get_channel_info(event.get('channel'))
+        chat_detail = Store.instance.get_channel_info(channel_id)
         new_count = chat_detail.get('unread_count_display', 0)
 
         for widget in target:

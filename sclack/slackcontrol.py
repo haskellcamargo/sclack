@@ -52,7 +52,7 @@ def mark_unread_targets(channel_id, targets, unread):
 
 
 def message(app, loop, **event):
-    loop.create_task(app.update_chat(event))
+    loop.create_task(app.update_chat(event.get('channel')))
     update_message(app, **event)
 
     if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
