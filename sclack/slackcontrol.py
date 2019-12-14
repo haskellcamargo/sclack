@@ -9,8 +9,6 @@ async def start(app, loop):
         if app.is_chatbox_rendered:
             app.chatbox.message_box.typing = None
 
-    alarm = None
-
     while app.store.slack.server.connected is True:
         events = app.store.slack.rtm_read()
 
@@ -74,8 +72,6 @@ async def start(app, loop):
                     user = app.store.find_user_by_id(event['user'])
                     name = app.store.get_user_display_name(user)
 
-                    if alarm is not None:
-                        app.urwid_loop.remove_alarm(alarm)
                     app.chatbox.message_box.typing = name
                     app.urwid_loop.set_alarm_in(3, stop_typing)
                 else:
