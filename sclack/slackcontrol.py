@@ -48,9 +48,6 @@ async def start(app, loop):
                     else:
                         app.chatbox.body.body.extend(app.render_messages([event]))
                         app.chatbox.body.scroll_to_bottom()
-                else:
-                    pass
-
                 if (
                     event.get('subtype') != 'message_deleted'
                     and event.get('subtype') != 'message_changed'
@@ -67,9 +64,6 @@ async def start(app, loop):
 
                     app.chatbox.message_box.typing = name
                     app.urwid_loop.set_alarm_in(3, stop_typing)
-                else:
-                    pass
-                    # print(json.dumps(event, indent=2))
             elif event.get('type') == 'dnd_updated' and 'dnd_status' in event:
                 app.store.state.is_snoozed = event['dnd_status']['snooze_enabled']
                 app.sidebar.profile.set_snooze(app.store.state.is_snoozed)
@@ -91,9 +85,6 @@ async def start(app, loop):
                 )
                 app.chatbox.body.scroll_to_bottom()
                 app.handle_mark_read(-1)
-            else:
-                pass
-                # print(json.dumps(event, indent=2))
         await asyncio.sleep(0.5)
 
 
