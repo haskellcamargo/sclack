@@ -57,7 +57,9 @@ def message(app, loop, **event):
 
     if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
         # Continue while notifications are displayed asynchronuously.
-        loop.create_task(app.notify_message(event))
+        loop.create_task(
+            app.notify_message(event.get('channel'), event.get('text'), event.get('user'))
+        )
 
 
 def update_message(app, **event):

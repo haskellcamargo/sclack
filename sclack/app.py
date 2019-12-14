@@ -685,14 +685,14 @@ class App:
 
         return _messages
 
-    async def notify_message(self, message):
-        markdown_text = str(MarkdownText(message['text']))
-        user = self.store.find_user_by_id(message.get('user'))
+    async def notify_message(self, channel_id, text, user=None):
+        markdown_text = str(MarkdownText(text))
+        user = self.store.find_user_by_id(user)
         sender_name = self.store.get_user_display_name(user)
         team = self.store.state.auth['team']
         notification_title = f'New message in {team}'
-        if message.get('channel')[0] != 'D':
-            notification_title += ' #%s' % self.store.get_channel_name(message.get('channel'))
+        if channel_id[0] != 'D':
+            notification_title += ' #%s' % self.store.get_channel_name(channel_id)
         await notify(markdown_text, notification_title, sender_name)
 
     def handle_mark_read(self, data):
