@@ -809,37 +809,37 @@ class App:
             await loop.run_in_executor(
                 executor, self.store.load_thread_messages, channel_id, parent_ts
             )
-            self.store.state.last_date = None
+        self.store.state.last_date = None
 
-            if len(self.store.state.thread_messages) == 0:
-                messages = await self.render_messages(
-                    [
-                        {
-                            'text': "There was an error showing this thread :(",
-                            'ts': '0',
-                            'subtype': SCLACK_SUBTYPE,
-                        }
-                    ]
-                )
-            else:
-                messages = await self.render_messages(
-                    self.store.state.thread_messages, channel_id=channel_id
-                )
+        if len(self.store.state.thread_messages) == 0:
+            messages = await self.render_messages(
+                [
+                    {
+                        'text': "There was an error showing this thread :(",
+                        'ts': '0',
+                        'subtype': SCLACK_SUBTYPE,
+                    }
+                ]
+            )
+        else:
+            messages = await self.render_messages(
+                self.store.state.thread_messages, channel_id=channel_id
+            )
 
-            header = self.render_chatbox_header()
-            if self.is_chatbox_rendered:
-                self.chatbox.body.body[:] = messages
-                self.chatbox.header = header
-                self.chatbox.message_box.is_read_only = self.store.state.channel.get(
-                    'is_read_only', False
-                )
-                self.sidebar.select_channel(channel_id)
-                self.urwid_loop.set_alarm_in(0, self.scroll_messages)
+        header = self.render_chatbox_header()
+        if self.is_chatbox_rendered:
+            self.chatbox.body.body[:] = messages
+            self.chatbox.header = header
+            self.chatbox.message_box.is_read_only = self.store.state.channel.get(
+                'is_read_only', False
+            )
+            self.sidebar.select_channel(channel_id)
+            self.urwid_loop.set_alarm_in(0, self.scroll_messages)
 
-            if len(self.store.state.messages) == 0:
-                self.go_to_sidebar()
-            else:
-                self.go_to_chatbox()
+        if len(self.store.state.messages) == 0:
+            self.go_to_sidebar()
+        else:
+            self.go_to_chatbox()
 
     def toggle_thread(self, channel_id, parent_ts):
         if self.showing_thread:
