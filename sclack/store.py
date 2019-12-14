@@ -4,6 +4,8 @@ import urwid
 
 from slackclient import SlackClient
 
+from .utils.channel import is_channel, is_dm, is_group
+
 
 class State:
     def __init__(self):
@@ -101,30 +103,6 @@ class Store:
         self.state.thread_messages = replies['messages']
         self.state.has_more = replies.get('has_more', False)
 
-    def is_channel(self, channel_id):
-        """
-        Is a channel
-        :param channel_id:
-        :return:
-        """
-        return channel_id[0] == 'C'
-
-    def is_dm(self, channel_id):
-        """
-        Is direct message
-        :param channel_id:
-        :return:
-        """
-        return channel_id[0] == 'D'
-
-    def is_group(self, channel_id):
-        """
-        Is a group
-        :param channel_id:
-        :return:
-        """
-        return channel_id[0] == 'G'
-
     def get_channel_info(self, channel_id):
         if channel_id[0] == 'G':
             return self.slack.api_call('groups.info', channel=channel_id)['group']
@@ -137,11 +115,11 @@ class Store:
         return self.slack.api_call('conversations.members', channel=channel_id)
 
     def mark_read(self, channel_id, ts):
-        if self.is_group(channel_id):
+        if is_group(channel_id):
             return self.slack.api_call('groups.mark', channel=channel_id, ts=ts)
-        elif self.is_channel(channel_id):
+        elif is_channel(channel_id):
             return self.slack.api_call('channels.mark', channel=channel_id, ts=ts)
-        elif self.is_dm(channel_id):
+        elif is_dm(channel_id):
             return self.slack.api_call('im.mark', channel=channel_id, ts=ts)
 
     def get_permalink(self, channel_id, ts):
