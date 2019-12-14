@@ -13,9 +13,7 @@ async def start(app, loop):
         events = app.store.slack.rtm_read()
 
         for event in events:
-            if event.get('type') == 'hello':
-                pass
-            elif event.get('type') in ('channel_marked', 'group_marked', 'im_marked'):
+            if event.get('type') in ('channel_marked', 'group_marked', 'im_marked'):
                 unread = event.get('unread_count_display', 0)
 
                 if event.get('type') == 'channel_marked':
