@@ -514,11 +514,11 @@ class App:
                 message_text = '{}\n{}'.format(message_text, file_text)
 
         if subtype == 'bot_message':
-            bot = self.store.find_user_by_id(message['bot_id']) or self.store.find_or_load_bot(
-                message['bot_id']
-            )
+            user_id = message['bot_id']
+            bot = self.store.find_user_by_id(user_id)
+            if not bot:
+                bot = self.store.find_or_load_bot(user_id)
             if bot:
-                user_id = message['bot_id']
                 user_name = bot.get('profile', {}).get('display_name') or bot.get('name')
                 color = bot.get('color')
                 is_app = 'app_id' in bot
