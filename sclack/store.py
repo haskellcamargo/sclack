@@ -101,14 +101,6 @@ class Store:
         self.state.thread_messages = replies['messages']
         self.state.has_more = replies.get('has_more', False)
 
-    def is_valid_channel_id(self, channel_id):
-        """
-        Check whether channel_id is valid
-        :param channel_id:
-        :return:
-        """
-        return channel_id[0] in ('C', 'G', 'D')
-
     def is_channel(self, channel_id):
         """
         Is a channel

@@ -12,15 +12,6 @@ def get_group_name(group_raw_name):
     return group_raw_name
 
 
-def is_valid_channel_id(channel_id):
-    """
-    Check whether channel_id is valid
-    :param channel_id:
-    :return:
-    """
-    return channel_id[0] in ('C', 'G', 'D')
-
-
 def is_channel(channel_id):
     """
     Is a channel
