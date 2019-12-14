@@ -104,11 +104,11 @@ class Store:
         self.state.has_more = replies.get('has_more', False)
 
     def get_channel_info(self, channel_id):
-        if channel_id[0] == 'G':
+        if is_group(channel_id):
             return self.slack.api_call('groups.info', channel=channel_id)['group']
-        elif channel_id[0] == 'C':
+        elif is_channel(channel_id):
             return self.slack.api_call('channels.info', channel=channel_id)['channel']
-        elif channel_id[0] == 'D':
+        elif is_dm(channel_id):
             return self.slack.api_call('im.info', channel=channel_id)['im']
 
     def get_channel_members(self, channel_id):
