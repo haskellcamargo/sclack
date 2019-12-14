@@ -14,19 +14,13 @@ async def start(app, loop):
 
         for event in events:
             if event.get('type') in ('channel_marked', 'group_marked', 'im_marked'):
-                unread = event.get('unread_count_display', 0)
-
                 if event.get('type') == 'channel_marked':
                     targets = app.sidebar.get_all_channels()
                 elif event.get('type') == 'group_marked':
                     targets = app.sidebar.get_all_groups()
                 else:
                     targets = app.sidebar.get_all_dms()
-
-                for target in targets:
-                    if target.id == event['channel']:
-                        target.set_unread(unread)
-
+                mark_unread_targets(event['channel'], targets, event.get('unread_count_display', 0))
             elif event['type'] == 'message':
                 loop.create_task(app.update_chat(event))
 
@@ -100,3 +94,9 @@ async def start(app, loop):
                 pass
                 # print(json.dumps(event, indent=2))
         await asyncio.sleep(0.5)
+
+
+def mark_unread_targets(channel_id, targets, unread):
+    for target in targets:
+        if target.id == channel_id:
+            target.set_unread(unread)
