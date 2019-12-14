@@ -806,10 +806,8 @@ class App:
         Display the requested thread in the chatbox
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            await asyncio.gather(
-                loop.run_in_executor(
-                    executor, self.store.load_thread_messages, channel_id, parent_ts
-                )
+            await loop.run_in_executor(
+                executor, self.store.load_thread_messages, channel_id, parent_ts
             )
             self.store.state.last_date = None
 
