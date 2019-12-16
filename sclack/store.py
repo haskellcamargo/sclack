@@ -106,11 +106,14 @@ class Store:
 
     async def get_channel_info(self, channel_id):
         if is_group(channel_id):
-            return self.slack.api_call('groups.info', channel=channel_id)['group']
+            info = self.slack.api_call('groups.info', channel=channel_id)
+            return info['group']
         elif is_channel(channel_id):
-            return self.slack.api_call('channels.info', channel=channel_id)['channel']
+            info = self.slack.api_call('channels.info', channel=channel_id)
+            return info['channel']
         elif is_dm(channel_id):
-            return self.slack.api_call('im.info', channel=channel_id)['im']
+            info = self.slack.api_call('im.info', channel=channel_id)
+            return info['im']
 
     async def get_channel_members(self, channel_id):
         return self.slack.api_call('conversations.members', channel=channel_id)
@@ -145,9 +148,9 @@ class Store:
             exclude_archived=True,
             limit=1000,  # 1k is max limit
             types='public_channel,private_channel,im,mpim',
-        )['channels']
+        )
 
-        for channel in conversations:
+        for channel in conversations['channels']:
             # Public channel
             if channel.get('is_channel', False):
                 self.state.channels.append(channel)
@@ -181,26 +184,25 @@ class Store:
         return channel_id
 
     async def load_groups(self):
-        self.state.groups = self.slack.api_call('mpim.list')['groups']
+        result = self.slack.api_call('mpim.list')
+        self.state.groups = result['groups']
 
     async def load_stars(self):
         """
         Load stars
         :return:
         """
+        stars = self.slack.api_call('stars.list')
         self.state.stars = list(
             filter(
-                lambda star: star.get('type', '') in ('channel', 'im', 'group',),
-                self.slack.api_call('stars.list')['items'],
+                lambda star: star.get('type', '') in ('channel', 'im', 'group',), stars['items'],
             )
         )
 
     async def load_users(self):
+        users = self.slack.api_call('users.list')
         self.state.users = list(
-            filter(
-                lambda user: not user.get('deleted', False),
-                self.slack.api_call('users.list')['members'],
-            )
+            filter(lambda user: not user.get('deleted', False), users['members'],)
         )
         self._users_dict.clear()
         self._bots_dict.clear()
@@ -210,7 +212,8 @@ class Store:
             self._users_dict[user['id']] = user
 
     async def load_user_dnd(self):
-        self.state.is_snoozed = self.slack.api_call('dnd.info').get('snooze_enabled')
+        info = self.slack.api_call('dnd.info')
+        self.state.is_snoozed = info.get('snooze_enabled')
 
     async def set_topic(self, channel_id, topic):
         return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)
