@@ -368,7 +368,7 @@ class App:
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel),
         )
-        messages = self.render_messages(self.store.state.messages, channel_id=channel)
+        messages = await self.render_messages(self.store.state.messages, channel_id=channel)
         header = self.render_chatbox_header()
         self._loading = False
         self.sidebar.select_channel(channel)
@@ -474,7 +474,10 @@ class App:
         self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
-    def render_message(self, message, channel_id=None):
+    async def render_message(self, message, channel_id=None):
+        return self.render_message_(message, channel_id)
+
+    def render_message_(self, message, channel_id=None):
         is_app = False
         subtype = message.get('subtype')
 
@@ -635,7 +638,10 @@ class App:
                     )
                 )
 
-    def render_messages(self, messages, channel_id=None):
+    async def render_messages(self, messages, channel_id=None):
+        return self.render_messages_(messages, channel_id)
+
+    def render_messages_(self, messages, channel_id=None):
         _messages = []
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(
@@ -647,7 +653,7 @@ class App:
         # to the user.
         if self.showing_thread:
             _messages.append(
-                self.render_message(
+                self.render_message_(
                     {'text': "VIEWING THREAD", 'ts': '0', 'subtype': SCLACK_SUBTYPE,}
                 )
             )
@@ -678,7 +684,7 @@ class App:
             elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
-            message = self.render_message(raw_message, channel_id)
+            message = self.render_message_(raw_message, channel_id)
 
             if message is not None:
                 _messages.append(message)
@@ -753,7 +759,7 @@ class App:
             self.store.state.last_date = None
 
             if len(self.store.state.messages) == 0:
-                messages = self.render_messages(
+                messages = await self.render_messages(
                     [
                         {
                             'text': "There's no conversation in this channel",
@@ -763,7 +769,9 @@ class App:
                     ]
                 )
             else:
-                messages = self.render_messages(self.store.state.messages, channel_id=channel_id)
+                messages = await self.render_messages(
+                    self.store.state.messages, channel_id=channel_id
+                )
 
             header = self.render_chatbox_header()
             if self.is_chatbox_rendered:
@@ -806,7 +814,7 @@ class App:
             self.store.state.last_date = None
 
             if len(self.store.state.thread_messages) == 0:
-                messages = self.render_messages(
+                messages = await self.render_messages(
                     [
                         {
                             'text': "There was an error showing this thread :(",
@@ -816,7 +824,7 @@ class App:
                     ]
                 )
             else:
-                messages = self.render_messages(
+                messages = await self.render_messages(
                     self.store.state.thread_messages, channel_id=channel_id
                 )
 

@@ -67,7 +67,7 @@ def update_message(app, **event):
         elif event.get('subtype') == 'message_changed':
             change_message(app, **event)
         else:
-            app.chatbox.body.body.extend(app.render_messages([event]))
+            app.chatbox.body.body.extend(app.render_messages_([event]))
             app.chatbox.body.scroll_to_bottom()
 
 
@@ -81,7 +81,7 @@ def delete_message(app, delete_ts, **kwargs):
 def change_message(app, message, **kwargs):
     for index, widget in enumerate(app.chatbox.body.body):
         if hasattr(widget, 'ts') and getattr(widget, 'ts') == message['ts']:
-            app.chatbox.body.body[index] = app.render_message(message)
+            app.chatbox.body.body[index] = app.render_message_(message)
             break
 
 
@@ -110,7 +110,7 @@ def other(app, text, ts, **kwargs):
 
     # Message was sent, Slack confirmed it.
     app.chatbox.body.body.extend(
-        app.render_messages([{'text': text, 'ts': ts, 'user': app.store.state.auth['user_id'],}])
+        app.render_messages_([{'text': text, 'ts': ts, 'user': app.store.state.auth['user_id'],}])
     )
     app.chatbox.body.scroll_to_bottom()
     app.handle_mark_read(-1)
