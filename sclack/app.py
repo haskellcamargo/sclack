@@ -361,7 +361,8 @@ class App:
         :param event:
         :return:
         """
-        self.sidebar.update_items(channel_id)
+        channel_info = self.store.get_channel_info(channel_id)
+        self.sidebar.update_items(channel_id, channel_info.get('unread_count_display', 0))
 
     async def mount_chatbox(self, executor, channel):
         await asyncio.gather(
