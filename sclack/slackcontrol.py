@@ -10,6 +10,9 @@ class WebClient(SlackClient):
     def __getattr__(self, name):
         return partial(self.api_call, name.replace('_', '.', 1))
 
+    async def api_call(self, api_method, **kwargs):
+        return super(WebClient, self).api_call(api_method, **kwargs)
+
 
 async def start(app, loop):
     app.store.slack.rtm_connect(auto_reconnect=True)
