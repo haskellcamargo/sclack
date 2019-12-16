@@ -1,4 +1,14 @@
 import asyncio
+from functools import partial
+
+from slackclient import SlackClient
+
+
+class WebClient(SlackClient):
+    # Mimic the new API using the old one.
+
+    def __getattr__(self, name):
+        return partial(self.api_call, name.replace('_', '.', 1))
 
 
 async def start(app, loop):
