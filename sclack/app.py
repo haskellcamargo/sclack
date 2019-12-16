@@ -885,7 +885,7 @@ class App:
             profile.avatar = avatar
 
     async def start_real_time(self):
-        await slackcontrol.start(self, loop)
+        await slackcontrol.RTMClient(self, token=self.store.slack_token)
 
     def stop_typing(self, *args):
         # Prevent error while switching workspace

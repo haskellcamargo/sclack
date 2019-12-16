@@ -20,7 +20,7 @@ setup(
         'urwid>2',
         'pyperclip',
         'requests',
-        'slackclient==1.2.1',
+        'slackclient',
         'urwid_readline'
     ],
     zip_safe=False,

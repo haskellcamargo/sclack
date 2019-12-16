@@ -8,7 +8,7 @@ asyncio = "*"
 urwid = "==2.0.1"
 pyperclip = "==1.6.2"
 requests = "*"
-slackclient = "==1.2.1"
+slackclient = "*"
 urwid-readline = "*"
 websocket-client = "==0.47.0"
 

@@ -1,56 +1,29 @@
-import asyncio
-from functools import partial
-
-from slackclient import SlackClient
+import slack
 
 
-class WebClient(SlackClient):
-    # Mimic the new API using the old one.
-
-    def __getattr__(self, name):
-        return partial(self.api_call, name.replace('_', '.', 1))
-
-    async def api_call(self, api_method, **kwargs):
-        # Hack until the new slack api: Force asyncio controler to switch task.
-        await asyncio.sleep(0)
-        return super(WebClient, self).api_call(api_method, **kwargs)
+class RTMClient(slack.RTMClient):
+    def __init__(self, app, *, token, **kwargs):
+        self.app = app
+        super(RTMClient, self).__init__(token=token, run_aync=True, auto_reconnect=True, **kwargs)
 
 
-async def start(app, loop):
-    app.store.slack.rtm_connect(auto_reconnect=True)
-
-    while app.store.slack.server.connected is True:
-        events = app.store.slack.rtm_read()
-
-        for event in events:
-            if event.get('type') == 'channel_marked':
-                loop.create_task(channel_marked(app, **event))
-            elif event.get('type') == 'group_marked':
-                loop.create_task(group_marked(app, **event))
-            elif event.get('type') == 'im_marked':
-                loop.create_task(im_marked(app, **event))
-            elif event['type'] == 'message':
-                loop.create_task(message(app, loop, **event))
-            elif event['type'] == 'user_typing':
-                loop.create_task(user_typing(app, **event))
-            elif event.get('type') == 'dnd_updated':
-                loop.create_task(dnd_updated(app, **event))
-            elif event.get('ok', False):
-                loop.create_task(other(app, **event))
-        await asyncio.sleep(0.5)
-
-
-async def channel_marked(app, channel, unread_count_display=0, **kwargs):
+@RTMClient.run_on(event='channel_marked')
+async def channel_marked(rtm_client, channel, unread_count_display=0, **kwargs):
+    app = rtm_client.app
     targets = app.sidebar.get_all_channels()
     mark_unread_targets(channel, targets, unread_count_display)
 
 
-async def group_marked(app, channel, unread_count_display=0, **kwargs):
+@RTMClient.run_on(event='group_marked')
+async def group_marked(rtm_client, channel, unread_count_display=0, **kwargs):
+    app = rtm_client.app
     targets = app.sidebar.get_all_groups()
     mark_unread_targets(channel, targets, unread_count_display)
 
 
-async def im_marked(app, channel, unread_count_display=0, **kwargs):
+@RTMClient.run_on(event='im_marked')
+async def im_marked(rtm_client, channel, unread_count_display=0, **kwargs):
+    app = rtm_client.app
     targets = app.sidebar.get_all_dms()
     mark_unread_targets(channel, targets, unread_count_display)
 
@@ -61,7 +34,9 @@ def mark_unread_targets(channel_id, targets, unread):
             target.set_unread(unread)
 
 
-async def message(app, loop, **event):
+@RTMClient.run_on(event='message')
+async def message(rtm_client, loop, **event):
+    app = rtm_client.app
     loop.create_task(app.update_chat(event.get('channel')))
     await update_message(app, **event)
 
@@ -107,7 +82,9 @@ async def change_message(app, message, **kwargs):
             break
 
 
-async def user_typing(app, channel=None, user=None, **kwargs):
+@RTMClient.run_on(event='user_typing')
+async def user_typing(rtm_client, channel=None, user=None, **kwargs):
+    app = rtm_client.app
     if not app.is_chatbox_rendered:
         return
 
@@ -119,9 +96,11 @@ async def user_typing(app, channel=None, user=None, **kwargs):
         app.urwid_loop.set_alarm_in(3, app.stop_typing)
 
 
-async def dnd_updated(app, dnd_status=None, **kwargs):
+@RTMClient.run_on(event='dnd_updated')
+async def dnd_updated(rtm_client, dnd_status=None, **kwargs):
     if not dnd_status:
         return
+    app = rtm_client.app
     app.store.state.is_snoozed = dnd_status['snooze_enabled']
     app.sidebar.profile.set_snooze(app.store.state.is_snoozed)
 

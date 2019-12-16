@@ -3,7 +3,8 @@ import contextlib
 
 import urwid
 
-from .slackcontrol import WebClient
+from slack import WebClient
+
 from .utils.channel import is_channel, is_dm, is_group
 
 
@@ -44,7 +45,7 @@ class Store:
         slack_token = workspaces[0][1]
         self.slack_token = slack_token
         self.semaphore = asyncio.Semaphore(20)
-        self.slack = WebClient(slack_token)
+        self.slack = WebClient(token=slack_token, run_async=True)
         self.urwid_mainloop = None
         self.state = State()
         self.cache = Cache()
@@ -55,7 +56,6 @@ class Store:
     def switch_to_workspace(self, workspace_number):
         self.slack_token = self.workspaces[workspace_number - 1][1]
         self.slack.token = self.slack_token
-        self.slack.server.token = self.slack_token
         self.state = State()
         self.cache = Cache()
 
@@ -118,12 +118,12 @@ class Store:
             return info['channel']
         elif is_dm(channel_id):
             async with self.semaphore:
-                info = await self.slack.im_info(channel=channel_id)
+                info = await self.slack.api_call('im.info', params={'channel': channel_id})
             return info['im']
 
     async def get_channel_members(self, channel_id):
         async with self.semaphore:
-            return await self.slack.api_call('conversations.members', channel=channel_id)
+            return await self.slack.conversations_members(channel=channel_id)
 
     async def mark_read(self, channel_id, ts):
         if is_group(channel_id):
@@ -157,7 +157,7 @@ class Store:
     async def load_channels(self):
         async with self.semaphore:
             conversations = await self.slack.users_conversations(
-                exclude_archived=True,
+                exclude_archived='true',
                 limit=1000,  # 1k is max limit
                 types='public_channel,private_channel,im,mpim',
             )
@@ -236,24 +236,28 @@ class Store:
 
     async def delete_message(self, channel_id, ts):
         async with self.semaphore:
-            return await self.slack.chat_delete(channel=channel_id, ts=ts, as_user=True)
+            return await self.slack.chat_delete(channel=channel_id, ts=ts, as_user='true')
 
     async def edit_message(self, channel_id, ts, text):
         async with self.semaphore:
             return await self.slack.chat_update(
-                channel=channel_id, ts=ts, as_user=True, link_names=True, text=text
+                channel=channel_id, ts=ts, as_user='true', link_names='true', text=text
             )
 
     async def post_message(self, channel_id, message):
         async with self.semaphore:
             return await self.slack.chat_postMessage(
-                channel=channel_id, as_user=True, link_names=True, text=message
+                channel=channel_id, as_user='true', link_names='true', text=message
             )
 
     async def post_thread_message(self, channel_id, parent_ts, message):
         async with self.semaphore:
             return await self.slack.chat_postMessage(
-                channel=channel_id, as_user=True, link_name=True, text=message, thread_ts=parent_ts,
+                channel=channel_id,
+                as_user='true',
+                link_name='true',
+                text=message,
+                thread_ts=parent_ts,
             )
 
     async def get_presence(self, user_id):
