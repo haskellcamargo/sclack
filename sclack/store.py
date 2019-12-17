@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 
 import urwid
@@ -75,10 +76,10 @@ class Store:
             user_detail.get('display_name') or user_detail.get('real_name') or user_detail['name']
         )
 
-    def load_auth(self):
+    async def load_auth(self):
         self.state.auth = self.slack.api_call('auth.test')
 
-    def find_or_load_bot(self, bot_id):
+    async def find_or_load_bot(self, bot_id):
         if bot_id in self.state.bots:
             return self.state.bots[bot_id]
         request = self.slack.api_call('bots.info', bot=bot_id)
@@ -86,7 +87,7 @@ class Store:
             self.state.bots[bot_id] = request['bot']
             return self.state.bots[bot_id]
 
-    def load_messages(self, channel_id):
+    async def load_messages(self, channel_id):
         history = self.slack.api_call('conversations.history', channel=channel_id)
         self.state.messages = history['messages']
         self.state.has_more = history.get('has_more', False)
@@ -94,7 +95,7 @@ class Store:
         self.state.pin_count = history['pin_count']
         self.state.messages.reverse()
 
-    def load_thread_messages(self, channel_id, parent_ts):
+    async def load_thread_messages(self, channel_id, parent_ts):
         """
         Load all of the messages sent in reply to the message with the given timestamp.
         """
@@ -103,7 +104,7 @@ class Store:
         self.state.thread_messages = replies['messages']
         self.state.has_more = replies.get('has_more', False)
 
-    def get_channel_info(self, channel_id):
+    async def get_channel_info(self, channel_id):
         if is_group(channel_id):
             return self.slack.api_call('groups.info', channel=channel_id)['group']
         elif is_channel(channel_id):
@@ -111,10 +112,10 @@ class Store:
         elif is_dm(channel_id):
             return self.slack.api_call('im.info', channel=channel_id)['im']
 
-    def get_channel_members(self, channel_id):
+    async def get_channel_members(self, channel_id):
         return self.slack.api_call('conversations.members', channel=channel_id)
 
-    def mark_read(self, channel_id, ts):
+    async def mark_read(self, channel_id, ts):
         if is_group(channel_id):
             return self.slack.api_call('groups.mark', channel=channel_id, ts=ts)
         elif is_channel(channel_id):
@@ -122,22 +123,23 @@ class Store:
         elif is_dm(channel_id):
             return self.slack.api_call('im.mark', channel=channel_id, ts=ts)
 
-    def get_permalink(self, channel_id, ts):
+    async def get_permalink(self, channel_id, ts):
         # https://api.slack.com/methods/chat.getPermalink
         return self.slack.api_call('chat.getPermalink', channel=channel_id, message_ts=ts)
 
-    def set_snooze(self, snoozed_time):
+    async def set_snooze(self, snoozed_time):
         return self.slack.api_call('dnd.setSnooze', num_minutes=snoozed_time)
 
-    def load_channel(self, channel_id):
+    async def load_channel(self, channel_id):
         if channel_id[0] in ('C', 'G', 'D'):
-            self.state.channel = self.get_channel_info(channel_id)
-            self.state.members = self.get_channel_members(channel_id)
+            self.state.channel, self.state.members = await asyncio.gather(
+                self.get_channel_info(channel_id), self.get_channel_members(channel_id)
+            )
             self.state.did_render_new_messages = (
                 self.state.channel.get('unread_count_display', 0) == 0
             )
 
-    def load_channels(self):
+    async def load_channels(self):
         conversations = self.slack.api_call(
             'users.conversations',
             exclude_archived=True,
@@ -178,10 +180,10 @@ class Store:
 
         return channel_id
 
-    def load_groups(self):
+    async def load_groups(self):
         self.state.groups = self.slack.api_call('mpim.list')['groups']
 
-    def load_stars(self):
+    async def load_stars(self):
         """
         Load stars
         :return:
@@ -193,7 +195,7 @@ class Store:
             )
         )
 
-    def load_users(self):
+    async def load_users(self):
         self.state.users = list(
             filter(
                 lambda user: not user.get('deleted', False),
@@ -207,26 +209,26 @@ class Store:
                 self._users_dict[user['profile']['bot_id']] = user
             self._users_dict[user['id']] = user
 
-    def load_user_dnd(self):
+    async def load_user_dnd(self):
         self.state.is_snoozed = self.slack.api_call('dnd.info').get('snooze_enabled')
 
-    def set_topic(self, channel_id, topic):
+    async def set_topic(self, channel_id, topic):
         return self.slack.api_call('conversations.setTopic', channel=channel_id, topic=topic)
 
-    def delete_message(self, channel_id, ts):
+    async def delete_message(self, channel_id, ts):
         return self.slack.api_call('chat.delete', channel=channel_id, ts=ts, as_user=True)
 
-    def edit_message(self, channel_id, ts, text):
+    async def edit_message(self, channel_id, ts, text):
         return self.slack.api_call(
             'chat.update', channel=channel_id, ts=ts, as_user=True, link_names=True, text=text
         )
 
-    def post_message(self, channel_id, message):
+    async def post_message(self, channel_id, message):
         return self.slack.api_call(
             'chat.postMessage', channel=channel_id, as_user=True, link_names=True, text=message
         )
 
-    def post_thread_message(self, channel_id, parent_ts, message):
+    async def post_thread_message(self, channel_id, parent_ts, message):
         return self.slack.api_call(
             'chat.postMessage',
             channel=channel_id,
@@ -236,7 +238,7 @@ class Store:
             thread_ts=parent_ts,
         )
 
-    def get_presence(self, user_id):
+    async def get_presence(self, user_id):
         response = self.slack.api_call('users.getPresence', user=user_id)
 
         if response.get('ok', False):

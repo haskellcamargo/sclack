@@ -211,12 +211,12 @@ class App:
 
     async def mount_sidebar(self, executor):
         await asyncio.gather(
-            loop.run_in_executor(executor, self.store.load_auth),
-            loop.run_in_executor(executor, self.store.load_channels),
-            loop.run_in_executor(executor, self.store.load_stars),
-            loop.run_in_executor(executor, self.store.load_groups),
-            loop.run_in_executor(executor, self.store.load_users),
-            loop.run_in_executor(executor, self.store.load_user_dnd),
+            self.store.load_auth(),
+            self.store.load_channels(),
+            self.store.load_stars(),
+            self.store.load_groups(),
+            self.store.load_users(),
+            self.store.load_user_dnd(),
         )
         self.mentioned_patterns = self.get_mentioned_patterns()
 
@@ -235,7 +235,7 @@ class App:
         # Prepare list of Star users and channels
         for dm in self.store.state.stars:
             if is_dm(dm['channel']):
-                detail = self.store.get_channel_info(dm['channel'])
+                detail = await self.store.get_channel_info(dm['channel'])
                 user = self.store.find_user_by_id(detail['user'])
 
                 if user:
@@ -249,7 +249,7 @@ class App:
                         )
                     )
             elif is_channel(dm['channel']) or is_group(dm['channel']):
-                channel = self.store.get_channel_info(dm['channel'])
+                channel = await self.store.get_channel_info(dm['channel'])
                 # Group chat (is_mpim) is not supported, prefer to https://github.com/haskellcamargo/sclack/issues/67
                 if (
                     channel
@@ -308,13 +308,11 @@ class App:
         :return:
         """
 
-        def get_presence(dm_widget):
-            presence = self.store.get_presence(dm_widget.user)
+        async def get_presence(dm_widget):
+            presence = await self.store.get_presence(dm_widget.user)
             return [dm_widget, presence]
 
-        presences = await asyncio.gather(
-            *[loop.run_in_executor(executor, get_presence, dm_widget) for dm_widget in dm_widgets]
-        )
+        presences = await asyncio.gather(*(get_presence(dm_widget) for dm_widget in dm_widgets))
 
         for presence in presences:
             [widget, response] = presence
@@ -329,13 +327,11 @@ class App:
         :return:
         """
 
-        def get_presence(dm_widget):
-            profile_response = self.store.get_channel_info(dm_widget.id)
+        async def get_presence(dm_widget):
+            profile_response = await self.store.get_channel_info(dm_widget.id)
             return [dm_widget, profile_response]
 
-        responses = await asyncio.gather(
-            *[loop.run_in_executor(executor, get_presence, dm_widget) for dm_widget in dm_widgets]
-        )
+        responses = await asyncio.gather(*(get_presence(dm_widget) for dm_widget in dm_widgets))
 
         for profile_response in responses:
             [widget, response] = profile_response
@@ -343,13 +339,11 @@ class App:
                 widget.set_unread(response['unread_count_display'])
 
     async def get_channels_info(self, executor, channels):
-        def get_info(channel):
-            info = self.store.get_channel_info(channel.id)
+        async def get_info(channel):
+            info = await self.store.get_channel_info(channel.id)
             return [channel, info]
 
-        channels_info = await asyncio.gather(
-            *[loop.run_in_executor(executor, get_info, channel) for channel in channels]
-        )
+        channels_info = await asyncio.gather(*(get_info(channel) for channel in channels))
 
         for channel_info in channels_info:
             [widget, response] = channel_info
@@ -361,13 +355,12 @@ class App:
         :param event:
         :return:
         """
-        channel_info = self.store.get_channel_info(channel_id)
+        channel_info = await self.store.get_channel_info(channel_id)
         self.sidebar.update_items(channel_id, channel_info.get('unread_count_display', 0))
 
     async def mount_chatbox(self, executor, channel):
         await asyncio.gather(
-            loop.run_in_executor(executor, self.store.load_channel, channel),
-            loop.run_in_executor(executor, self.store.load_messages, channel),
+            self.store.load_channel(channel), self.store.load_messages(channel),
         )
         messages = await self.render_messages(self.store.state.messages, channel_id=channel)
         header = self.render_chatbox_header()
@@ -383,7 +376,7 @@ class App:
         urwid.connect_signal(self.chatbox, 'open_quick_switcher', self.open_quick_switcher)
         urwid.connect_signal(self.chatbox, 'open_set_snooze', self.open_set_snooze)
 
-        urwid.connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
+        async_connect_signal(self.message_box.prompt_widget, 'submit_message', self.submit_message)
         urwid.connect_signal(
             self.message_box.prompt_widget, 'go_to_last_message', self.go_to_last_message
         )
@@ -401,9 +394,9 @@ class App:
             self.chatbox.message_box.text = original_text
             widget.set_edit_mode()
 
-    def get_permalink(self, widget, channel_id, ts):
+    async def get_permalink(self, widget, channel_id, ts):
         try:
-            permalink = self.store.get_permalink(channel_id, ts)
+            permalink = await self.store.get_permalink(channel_id, ts)
             if permalink and permalink.get('permalink'):
                 text = permalink.get('permalink')
                 self.set_insert_mode()
@@ -411,9 +404,10 @@ class App:
         except:
             pass
 
-    def delete_message(self, widget, user_id, ts):
+    async def delete_message(self, widget, user_id, ts):
         if self.store.state.auth['user_id'] == user_id:
-            if self.store.delete_message(self.store.state.channel['id'], ts)['ok']:
+            result = await self.store.delete_message(self.store.state.channel['id'], ts)
+            if result['ok']:
                 self.chatbox.body.body.remove(widget)
 
     def go_to_profile(self, user_id):
@@ -467,12 +461,12 @@ class App:
                 is_private=self.store.state.channel.get('is_group', False),
                 is_starred=self.store.state.channel.get('is_starred', False),
             )
-            urwid.connect_signal(header.topic_widget, 'done', self.on_change_topic)
+            async_connect_signal(header.topic_widget, 'done', self.on_change_topic)
         return header
 
-    def on_change_topic(self, text):
+    async def on_change_topic(self, text):
         self.chatbox.header.original_topic = text
-        self.store.set_topic(self.store.state.channel['id'], text)
+        await self.store.set_topic(self.store.state.channel['id'], text)
         self.go_to_sidebar()
 
     async def render_message(self, message, channel_id=None):
@@ -515,7 +509,7 @@ class App:
             user_id = message['bot_id']
             bot = self.store.find_user_by_id(user_id)
             if not bot:
-                bot = self.store.find_or_load_bot(user_id)
+                bot = await self.store.find_or_load_bot(user_id)
             if bot:
                 user_name = bot.get('profile', {}).get('display_name') or bot.get('name')
                 color = bot.get('color')
@@ -601,10 +595,10 @@ class App:
         self.lazy_load_images(files, message)
 
         urwid.connect_signal(message, 'edit_message', self.edit_message)
-        urwid.connect_signal(message, 'get_permalink', self.get_permalink)
+        async_connect_signal(message, 'get_permalink', self.get_permalink)
         urwid.connect_signal(message, 'go_to_profile', self.go_to_profile)
         urwid.connect_signal(message, 'go_to_sidebar', self.go_to_sidebar)
-        urwid.connect_signal(message, 'delete_message', self.delete_message)
+        async_connect_signal(message, 'delete_message', self.delete_message)
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(message, 'open_in_browser', self.open_in_browser)
@@ -743,14 +737,12 @@ class App:
                     message = self.chatbox.body.body[index - 1]
 
             if message.channel_id:
-                self.store.mark_read(message.channel_id, message.ts)
+                await self.store.mark_read(message.channel_id, message.ts)
 
     async def _go_to_channel(self, channel_id):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            await asyncio.gather(
-                loop.run_in_executor(executor, self.store.load_channel, channel_id),
-                loop.run_in_executor(executor, self.store.load_messages, channel_id),
-            )
+        await asyncio.gather(
+            self.store.load_channel(channel_id), self.store.load_messages(channel_id),
+        )
         self.store.state.last_date = None
 
         if len(self.store.state.messages) == 0:
@@ -798,10 +790,7 @@ class App:
         """
         Display the requested thread in the chatbox
         """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            await loop.run_in_executor(
-                executor, self.store.load_thread_messages, channel_id, parent_ts
-            )
+        await self.store.load_thread_messages(channel_id, parent_ts)
         self.store.state.last_date = None
 
         if len(self.store.state.thread_messages) == 0:
@@ -846,7 +835,7 @@ class App:
             loop.create_task(self._show_thread(channel_id, parent_ts))
 
     def handle_set_snooze_time(self, snoozed_time):
-        loop.create_task(self.dispatch_snooze_time(snoozed_time))
+        loop.create_task(self.store.set_snooze(snoozed_time))
 
     def handle_close_set_snooze(self):
         """
@@ -862,9 +851,6 @@ class App:
             )
             self.urwid_loop.widget = self._body
             self.set_snooze_widget = None
-
-    async def dispatch_snooze_time(self, snoozed_time):
-        self.store.set_snooze(snoozed_time)
 
     async def load_picture_async(self, url, width, message_widget, auth=True):
         width = min(width, 800)
@@ -940,11 +926,11 @@ class App:
             self.urwid_loop.widget = self._body
             self.quick_switcher = None
 
-    def submit_message(self, message):
+    async def submit_message(self, message):
         if self.store.state.editing_widget:
             channel = self.store.state.channel['id']
             ts = self.store.state.editing_widget.ts
-            edit_result = self.store.edit_message(channel, ts, message)
+            edit_result = await self.store.edit_message(channel, ts, message)
             if edit_result['ok']:
                 self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
@@ -952,7 +938,9 @@ class App:
         if self.showing_thread:
             channel = self.store.state.channel['id']
             if message.strip() != '':
-                self.store.post_thread_message(channel, self.store.state.thread_parent, message)
+                await self.store.post_thread_message(
+                    channel, self.store.state.thread_parent, message
+                )
                 self.leave_edit_mode()
 
             # Refresh the thread to make sure the new message immediately shows up
@@ -960,7 +948,7 @@ class App:
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
-                self.store.post_message(channel, message)
+                await self.store.post_message(channel, message)
                 self.leave_edit_mode()
 
             # Refresh the channel to make sure the new message shows up
@@ -1096,3 +1084,11 @@ def run():
     if config.get('logging', None):
         logging.config.dictConfig(config['logging'])
     App(config).start()
+
+
+def async_connect_signal(widget, signal, callback, *args):
+    @functools.wraps(callback)
+    def signal_task(*args):
+        loop.create_task(callback(*args))
+
+    urwid.connect_signal(widget, signal, signal_task, *args)
