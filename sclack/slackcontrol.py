@@ -9,33 +9,33 @@ async def start(app, loop):
 
         for event in events:
             if event.get('type') == 'channel_marked':
-                channel_marked(app, **event)
+                loop.create_task(channel_marked(app, **event))
             elif event.get('type') == 'group_marked':
-                group_marked(app, **event)
+                loop.create_task(group_marked(app, **event))
             elif event.get('type') == 'im_marked':
-                im_marked(app, **event)
+                loop.create_task(im_marked(app, **event))
             elif event['type'] == 'message':
-                message(app, loop, **event)
+                loop.create_task(message(app, loop, **event))
             elif event['type'] == 'user_typing':
-                user_typing(app, **event)
+                loop.create_task(user_typing(app, **event))
             elif event.get('type') == 'dnd_updated':
-                dnd_updated(app, **event)
+                loop.create_task(dnd_updated(app, **event))
             elif event.get('ok', False):
-                other(app, **event)
+                loop.create_task(other(app, **event))
         await asyncio.sleep(0.5)
 
 
-def channel_marked(app, channel, unread_count_display=0, **kwargs):
+async def channel_marked(app, channel, unread_count_display=0, **kwargs):
     targets = app.sidebar.get_all_channels()
     mark_unread_targets(channel, targets, unread_count_display)
 
 
-def group_marked(app, channel, unread_count_display=0, **kwargs):
+async def group_marked(app, channel, unread_count_display=0, **kwargs):
     targets = app.sidebar.get_all_groups()
     mark_unread_targets(channel, targets, unread_count_display)
 
 
-def im_marked(app, channel, unread_count_display=0, **kwargs):
+async def im_marked(app, channel, unread_count_display=0, **kwargs):
     targets = app.sidebar.get_all_dms()
     mark_unread_targets(channel, targets, unread_count_display)
 
@@ -46,7 +46,7 @@ def mark_unread_targets(channel_id, targets, unread):
             target.set_unread(unread)
 
 
-def message(app, loop, **event):
+async def message(app, loop, **event):
     loop.create_task(app.update_chat(event.get('channel')))
     update_message(app, **event)
 
@@ -85,7 +85,7 @@ def change_message(app, message, **kwargs):
             break
 
 
-def user_typing(app, channel=None, user=None, **kwargs):
+async def user_typing(app, channel=None, user=None, **kwargs):
     if not app.is_chatbox_rendered:
         return
 
@@ -97,14 +97,14 @@ def user_typing(app, channel=None, user=None, **kwargs):
         app.urwid_loop.set_alarm_in(3, app.stop_typing)
 
 
-def dnd_updated(app, dnd_status=None, **kwargs):
+async def dnd_updated(app, dnd_status=None, **kwargs):
     if not dnd_status:
         return
     app.store.state.is_snoozed = dnd_status['snooze_enabled']
     app.sidebar.profile.set_snooze(app.store.state.is_snoozed)
 
 
-def other(app, text, ts, **kwargs):
+async def other(app, text, ts, **kwargs):
     if not app.is_chatbox_rendered:
         return
 
