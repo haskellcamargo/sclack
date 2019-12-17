@@ -494,7 +494,7 @@ class App:
 
             return message
 
-        message_text = message['text']
+        message_text = message.get('text', '')
         files = message.get('files', [])
 
         # Files uploaded

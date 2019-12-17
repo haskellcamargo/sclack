@@ -50,7 +50,11 @@ async def message(app, loop, **event):
     loop.create_task(app.update_chat(event.get('channel')))
     await update_message(app, **event)
 
-    if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
+    if (
+        event.get('subtype') != 'message_deleted'
+        and event.get('subtype') != 'message_changed'
+        and not event.get('hidden')
+    ):
         # Continue while notifications are displayed asynchronuously.
         loop.create_task(
             app.notify_message(event.get('channel'), event.get('text'), event.get('user'))
@@ -66,13 +70,15 @@ async def update_message(app, **event):
             delete_message(app, **event)
         elif event.get('subtype') == 'message_changed':
             await change_message(app, **event)
+        elif event.get('hidden'):
+            pass
         else:
             messages = await app.render_messages([event])
             app.chatbox.body.body.extend(messages)
             app.chatbox.body.scroll_to_bottom()
 
 
-def delete_message(app, delete_ts, **kwargs):
+def delete_message(app, delete_ts=None, **kwargs):
     for widget in app.chatbox.body.body:
         if hasattr(widget, 'ts') and getattr(widget, 'ts') == delete_ts:
             app.chatbox.body.body.remove(widget)
