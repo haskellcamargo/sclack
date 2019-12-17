@@ -48,7 +48,7 @@ def mark_unread_targets(channel_id, targets, unread):
 
 async def message(app, loop, **event):
     loop.create_task(app.update_chat(event.get('channel')))
-    update_message(app, **event)
+    await update_message(app, **event)
 
     if event.get('subtype') != 'message_deleted' and event.get('subtype') != 'message_changed':
         # Continue while notifications are displayed asynchronuously.
@@ -57,7 +57,7 @@ async def message(app, loop, **event):
         )
 
 
-def update_message(app, **event):
+async def update_message(app, **event):
     if event.get('channel') == app.store.state.channel['id']:
         if not app.is_chatbox_rendered:
             return
@@ -65,9 +65,10 @@ def update_message(app, **event):
         if event.get('subtype') == 'message_deleted':
             delete_message(app, **event)
         elif event.get('subtype') == 'message_changed':
-            change_message(app, **event)
+            await change_message(app, **event)
         else:
-            app.chatbox.body.body.extend(app.render_messages_([event]))
+            messages = await app.render_messages([event])
+            app.chatbox.body.body.extend(messages)
             app.chatbox.body.scroll_to_bottom()
 
 
@@ -78,10 +79,10 @@ def delete_message(app, delete_ts, **kwargs):
             break
 
 
-def change_message(app, message, **kwargs):
+async def change_message(app, message, **kwargs):
     for index, widget in enumerate(app.chatbox.body.body):
         if hasattr(widget, 'ts') and getattr(widget, 'ts') == message['ts']:
-            app.chatbox.body.body[index] = app.render_message_(message)
+            app.chatbox.body.body[index] = await app.render_message(message)
             break
 
 
@@ -109,8 +110,9 @@ async def other(app, text, ts, **kwargs):
         return
 
     # Message was sent, Slack confirmed it.
-    app.chatbox.body.body.extend(
-        app.render_messages_([{'text': text, 'ts': ts, 'user': app.store.state.auth['user_id'],}])
+    messages = await app.render_messages(
+        [{'text': text, 'ts': ts, 'user': app.store.state.auth['user_id'],}]
     )
+    app.chatbox.body.body.extend(messages)
     app.chatbox.body.scroll_to_bottom()
     app.handle_mark_read(-1)

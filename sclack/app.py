@@ -476,9 +476,6 @@ class App:
         self.go_to_sidebar()
 
     async def render_message(self, message, channel_id=None):
-        return self.render_message_(message, channel_id)
-
-    def render_message_(self, message, channel_id=None):
         is_app = False
         subtype = message.get('subtype')
 
@@ -640,9 +637,6 @@ class App:
                 )
 
     async def render_messages(self, messages, channel_id=None):
-        return self.render_messages_(messages, channel_id)
-
-    def render_messages_(self, messages, channel_id=None):
         _messages = []
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(
@@ -654,7 +648,7 @@ class App:
         # to the user.
         if self.showing_thread:
             _messages.append(
-                self.render_message_(
+                await self.render_message(
                     {'text': "VIEWING THREAD", 'ts': '0', 'subtype': SCLACK_SUBTYPE,}
                 )
             )
@@ -685,7 +679,7 @@ class App:
             elif date_text is not None:
                 _messages.append(TextDivider(('history_date', date_text), 'center'))
 
-            message = self.render_message_(raw_message, channel_id)
+            message = await self.render_message(raw_message, channel_id)
 
             if message is not None:
                 _messages.append(message)
