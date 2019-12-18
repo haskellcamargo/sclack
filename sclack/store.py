@@ -43,6 +43,7 @@ class Store:
         self.workspaces = workspaces
         slack_token = workspaces[0][1]
         self.slack_token = slack_token
+        self.semaphore = asyncio.Semaphore(20)
         self.slack = WebClient(slack_token)
         self.urwid_mainloop = None
         self.state = State()
@@ -76,18 +77,21 @@ class Store:
         )
 
     async def load_auth(self):
-        self.state.auth = await self.slack.auth_test()
+        async with self.semaphore:
+            self.state.auth = await self.slack.auth_test()
 
     async def find_or_load_bot(self, bot_id):
         if bot_id in self.state.bots:
             return self.state.bots[bot_id]
-        request = await self.slack.bots_info(bot=bot_id)
+        async with self.semaphore:
+            request = await self.slack.bots_info(bot=bot_id)
         if request['ok']:
             self.state.bots[bot_id] = request['bot']
             return self.state.bots[bot_id]
 
     async def load_messages(self, channel_id):
-        history = await self.slack.conversations_history(channel=channel_id)
+        async with self.semaphore:
+            history = await self.slack.conversations_history(channel=channel_id)
         self.state.messages = history['messages']
         self.state.has_more = history.get('has_more', False)
         self.state.is_limited = history.get('is_limited', False)
@@ -98,38 +102,48 @@ class Store:
         """
         Load all of the messages sent in reply to the message with the given timestamp.
         """
-        replies = await self.slack.conversations_replies(channel=channel_id, ts=parent_ts,)
+        async with self.semaphore:
+            replies = await self.slack.conversations_replies(channel=channel_id, ts=parent_ts,)
         self.state.thread_messages = replies['messages']
         self.state.has_more = replies.get('has_more', False)
 
     async def get_channel_info(self, channel_id):
         if is_group(channel_id):
-            info = await self.slack.groups_info(channel=channel_id)
+            async with self.semaphore:
+                info = await self.slack.groups_info(channel=channel_id)
             return info['group']
         elif is_channel(channel_id):
-            info = await self.slack.channels_info(channel=channel_id)
+            async with self.semaphore:
+                info = await self.slack.channels_info(channel=channel_id)
             return info['channel']
         elif is_dm(channel_id):
-            info = await self.slack.im_info(channel=channel_id)
+            async with self.semaphore:
+                info = await self.slack.im_info(channel=channel_id)
             return info['im']
 
     async def get_channel_members(self, channel_id):
-        return await self.slack.api_call('conversations.members', channel=channel_id)
+        async with self.semaphore:
+            return await self.slack.api_call('conversations.members', channel=channel_id)
 
     async def mark_read(self, channel_id, ts):
         if is_group(channel_id):
-            return await self.slack.groups_mark(channel=channel_id, ts=ts)
+            async with self.semaphore:
+                return await self.slack.groups_mark(channel=channel_id, ts=ts)
         elif is_channel(channel_id):
-            return await self.slack.channels_mark(channel=channel_id, ts=ts)
+            async with self.semaphore:
+                return await self.slack.channels_mark(channel=channel_id, ts=ts)
         elif is_dm(channel_id):
-            return await self.slack.im_mark(channel=channel_id, ts=ts)
+            async with self.semaphore:
+                return await self.slack.im_mark(channel=channel_id, ts=ts)
 
     async def get_permalink(self, channel_id, ts):
         # https://api.slack.com/methods/chat.getPermalink
-        return await self.slack.chat_getPermalink(channel=channel_id, message_ts=ts)
+        async with self.semaphore:
+            return await self.slack.chat_getPermalink(channel=channel_id, message_ts=ts)
 
     async def set_snooze(self, snoozed_time):
-        return await self.slack.dnd_setSnooze(num_minutes=snoozed_time)
+        async with self.semaphore:
+            return await self.slack.dnd_setSnooze(num_minutes=snoozed_time)
 
     async def load_channel(self, channel_id):
         if channel_id[0] in ('C', 'G', 'D'):
@@ -141,12 +155,12 @@ class Store:
             )
 
     async def load_channels(self):
-        conversations = await self.slack.users_conversations(
-            exclude_archived=True,
-            limit=1000,  # 1k is max limit
-            types='public_channel,private_channel,im,mpim',
-        )
-
+        async with self.semaphore:
+            conversations = await self.slack.users_conversations(
+                exclude_archived=True,
+                limit=1000,  # 1k is max limit
+                types='public_channel,private_channel,im,mpim',
+            )
         for channel in conversations['channels']:
             # Public channel
             if channel.get('is_channel', False):
@@ -181,7 +195,8 @@ class Store:
         return channel_id
 
     async def load_groups(self):
-        result = await self.slack.mpim_list()
+        async with self.semaphore:
+            result = await self.slack.mpim_list()
         self.state.groups = result['groups']
 
     async def load_stars(self):
@@ -189,7 +204,8 @@ class Store:
         Load stars
         :return:
         """
-        stars = await self.slack.stars_list()
+        async with self.semaphore:
+            stars = await self.slack.stars_list()
         self.state.stars = list(
             filter(
                 lambda star: star.get('type', '') in ('channel', 'im', 'group',), stars['items'],
@@ -197,7 +213,8 @@ class Store:
         )
 
     async def load_users(self):
-        users = await self.slack.users_list()
+        async with self.semaphore:
+            users = await self.slack.users_list()
         self.state.users = list(
             filter(lambda user: not user.get('deleted', False), users['members'],)
         )
@@ -209,39 +226,44 @@ class Store:
             self._users_dict[user['id']] = user
 
     async def load_user_dnd(self):
-        info = await self.slack.dnd_info()
+        async with self.semaphore:
+            info = await self.slack.dnd_info()
         self.state.is_snoozed = info.get('snooze_enabled')
 
     async def set_topic(self, channel_id, topic):
-        return await self.slack.conversations_setTopic(channel=channel_id, topic=topic)
+        async with self.semaphore:
+            return await self.slack.conversations_setTopic(channel=channel_id, topic=topic)
 
     async def delete_message(self, channel_id, ts):
-        return await self.slack.chat_delete(channel=channel_id, ts=ts, as_user=True)
+        async with self.semaphore:
+            return await self.slack.chat_delete(channel=channel_id, ts=ts, as_user=True)
 
     async def edit_message(self, channel_id, ts, text):
-        return await self.slack.chat_update(
-            channel=channel_id, ts=ts, as_user=True, link_names=True, text=text
-        )
+        async with self.semaphore:
+            return await self.slack.chat_update(
+                channel=channel_id, ts=ts, as_user=True, link_names=True, text=text
+            )
 
     async def post_message(self, channel_id, message):
-        return await self.slack.chat_postMessage(
-            channel=channel_id, as_user=True, link_names=True, text=message
-        )
+        async with self.semaphore:
+            return await self.slack.chat_postMessage(
+                channel=channel_id, as_user=True, link_names=True, text=message
+            )
 
     async def post_thread_message(self, channel_id, parent_ts, message):
-        return await self.slack.chat_postMessage(
-            channel=channel_id, as_user=True, link_name=True, text=message, thread_ts=parent_ts,
-        )
+        async with self.semaphore:
+            return await self.slack.chat_postMessage(
+                channel=channel_id, as_user=True, link_name=True, text=message, thread_ts=parent_ts,
+            )
 
     async def get_presence(self, user_id):
-        response = await self.slack.users_getPresence(user=user_id)
-
+        async with self.semaphore:
+            response = await self.slack.users_getPresence(user=user_id)
         if response.get('ok', False):
             if response['presence'] == 'active':
                 self.state.online_users.add(user_id)
             else:
                 self.state.online_users.discard(user_id)
-
         return response
 
     def make_urwid_mainloop(self, body, palette, event_loop, unhandled_input):
