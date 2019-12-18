@@ -206,7 +206,12 @@ class App:
 
     async def component_did_mount(self):
         await self.mount_sidebar()
-        await self.mount_chatbox(self.store.state.channels[0]['id'])
+        await self.mount_chatbox(self.store.state.channels[0]['id']),
+        await asyncio.gather(
+            self.get_channels_info(self.sidebar.get_all_channels()),
+            self.get_presences(self.sidebar.get_all_dms()),
+            self.get_dms_unread(self.sidebar.get_all_dms()),
+        )
 
     async def mount_sidebar(self):
         await asyncio.gather(
@@ -295,9 +300,6 @@ class App:
             profile, channels, dms, stars=stars, title=self.store.state.auth['team']
         )
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
-        loop.create_task(self.get_channels_info(self.sidebar.get_all_channels()))
-        loop.create_task(self.get_presences(self.sidebar.get_all_dms()))
-        loop.create_task(self.get_dms_unread(self.sidebar.get_all_dms()))
 
     async def get_presences(self, dm_widgets):
         """

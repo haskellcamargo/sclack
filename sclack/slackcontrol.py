@@ -11,6 +11,8 @@ class WebClient(SlackClient):
         return partial(self.api_call, name.replace('_', '.', 1))
 
     async def api_call(self, api_method, **kwargs):
+        # Hack until the new slack api: Force asyncio controler to switch task.
+        await asyncio.sleep(0)
         return super(WebClient, self).api_call(api_method, **kwargs)
 
 
