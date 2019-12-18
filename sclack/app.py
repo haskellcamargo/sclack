@@ -205,11 +205,10 @@ class App:
         update()
 
     async def component_did_mount(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            await self.mount_sidebar(executor)
-            await self.mount_chatbox(executor, self.store.state.channels[0]['id'])
+        await self.mount_sidebar()
+        await self.mount_chatbox(self.store.state.channels[0]['id'])
 
-    async def mount_sidebar(self, executor):
+    async def mount_sidebar(self):
         await asyncio.gather(
             self.store.load_auth(),
             self.store.load_channels(),
@@ -296,14 +295,13 @@ class App:
             profile, channels, dms, stars=stars, title=self.store.state.auth['team']
         )
         urwid.connect_signal(self.sidebar, 'go_to_channel', self.go_to_channel)
-        loop.create_task(self.get_channels_info(executor, self.sidebar.get_all_channels()))
-        loop.create_task(self.get_presences(executor, self.sidebar.get_all_dms()))
-        loop.create_task(self.get_dms_unread(executor, self.sidebar.get_all_dms()))
+        loop.create_task(self.get_channels_info(self.sidebar.get_all_channels()))
+        loop.create_task(self.get_presences(self.sidebar.get_all_dms()))
+        loop.create_task(self.get_dms_unread(self.sidebar.get_all_dms()))
 
-    async def get_presences(self, executor, dm_widgets):
+    async def get_presences(self, dm_widgets):
         """
         Compute and return presence because updating UI from another thread is unsafe
-        :param executor:
         :param dm_widgets:
         :return:
         """
@@ -319,10 +317,9 @@ class App:
             if response['ok']:
                 widget.set_presence(response['presence'])
 
-    async def get_dms_unread(self, executor, dm_widgets):
+    async def get_dms_unread(self, dm_widgets):
         """
         Compute and return unread_count_display because updating UI from another thread is unsafe
-        :param executor:
         :param dm_widgets:
         :return:
         """
@@ -338,7 +335,7 @@ class App:
             if response is not None:
                 widget.set_unread(response['unread_count_display'])
 
-    async def get_channels_info(self, executor, channels):
+    async def get_channels_info(self, channels):
         async def get_info(channel):
             info = await self.store.get_channel_info(channel.id)
             return [channel, info]
@@ -358,7 +355,7 @@ class App:
         channel_info = await self.store.get_channel_info(channel_id)
         self.sidebar.update_items(channel_id, channel_info.get('unread_count_display', 0))
 
-    async def mount_chatbox(self, executor, channel):
+    async def mount_chatbox(self, channel):
         await asyncio.gather(
             self.store.load_channel(channel), self.store.load_messages(channel),
         )
