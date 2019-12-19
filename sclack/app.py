@@ -926,30 +926,24 @@ class App:
             self.quick_switcher = None
 
     async def submit_message(self, message):
+        if not message.strip():
+            return
+        channel = self.store.state.channel['id']
         if self.store.state.editing_widget:
-            channel = self.store.state.channel['id']
             ts = self.store.state.editing_widget.ts
             edit_result = await self.store.edit_message(channel, ts, message)
             if edit_result['ok']:
                 self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
             self.leave_edit_mode()
-        if self.showing_thread:
-            channel = self.store.state.channel['id']
-            if message.strip() != '':
-                await self.store.post_thread_message(
-                    channel, self.store.state.thread_parent, message
-                )
-                self.leave_edit_mode()
-
+        elif self.showing_thread:
+            await self.store.post_thread_message(channel, self.store.state.thread_parent, message)
+            self.leave_edit_mode()
             # Refresh the thread to make sure the new message immediately shows up
             loop.create_task(self._show_thread(channel, self.store.state.thread_parent))
         else:
-            channel = self.store.state.channel['id']
-            if message.strip() != '':
-                await self.store.post_message(channel, message)
-                self.leave_edit_mode()
-
+            await self.store.post_message(channel, message)
+            self.leave_edit_mode()
             # Refresh the channel to make sure the new message shows up
             loop.create_task(self._go_to_channel(channel))
 
