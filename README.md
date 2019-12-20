@@ -149,6 +149,7 @@ Your `~/.sclack` file will look like:
         "timezone": "\uF0AC",
         "alarm_snooze": "\ufb8c"
     },
+    "logging": {},
     "workspaces": {
         "default": "wow-such-secret"
     }
@@ -256,6 +257,32 @@ To test your notification availability, trigger below command, if you can see no
 ```bash
 python sclack/notification.py
 ```
+
+#### logging
+
+Sclack uses the python `logging` module to display debug messages. Logged messages can be configured in the `"logging"` section of the configuration file. The specified logging configuration is given to [logging.config.DictConfig](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig).
+
+```json
+"logging": {
+    "formatters": {
+        "default": {
+            "style": "{",
+            "format": "[{levelname}] {message} - {name}"
+        }
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "/tmp/sclack.log",
+            "mode": "w",
+            "formatter": "default"
+        }
+    },
+    "root": {
+        "level": "DEBUG",
+        "handlers": ["file"]
+    }
+}
 
 ## Tested Terminals
 

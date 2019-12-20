@@ -3,6 +3,7 @@ import asyncio
 import concurrent.futures
 import functools
 import json
+import logging.config
 import os
 import re
 import sys
@@ -1191,5 +1192,7 @@ def ask_for_token(json_config):
 
 
 def run():
-    app = App(load_configuration())
-    app.start()
+    config = load_configuration()
+    if config.get('logging', None):
+        logging.config.dictConfig(config['logging'])
+    App(config).start()

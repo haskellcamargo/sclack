@@ -59,5 +59,6 @@
         "status": "\uF075",
         "timezone": "\uF0AC",
         "alarm_snooze": "\ufb8c"
-    }
+    },
+    "logging": {}
 }
