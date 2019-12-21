@@ -13,7 +13,7 @@ setup(
     author_email='marcelocamargo@linuxmail.org',
     url='https://github.com/haskellcamargo/sclack',
     entry_points={'console_scripts': ['sclack=sclack.app:run']},
-    package_data={'sclack': ['resources/*.json', 'resources/*.png']},
+    package_data={'sclack': ['resources/*.yaml', 'resources/*.png']},
     packages=find_packages(),
     install_requires=[
         'asyncio',
@@ -21,7 +21,8 @@ setup(
         'pyperclip',
         'requests',
         'slackclient',
-        'urwid_readline'
+        'urwid_readline',
+        'pyyaml',
     ],
     zip_safe=False,
 )

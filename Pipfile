@@ -11,6 +11,7 @@ requests = "*"
 slackclient = "*"
 urwid-readline = "*"
 websocket-client = "==0.47.0"
+pyyaml = "*"
 
 [dev-packages]
 

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import requests
 import urwid
+import yaml
 
 from . import slackcontrol
 from .component.message import Message
@@ -1048,21 +1049,30 @@ class App:
 
 
 def load_configuration():
-    filepath = Path(__file__).parent / 'resources' / 'config.json'
+    filepath = Path(__file__).parent / 'resources' / 'config.yaml'
     with filepath.open() as config_file:
-        json_config = json.load(config_file)
+        json_config = yaml.load(config_file, Loader=yaml.FullLoader)
     filepath = Path('~/.sclack').expanduser()
+    config_dir = Path(os.environ.get('XDG_CONFIG_HOME') or '~/.config').expanduser() / 'sclack'
     if not filepath.exists():
-        config_home = Path(os.environ.get('XDG_CONFIG_HOME') or '~/.config').expanduser()
-        filepath = config_home / 'sclack' / 'config.json'
+        filepath = config_dir / 'config.json'
+    if not filepath.exists():
+        filepath = config_dir / 'config.yaml'
     if not filepath.exists():
         ask_for_token(json_config)
-        filepath.parent.mkdir(parents=True)
+        if not config_dir.exists():
+            filepath.parent.mkdir(parents=True)
         with filepath.open('w') as config_file:
-            json.dump(json_config, config_file, indent=2)
+            if filepath.suffix == '.json':
+                json.dump(json_config, config_file, indent=2)
+            elif filepath.suffix == '.yaml':
+                yaml.dump(json_config, config_file)
     else:
         with filepath.open() as config_file:
-            json_config.update(json.load(config_file))
+            if filepath.suffix == '.json':
+                json_config.update(json.load(config_file))
+            elif filepath.suffix == '.yaml':
+                json_config.update(yaml.load(config_file, Loader=yaml.FullLoader))
     return json_config
 
 
