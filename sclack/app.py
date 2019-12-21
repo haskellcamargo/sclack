@@ -369,6 +369,7 @@ class App:
         self.message_box = MessageBox(
             user=self.store.state.auth['user'],
             is_read_only=self.store.state.channel.get('is_read_only', False),
+            users=[user['name'] for user in self.store.state.users],
         )
         self.chatbox = ChatBox(messages, header, self.message_box, self.urwid_loop)
         urwid.connect_signal(self.chatbox, 'set_insert_mode', self.set_insert_mode)

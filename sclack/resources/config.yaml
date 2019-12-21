@@ -51,6 +51,7 @@ keymap:
   toggle_sidebar: s
   toggle_thread: t
   yank_message: y
+  prompt_autocomplete: tab
 logging: {}
 sidebar:
   max_users: 20

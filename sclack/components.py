@@ -1,8 +1,9 @@
+import re
 import time
 
 import urwid
-
 import urwid_readline
+
 from sclack.utils.channel import is_channel, is_dm, is_group
 from sclack.utils.message import format_date_time
 
@@ -534,7 +535,7 @@ class Indicators(urwid.Columns):
 
 
 class MessageBox(urwid.AttrMap):
-    def __init__(self, user, typing=None, is_read_only=False):
+    def __init__(self, user, typing=None, is_read_only=False, users=None):
         self.read_only_widget = urwid.Text('You have no power here!', align='center')
         if typing != None:
             top_separator = TextDivider(
@@ -542,7 +543,7 @@ class MessageBox(urwid.AttrMap):
             )
         else:
             top_separator = urwid.Divider('─')
-        self.prompt_widget = MessagePrompt(user)
+        self.prompt_widget = MessagePrompt(user, users=users)
         middle = urwid.WidgetPlaceholder(
             self.read_only_widget if is_read_only else self.prompt_widget
         )
@@ -594,9 +595,14 @@ class MessageBox(urwid.AttrMap):
 
 class MessagePrompt(urwid_readline.ReadlineEdit):
     signals = ['submit_message', 'go_to_last_message']
+    emoji_codes = ' ' + ' '.join(emoji_codemap.keys()) + ' '
 
-    def __init__(self, user):
+    def __init__(self, user, users=None):
+        self._users = ' ' + ' '.join(users or [user]) + ' '
         super(MessagePrompt, self).__init__([('prompt', ' {}'.format(user)), ' '])
+        self.enable_autocomplete(
+            self._autocomplete_text, key=Store.instance.config['keymap'].get('prompt_autocomplete')
+        )
 
     def keypress(self, size, key):
         keymap = Store.instance.config['keymap']
@@ -610,6 +616,45 @@ class MessagePrompt(urwid_readline.ReadlineEdit):
             urwid.emit_signal(self, 'go_to_last_message')
             return True
         return super(MessagePrompt, self).keypress(size, key)
+
+    def _add_in_edit_text(self, text):
+        self.set_edit_text(self.get_edit_text() + text)
+
+    def _autocomplete_text(self, text, state):
+        if text.startswith(':'):
+            return self._autocomplete_smiley(text, state)
+        if text.startswith('@'):
+            return self._autocomplete_user(text, state)
+
+    def _autocomplete_user(self, text, state):
+        matched = self._match(text, self._users, fuzzy=False)
+        try:
+            return '@' + matched[state]
+        except IndexError:
+            return
+
+    def _autocomplete_smiley(self, text, state):
+        text = text.strip(':')
+        if not text:
+            return ':' + list(emoji_codemap.keys())[state] + ': '
+        if text.startswith('+'):  # :+1: available only
+            return ':+1: '
+        if text.startswith('-'):  # :-1: available only
+            return ':-1: '
+        matched = self._match(text, self.emoji_codes, fuzzy=True)
+        try:
+            name = matched[state]
+        except IndexError:
+            return None
+        return emoji_codemap[name] + ' '
+
+    def _match(self, text, concated_texts, fuzzy=False):
+        text = re.sub(r'\W', '', text)
+        if fuzzy:
+            matcher = r'\w*' + r'\w*'.join(text) + r'\w*'
+        else:
+            matcher = text + r'\w*'
+        return list(sorted(re.findall(f' ({matcher}) ', concated_texts), key=lambda x: len(x)))
 
 
 class Profile(urwid.Text):
