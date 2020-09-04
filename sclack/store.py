@@ -114,9 +114,7 @@ class Store:
         return channel_id[0] == 'G'
 
     def get_channel_info(self, channel_id):
-        if channel_id[0] == 'G':
-            return self.slack.api_call('groups.info', channel=channel_id)['group']
-        elif channel_id[0] == 'C':
+        if channel_id[0] in ('C', 'G'):
             return self.slack.api_call('conversations.info', channel=channel_id)['channel']
         elif channel_id[0] == 'D':
             return self.slack.api_call('im.info', channel=channel_id)['im']
@@ -167,7 +165,7 @@ class Store:
         self.state.dms.sort(key=lambda dm: dm['created'])
 
     def load_groups(self):
-        self.state.groups = self.slack.api_call('mpim.list')['groups']
+        self.state.groups = filter(lambda c: c['is_group'] is True, self.slack.api_call('conversations.list'))
 
     def load_stars(self):
         """
