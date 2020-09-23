@@ -24,7 +24,7 @@ Unfortunately some serious hoops need to be jumped through to use a non-legacy t
 1. Go to <https://api.slack.com/apps>
 2. Click "Create new app"
 3. Give the app a name (maybe "Sclack") and select the server you'd like to use
-4. Go to "Permissions" and add a new redirect URL: `http://localhost:8080`
+4. Go to "OAuth & Permissions" and add a new redirect URL: `http://localhost:8080`
 5. Go back to the previous page, you'll be able to see "Client ID" (you will also need the "Client Secret" later). Use this to fill in this url:
 ```
     https://slack.com/oauth/authorize?client_id=[Client ID here]&scope=client
