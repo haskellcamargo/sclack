@@ -45,6 +45,7 @@ Sclack seems better when used with a [Nerd Font](https://nerdfonts.com/). Using
 them is completely optional, but it is how some Sclack icons are possible.
 Personally, I use [Fira Code Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases/download/v2.0.0/FiraCode.zip).
 Download, install and set as the default font of your terminal emulator.
+This may install as **FuraCode Nerd Font**, so be sure to select the right font in case you already have the official FiraCode font installed.
 
 ### libcaca
 
