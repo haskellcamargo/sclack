@@ -1,5 +1,5 @@
 from sclack.quick_switcher import remove_diacritic
-from app import ask_for_token
+from sclack.app import ask_for_token
 
 from slackclient import SlackClient
 
