@@ -14,8 +14,8 @@ setup(
     url='https://github.com/haskellcamargo/sclack',
     scripts=["app.py"],
     packages=find_packages(),
+    python_requires=">=3.5",
     install_requires=[
-        'asyncio',
         'urwid>2',
         'pyperclip',
         'requests',
