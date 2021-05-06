@@ -117,7 +117,7 @@ class Store:
         if channel_id[0] in ('C', 'G'):
             return self.slack.api_call('conversations.info', channel=channel_id)['channel']
         elif channel_id[0] == 'D':
-            return self.slack.api_call('im.info', channel=channel_id)['im']
+            return self.slack.api_call('im.info', channel=channel_id)['channel']
 
     def get_channel_members(self, channel_id):
         return self.slack.api_call('conversations.members', channel=channel_id)
