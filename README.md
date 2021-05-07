@@ -144,11 +144,12 @@ Focus on message and press <kbd>r</kbd> (or your custom shortcut) to get permali
     "go_to_sidebar": "esc",
     "open_quick_switcher": "ctrl k",
     "quit_application": "q",
-    "set_edit_topic_mode": "t",
+    "set_edit_topic_mode": "ctrl t",
     "set_insert_mode": "i",
     "yank_message": "y",
     "get_permalink": "r",
-    "set_snooze": "ctrl d"
+    "set_snooze": "ctrl d",
+    "toggle_thread": "t"
   }
 }
 ```

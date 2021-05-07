@@ -894,6 +894,18 @@ class User(urwid.Text):
         super(User, self).__init__(markup)
 
 
+class ThreadText(urwid.Text):
+    """
+    A text element used to indicate the number of messages in a thread
+    """
+    def __init__(self, num_replies):
+        color = "#" + shorten_hex('146BF7')
+        markup = [
+            (urwid.AttrSpec(color, 'h235'), 'Thread ({})'.format(num_replies))
+        ]
+        super(ThreadText, self).__init__(markup)
+
+
 class Workspace(urwid.AttrMap):
     __metaclass__ = urwid.MetaSignals
     signals = ['select_workspace']

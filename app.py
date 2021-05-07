@@ -62,6 +62,7 @@ class App:
         self.set_snooze_widget = None
         self.workspaces = list(config['workspaces'].items())
         self.store = Store(self.workspaces, self.config)
+        self.showing_thread = False
         Store.instance = self.store
         urwid.set_encoding('UTF-8')
         sidebar = LoadingSideBar()
@@ -94,7 +95,6 @@ class App:
     @property
     def sidebar_column(self):
         return self.columns.contents[0]
-
 
     def start(self):
         self._loading = True
@@ -294,7 +294,7 @@ class App:
             loop.run_in_executor(executor, self.store.load_channel, channel),
             loop.run_in_executor(executor, self.store.load_messages, channel)
         )
-        messages = self.render_messages(self.store.state.messages)
+        messages = self.render_messages(self.store.state.messages, channel_id=channel)
         header = self.render_chatbox_header()
         self._loading = False
         self.sidebar.select_channel(channel)
@@ -362,7 +362,6 @@ class App:
             self.columns.contents.append((profile, ('given', 35, False)))
 
     def render_chatbox_header(self):
-
         if self.store.state.channel['id'][0] == 'D':
             user = self.store.find_user_by_id(self.store.state.channel['user'])
             header = ChannelHeader(
@@ -467,6 +466,8 @@ class App:
             for reaction in message.get('reactions', [])
         ]
 
+        responses = message.get('replies', [])
+
         attachments = []
         for attachment in message.get('attachments', []):
             attachment_widget = Attachment(
@@ -506,7 +507,8 @@ class App:
             text,
             indicators,
             attachments=attachments,
-            reactions=reactions
+            reactions=reactions,
+            responses=responses
         )
 
         self.lazy_load_images(files, message)
@@ -519,6 +521,7 @@ class App:
         urwid.connect_signal(message, 'quit_application', self.quit_application)
         urwid.connect_signal(message, 'set_insert_mode', self.set_insert_mode)
         urwid.connect_signal(message, 'mark_read', self.handle_mark_read)
+        urwid.connect_signal(message, 'toggle_thread', self.toggle_thread)
 
         return message
 
@@ -548,6 +551,16 @@ class App:
         previous_date = self.store.state.last_date
         last_read_datetime = datetime.fromtimestamp(float(self.store.state.channel.get('last_read', '0')))
         today = datetime.today().date()
+
+        # If we are viewing a thread, add a dummy 'message' to indicate this
+        # to the user.
+        if self.showing_thread:
+            _messages.append(self.render_message({
+                    'text': "VIEWING THREAD",
+                    'ts': '0',
+                    'subtype': SCLACK_SUBTYPE,
+                }))
+
         for message in messages:
             message_datetime = datetime.fromtimestamp(float(message['ts']))
             message_date = message_datetime.date()
@@ -659,7 +672,57 @@ class App:
             urwid.disconnect_signal(self.quick_switcher, 'go_to_channel', self.go_to_channel)
             self.urwid_loop.widget = self._body
             self.quick_switcher = None
+
+        # We are not showing a thread - this needs to be reset as this method might be
+        # triggered from the sidebar while a thread is being shown.
+        self.showing_thread = False
+
+        # Show the channel in the chatbox
         loop.create_task(self._go_to_channel(channel_id))
+
+    @asyncio.coroutine
+    def _show_thread(self, channel_id, parent_ts):
+        """
+        Display the requested thread in the chatbox
+        """
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            yield from asyncio.gather(
+                loop.run_in_executor(executor, self.store.load_thread_messages, channel_id, parent_ts)
+            )
+            self.store.state.last_date = None
+
+            if len(self.store.state.thread_messages) == 0:
+                messages = self.render_messages([{
+                    'text': "There was an error showing this thread :(",
+                    'ts': '0',
+                    'subtype': SCLACK_SUBTYPE,
+                }])
+            else:
+                messages = self.render_messages(self.store.state.thread_messages, channel_id=channel_id)
+
+            header = self.render_chatbox_header()
+            if self.is_chatbox_rendered:
+                self.chatbox.body.body[:] = messages
+                self.chatbox.header = header
+                self.chatbox.message_box.is_read_only = self.store.state.channel.get('is_read_only', False)
+                self.sidebar.select_channel(channel_id)
+                self.urwid_loop.set_alarm_in(0, self.scroll_messages)
+
+            if len(self.store.state.messages) == 0:
+                self.go_to_sidebar()
+            else:
+                self.go_to_chatbox()
+
+    def toggle_thread(self, channel_id, parent_ts):
+        if self.showing_thread:
+            # Currently showing a thread, return to the main channel
+            self.showing_thread = False
+            loop.create_task(self._go_to_channel(channel_id))
+        else:
+            # Show the chosen thread
+            self.showing_thread = True
+            self.store.state.thread_parent = parent_ts
+            loop.create_task(self._show_thread(channel_id, parent_ts))
 
     def handle_set_snooze_time(self, snoozed_time):
         loop.create_task(self.dispatch_snooze_time(snoozed_time))
@@ -846,11 +909,22 @@ class App:
                 self.store.state.editing_widget.original_text = edit_result['text']
                 self.store.state.editing_widget.set_text(MarkdownText(edit_result['text']))
             self.leave_edit_mode()
+        if self.showing_thread:
+            channel = self.store.state.channel['id']
+            if message.strip() != '':
+                self.store.post_thread_message(channel, self.store.state.thread_parent, message)
+                self.leave_edit_mode()
+
+            # Refresh the thread to make sure the new message immediately shows up
+            loop.create_task(self._show_thread(channel, self.store.state.thread_parent))
         else:
             channel = self.store.state.channel['id']
             if message.strip() != '':
                 self.store.post_message(channel, message)
                 self.leave_edit_mode()
+
+            # Refresh the channel to make sure the new message shows up
+            loop.create_task(self._go_to_channel(channel))
 
     def go_to_last_message(self):
         self.go_to_chatbox()

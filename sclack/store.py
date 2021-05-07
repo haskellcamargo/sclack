@@ -8,6 +8,8 @@ class State:
         self.groups = []
         self.stars = []
         self.messages = []
+        self.thread_messages = []
+        self.thread_parent = None
         self.users = []
         self.pin_count = 0
         self.has_more = False
@@ -80,6 +82,19 @@ class Store:
         self.state.is_limited = history.get('is_limited', False)
         self.state.pin_count = history['pin_count']
         self.state.messages.reverse()
+
+    def load_thread_messages(self, channel_id, parent_ts):
+        """
+        Load all of the messages sent in reply to the message with the given timestamp.
+        """
+        replies = self.slack.api_call(
+            "conversations.replies",
+            channel=channel_id,
+            ts=parent_ts,
+        )
+
+        self.state.thread_messages = replies['messages']
+        self.state.has_more = replies.get('has_more', False)
 
     def is_valid_channel_id(self, channel_id):
         """
@@ -215,6 +230,16 @@ class Store:
             as_user=True,
             link_names=True,
             text=message
+        )
+
+    def post_thread_message(self, channel_id, parent_ts, message):
+        return self.slack.api_call(
+            'chat.postMessage',
+            channel=channel_id,
+            as_user=True,
+            link_name=True,
+            text=message,
+            thread_ts=parent_ts
         )
 
     def get_presence(self, user_id):

@@ -4,6 +4,7 @@ import urwid
 import pyperclip
 import webbrowser
 from sclack.store import Store
+from sclack.components import ThreadText
 from sclack.component.time import Time
 
 
@@ -18,9 +19,10 @@ class Message(urwid.AttrMap):
         'quit_application',
         'set_insert_mode',
         'mark_read',
+        'toggle_thread',
     ]
 
-    def __init__(self, ts, channel_id, user, text, indicators, reactions=(), attachments=()):
+    def __init__(self, ts, channel_id, user, text, indicators, reactions=(), attachments=(), responses=()):
         self.ts = ts
         self.channel_id = channel_id
         self.user_id = user.id
@@ -30,10 +32,15 @@ class Message(urwid.AttrMap):
         main_column = [urwid.Columns([('pack', user), self.text_widget])]
         main_column.extend(attachments)
         self._file_index = len(main_column)
+
         if reactions:
             main_column.append(urwid.Columns([
                 ('pack', reaction) for reaction in reactions
             ]))
+
+        if responses:
+            main_column.append(ThreadText(len(responses)))
+
         self.main_column = urwid.Pile(main_column)
         columns = [
             ('fixed', 7, Time(ts)),
@@ -76,6 +83,9 @@ class Message(urwid.AttrMap):
         elif key == keymap['get_permalink']:
             # FIXME
             urwid.emit_signal(self, 'get_permalink', self, self.channel_id, self.ts)
+        elif key == keymap['toggle_thread']:
+            urwid.emit_signal(self, 'toggle_thread', self.channel_id, self.ts)
+            return True
         elif key == 'enter':
             browser_name = Store.instance.config['features']['browser']
 
