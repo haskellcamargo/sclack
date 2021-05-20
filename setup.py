@@ -12,7 +12,14 @@ setup(
     author='Marcelo Camargo',
     author_email='marcelocamargo@linuxmail.org',
     url='https://github.com/haskellcamargo/sclack',
-    scripts=["app.py"],
+    entry_points={
+        'console_scripts': [
+            'sclack=sclack.app:run',
+        ],
+    },
+    package_data={
+        'sclack': ['config.json']
+    },
     packages=find_packages(),
     install_requires=[
         'asyncio',
