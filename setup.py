@@ -21,8 +21,8 @@ setup(
         'sclack': ['config.json']
     },
     packages=find_packages(),
+    python_requires=">=3.5",
     install_requires=[
-        'asyncio',
         'urwid>2',
         'pyperclip',
         'requests',
