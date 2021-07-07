@@ -1,5 +1,5 @@
 # Sclack
-
+[![Run on Repl.it](https://repl.it/badge/github/haskellcamargo/sclack)](https://repl.it/github/haskellcamargo/sclack)
 > The best CLI client for Slack, because everything is terrible!
 
 ![Sclack](./resources/example.png)
